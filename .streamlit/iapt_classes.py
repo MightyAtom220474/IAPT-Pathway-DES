@@ -71,7 +71,7 @@ class g:
     number_on_asst_wl = 0 # used to keep track of asst WL position
 
     # bring in past referral data
-    referral_rate_lookup = pd.read_csv('IAPT Weekly Referral Rates v1.csv'
+    referral_rate_lookup = pd.read_csv('talking_therapies_referral_rates.csv'
                                                                 ,index_col=0)
 
     # Patient to capture flow of patient through pathway
