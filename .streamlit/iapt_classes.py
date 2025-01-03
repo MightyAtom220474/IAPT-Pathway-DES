@@ -230,34 +230,6 @@ class Model:
             self.ref_optin_wait = self.asst_results_df['Opt-in Q Time'].mean()
             self.asst_tot_accept = self.asst_results_df['TA Outcome'].sum()
             
-            # self.max_triage_wl = self.results_df["Triage WL Posn"].max()
-            # self.triage_rej = self.results_df["Triage Rejected"].sum()
-            # self.triage_avg_wait = self.results_df["Q Time Triage"].mean()
-            # self.triage_tot_clin = self.results_df['Triage Mins Clin'].sum()
-            # self.triage_tot_admin = self.results_df['Triage Mins Admin'].sum()
-            # self.triage_tot_reject = self.results_df['Triage Time Reject'].sum()
-            # self.pack_tot_send = self.results_df["Time Pack Send"].sum()
-            # self.pack_rej = self.results_df["Pack Rejected"].sum()
-            # self.pack_tot_rej = self.results_df["Time Pack Reject"].sum()
-            # self.obs_tot_visit = self.results_df["Time Obs Visit"].sum()
-            # self.obs_rej = self.results_df["Obs Rejected"].sum()
-            # self.obs_tot_rej = self.results_df["Time Obs Reject"].sum()
-            # self.mdt_tot_prep = self.results_df["Time Prep MDT"].sum()
-            # self.mdt_tot_meet = self.results_df["Time Meet MDT"].sum()
-            # self.max_mdt_wl = self.results_df["MDT WL Posn"].max()
-            # self.mdt_tot_rej = self.results_df["MDT Time Reject"].sum()
-            # self.mdt_rej = self.results_df["MDT Rejected"].sum()
-            # self.mdt_avg_wait = self.results_df["Q Time MDT"].mean()
-            # #self.mdt_targ_wait = g.target_mdt_wait
-            # self.max_asst_wl = self.results_df["Asst WL Posn"].max()
-            # self.asst_rej = self.results_df["Asst Rejected"].sum()
-            # self.asst_avg_wait = self.results_df["Q Time Asst"].mean()
-            # self.asst_tot_clin = self.results_df['Asst Mins Clin'].sum()
-            # self.asst_tot_admin = self.results_df['Asst Mins Admin'].sum()
-            # self.diag_tot_rej = self.results_df['Diag Rejected Time'].sum()
-            # self.diag_tot_acc = self.results_df['Diag Accepted Time'].sum()
-            #self.asst_targ_wait = g.target_asst_wait
-
             # weekly waiting list positions
             self.asst_weekly_stats.append(
                 {
@@ -267,35 +239,15 @@ class Model:
                  'Referrals Delay Opt-in':self.ref_optin_delay,
                  'Referrals Opted-in':self.ref_tot_optin,
                  'Referrals Wait Opt-in':self.ref_optin_wait,
-                 'TA Total Accept':self.asst_tot_accept,
-                #  'Triage Reject Mins':self.triage_tot_reject,
-                #  'Pack Send Mins':self.pack_tot_send,
-                #  'Pack Rejects':self.pack_rej,
-                #  'Pack Reject Mins':self.pack_tot_rej,
-                #  'Obs Visit Mins':self.obs_tot_visit,
-                #  'Obs Rejects':self.obs_rej,
-                #  'Obs Reject Mins':self.obs_tot_rej,
-                #  'MDT Prep Mins':self.mdt_tot_prep,
-                #  'MDT Meet Mins':self.mdt_tot_meet,
-                #  'MDT WL':self.max_mdt_wl,
-                #  'MDT Rejects':self.mdt_rej,
-                #  'MDT Reject Mins':self.mdt_tot_rej,
-                #  'MDT Wait':self.mdt_avg_wait,
-                #  'Asst WL':self.max_asst_wl,
-                #  'Asst Rejects':self.asst_rej,
-                #  'Asst Wait':self.asst_avg_wait,
-                #  'Asst Clin Mins':self.asst_tot_clin,
-                #  'Asst Admin Mins':self.asst_tot_admin,
-                #  'Diag Reject Mins':self.diag_tot_rej,
-                #  'Diag Accept Mins':self.diag_tot_acc,
+                 'TA Total Accept':self.asst_tot_accept                
                 }
                 )
             
             
             # replenish resources
-            asst_amount_to_fill = g.asst_resource - self.triage_res.level
-            step2_amount_to_fill = g.mdt_resource - self.step2_res.level
-            step3_amount_to_fill = g.asst_resource - self.step3_res.level
+            #asst_amount_to_fill = g.asst_resource - self.triage_res.level
+            #step2_amount_to_fill = g.step2_resource - self.step2_res.level
+            #step3_amount_to_fill = g.step3_resource - self.step3_res.level
 
             if asst_amount_to_fill > 0:
                 if g.debug_level >= 2:
@@ -307,22 +259,22 @@ class Model:
                 if g.debug_level >= 2:
                     print(f"New Asst Level: {self.asst_res.level}")
 
-            if step2_amount_to_fill > 0:
-                if g.debug_level >= 2:
-                    print(f"Step2 Level: {self.step2_res.level}")
-                    print(f"Putting in {step2_amount_to_fill}")
+            # if step2_amount_to_fill > 0:
+            #     if g.debug_level >= 2:
+            #         print(f"Step2 Level: {self.step2_res.level}")
+            #         print(f"Putting in {step2_amount_to_fill}")
 
-                self.mdt_res.put(step2_amount_to_fill)
+            #     self.mdt_res.put(step2_amount_to_fill)
 
-                if g.debug_level >= 2:
-                    print(f"New Step2 Level: {self.step2_res.level}")
+            #     if g.debug_level >= 2:
+            #         print(f"New Step2 Level: {self.step2_res.level}")
 
-            if step3_amount_to_fill > 0:
-                if g.debug_level >= 2:
-                    print(f"Step3 Level: {self.step3_res.level}")
-                    print(f"Putting in {step3_amount_to_fill}")
+            # if step3_amount_to_fill > 0:
+            #     if g.debug_level >= 2:
+            #         print(f"Step3 Level: {self.step3_res.level}")
+            #         print(f"Putting in {step3_amount_to_fill}")
 
-                self.step3_res.put(step3_amount_to_fill)
+            #     self.step3_res.put(step3_amount_to_fill)
 
                 if g.debug_level >= 2:
                     print(f"New Step3 Level: {self.step3_res.level}")
@@ -334,14 +286,14 @@ class Model:
             self.week_number += 1
 
         # After all weeks processed combine all weekly stats
-        self.combined_asst_weekly = pd.concat(self.asst_weekly_stats
-                                              ,ignore_index=False)
+        # self.combined_asst_weekly = pd.concat(self.asst_weekly_stats
+        #                                       ,ignore_index=False)
 
-        self.combined_step2_weekly = pd.concat(self.step2_weekly_stats
-                                               ,ignore_index=False)
+        # self.combined_step2_weekly = pd.concat(self.step2_weekly_stats
+        #                                        ,ignore_index=False)
 
-        self.combined_step3_weekly = pd.concat(self.step3_weekly_stats
-                                               ,ignore_index=False)
+        # self.combined_step3_weekly = pd.concat(self.step3_weekly_stats
+        #                                        ,ignore_index=False)
 
     ##### generator function that represents the DES generator for referrals
     def generator_patient_referrals(self):
@@ -350,7 +302,9 @@ class Model:
         self.referrals_this_week = round(g.mean_referrals_pw + 
                                     (g.mean_referrals_pw * 
                                     g.referral_rate_lookup.at[
-                                    self.week_number+1,'PCVar']))
+                                    self.week_number+1,'PCVar'])) # weeks start at 1
+
+        print(self.referrals_this_week)
 
         print(self.referrals_this_week)
                 
@@ -410,7 +364,7 @@ class Model:
                                         g.referral_screen_time
                                         ,g.std_dev)
 
-        # print(f'Week {week_number}: Patient number {p.id} created')
+        #print(f'Week {week_number}: Patient number {p.id} created')
 
         # check whether the referral was a straight reject or not
         if self.reject_referral <= g.referral_rejection_rate:
@@ -504,16 +458,16 @@ class Model:
 
         return self.asst_results_df
     
-    def calculate_weekly_results(self):
-        # Take the mean of the queuing times and the maximum waiting list
-        # across patients in this run of the model
+    # def calculate_weekly_results(self):
+    #     # Take the mean of the queuing times and the maximum waiting list
+    #     # across patients in this run of the model
  
-        self.mean_screen_time = self.asst_results_df['Referral Time Screen'].mean()
-        self.reject_ref_total = self.asst_results_df['Referral Rejected'].sum()
-        self.mean_optin_wait = self.asst_results_df['Opt-in Wait'].mean()
-        self.ref_tot_optin = self.asst_results_df['Opted In'].sum()
-        self.mean_qtime_optin = self.asst_results_df['Opt-in Q Time'].mean()
-        self.tot_ta_accept = self.asst_results_df['TA Outcome'].sum()
+    #     self.mean_screen_time = self.asst_results_df['Referral Time Screen'].mean()
+    #     self.reject_ref_total = self.asst_results_df['Referral Rejected'].sum()
+    #     self.mean_optin_wait = self.asst_results_df['Opt-in Wait'].mean()
+    #     self.ref_tot_optin = self.asst_results_df['Opted In'].sum()
+    #     self.mean_qtime_optin = self.asst_results_df['Opt-in Q Time'].mean()
+    #     self.tot_ta_accept = self.asst_results_df['TA Outcome'].sum()
 
     # This method calculates results over each single run
     def calculate_run_results(self):
@@ -565,7 +519,7 @@ class Trial:
         self.df_trial_results["Total Accepted"] = [0]
         self.df_trial_results.set_index("Run Number", inplace=True)
 
-        self.asst_weekly_stats = []
+        self.weekly_asst_dfs = []
 
     # Method to print out the results from the trial.  In real world models,
     # you'd likely save them as well as (or instead of) printing them
@@ -590,25 +544,26 @@ class Trial:
                 my_model.mean_optin_wait,
                 my_model.ref_tot_optin,
                 my_model.mean_qtime_ta,
-                my_model.tot_ta_accept,
+                my_model.tot_ta_accept
                 ]
 
+            # turn weekly stats into a dataframe
             my_model.asst_weekly_stats = pd.DataFrame(my_model.asst_weekly_stats)
-
+            # add the run number to the dataframe
             my_model.asst_weekly_stats['Run'] = run
 
             #print(my_model.asst_weekly_stats)
-
+            # append stats for that week to asst dataframe
             self.asst_weekly_dfs.append(my_model.asst_weekly_stats)
                    
-        # Once the trial (i.e. all runs) has completed, print the final results
+        # Once the trial (i.e. all runs) has completed, print the final results and combine all the weekly dataframes
         return self.df_trial_results, pd.concat(self.asst_weekly_dfs)
     
 my_trial = Trial()
 #pd.set_option('display.max_rows', 1000)
 # Call the run_trial method of our Trial class object
 
-df_trial_results, asst_weekly_stats = my_trial.run_trial()
+df_trial_results, asst_weekly_dfs = my_trial.run_trial()
 
-df_trial_results, asst_weekly_stats
+df_trial_results, asst_weekly_dfs
         
