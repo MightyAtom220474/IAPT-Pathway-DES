@@ -6,7 +6,7 @@ import pandas as pd
 class g:
 
     # used for testing
-    debug_level = 0
+    debug_level = 2
 
     # Referrals
     mean_referrals_pw = 60
@@ -73,8 +73,9 @@ class g:
     # bring in past referral data
     referral_rate_lookup = pd.read_csv('talking_therapies_referral_rates.csv'
                                                                 ,index_col=0)
-
-    # Patient to capture flow of patient through pathway
+    #print(referral_rate_lookup)
+    
+# Patient to capture flow of patient through pathway
 class Patient:
     def __init__(self, p_id):
         # Patient
@@ -156,7 +157,9 @@ class Model:
         self.asst_results_df.set_index("Patient ID", inplace=True) 
 
         # Step2
-        # Create a new DataFrame that will store Step2 results against the patient ID
+        # Create a new DataFrame that will store opt-in results against the patient ID
+        self.step2_results_df = pd.DataFrame()
+        
         self.step2_results_df['Patient ID'] = [1]
         self.step2_results_df['Week Number'] = [0]
         self.step2_results_df['Run Number'] = [0]
@@ -170,6 +173,9 @@ class Model:
 
         # Step3
         # Create a new DataFrame that will store Step3 results against the patient ID
+        # Create a new DataFrame that will store opt-in results against the patient ID
+        self.step3_results_df = pd.DataFrame()
+        
         self.step3_results_df['Patient ID'] = [1]
         self.step3_results_df['Week Number'] = [0]
         self.step3_results_df['Run Number'] = [0]
@@ -195,11 +201,10 @@ class Model:
 
         # list to hold weekly asst statistics
         self.asst_weekly_stats = []
-
         # list to hold weekly Step2 statistics
-        self.step2_weekly_stats = []
+        #self.step2_weekly_stats = []
         # list to hold weekly Step3 statistics
-        self.step3_weekly_stats = []
+        #self.step3_weekly_stats = []
 
         while self.week_number <= number_of_weeks:
             if g.debug_level >= 1:
@@ -216,15 +221,14 @@ class Model:
 
             ########## need to start up the generator for non-clinical time here too ##########
 
-            self.referral_tot_screen = self.asst_results_df[
+            self.ref_tot_screen = self.asst_results_df[
                                                 'Referral Time Screen'].sum()
             self.ref_tot_reject = self.asst_results_df[
                                                 'Referral Rejected'].sum()
-            self.ref_tot_optin = self.asst_results_df['Opted In'].sum()
             self.ref_optin_delay = self.asst_results_df['Opt-in Wait'].mean()
+            self.ref_tot_optin = self.asst_results_df['Opted In'].sum()
             self.ref_optin_wait = self.asst_results_df['Opt-in Q Time'].mean()
             self.asst_tot_accept = self.asst_results_df['TA Outcome'].sum()
-            
             
             # self.max_triage_wl = self.results_df["Triage WL Posn"].max()
             # self.triage_rej = self.results_df["Triage Rejected"].sum()
@@ -258,10 +262,10 @@ class Model:
             self.asst_weekly_stats.append(
                 {
                  'Week Number':self.week_number,
-                 'Referral Screen Mins':self.ref_time_screen,   
+                 'Referral Screen Mins':self.ref_total_screen,   
                  'Referrals Rejected':self.ref_tot_reject,
-                 'Referrals Opted-in':self.ref_tot_optin,
                  'Referrals Delay Opt-in':self.ref_optin_delay,
+                 'Referrals Opted-in':self.ref_tot_optin,
                  'Referrals Wait Opt-in':self.ref_optin_wait,
                  'TA Total Accept':self.asst_tot_accept,
                 #  'Triage Reject Mins':self.triage_tot_reject,
@@ -289,7 +293,7 @@ class Model:
             
             
             # replenish resources
-            asst_amount_to_fill = g.triage_resource - self.triage_res.level
+            asst_amount_to_fill = g.asst_resource - self.triage_res.level
             step2_amount_to_fill = g.mdt_resource - self.step2_res.level
             step3_amount_to_fill = g.asst_resource - self.step3_res.level
 
@@ -345,11 +349,11 @@ class Model:
         # get the number of referrals that week based on the mean + seasonal variance
         self.referrals_this_week = round(g.mean_referrals_pw + 
                                     (g.mean_referrals_pw * 
-                                    g.referral_rate_lookup['PCVar']
-                                    [g.referral_rate_lookup['PCVar']
-                                    ==self.week_number]))
-        
-        
+                                    g.referral_rate_lookup.at[
+                                    self.week_number+1,'PCVar']))
+
+        print(self.referrals_this_week)
+                
         if g.debug_level >= 1:
             print(f'Week {self.week_number}: {self.referrals_this_week}' 
                                                     'referrals generated')
@@ -400,6 +404,7 @@ class Model:
         p = Patient(self.patient_counter)
         p.week_added = week_number
 
+        # all referrals get screened
         self.asst_results_df.at[p.id, 'Referral Time Screen'
                                         ] = self.random_normal(
                                         g.referral_screen_time
@@ -411,74 +416,77 @@ class Model:
         if self.reject_referral <= g.referral_rejection_rate:
 
             # if this referral is rejected mark as rejected
-            self.results_df.at[p.id, 'Run Number'] = self.run_number
+            self.asst_results_df.at[p.id, 'Run Number'] = self.run_number
 
-            self.results_df.at[p.id, 'Week Number'] = self.week_number
+            self.asst_results_df.at[p.id, 'Week Number'] = self.week_number
 
-            self.results_df.at[p.id, 'Referral Rejected'] = 1
+            self.asst_results_df.at[p.id, 'Referral Rejected'] = 1
 
         else:
 
-            self.results_df.at[p.id, 'Run Number'] = self.run_number
+            self.asst_results_df.at[p.id, 'Run Number'] = self.run_number
 
-            self.results_df.at[p.id, 'Week Number'] = self.week_number
+            self.asst_results_df.at[p.id, 'Week Number'] = self.week_number
             # Mark referral as accepted and move on to whether it needs a review
-            self.results_df.at[p.id, 'Referral Rejected'] = 0
-
-            
+            self.asst_results_df.at[p.id, 'Referral Rejected'] = 0
 
             # Now decide whether the patient has previously been treated and needs to go for review
             if self.requires_review >= g.referral_review_rate:
                 # set flag to show Patient didn't require review
-                self.results_df.at[p.id, 'Referral Reviewed'] = 0
+                self.asst_results_df.at[p.id, 'Referral Reviewed'] = 0
                 
-                self.results_df.at[p.id, 'Review Wait'] = 0
+                self.asst_results_df.at[p.id, 'Review Wait'] = 0
 
             else:
                 # set flag to show Patient required review
-                self.results_df.at[p.id, 'Referral Reviewed'] = 1
+                self.asst_results_df.at[p.id, 'Referral Reviewed'] = 1
                 # record how long they waited for MDT review between 0 and 2 weeks
-                self.results_df.at[p.id, 'Review Wait'] = random.uniform(0,
+                self.asst_results_df.at[p.id, 'Review Wait'] = random.uniform(0,
                                                                 g.mdt_freq)
 
                 # decide if they were rejected at Review
-                if self.review_reject <= g.review_rej_rate:
+                if self.asst_review_reject <= g.review_rej_rate:
                     # set flag to show Patient was rejected at review
-                    self.results_df.at[p.id, 'Review Rejected'] = 1
+                    self.asst_results_df.at[p.id, 'Review Rejected'] = 1
                 else:    
                     # otherwise set flag to show they were accepted and go to opt-in
-                    self.results_df.at[p.id, 'Review Rejected'] = 0
+                    self.asst_results_df.at[p.id, 'Review Rejected'] = 0
 
                     # now decide whether the patient opted-in or not
                     if self.patient_optedin >= g.opt_in_rate:
                         # set flag to show Patient failed to opt-in
-                        self.results_df.at[p.id, 'Opted In'] = 0
-
+                        self.asst_results_df.at[p.id, 'Opted In'] = 0
+                        # therefore didn't wait to opt-in
+                        self.asst_results_df.at[p.id, 'Opt-in Wait'
+                                                    ] = 0
+                        self.asst_results_df.at[p.id, 'Opt-in Q Time'
+                                                    ] = 0
                     else:    
                         # otherwise set flag to show they opted-in
-                        self.results_df.at[p.id, 'Opted In'] = 1
+                        self.asst_results_df.at[p.id, 'Opted In'] = 1
                         # record how long they took to opt-in, 1 week window
-                        self.results_df.at[p.id, 'Opt-in Wait'
+                        self.asst_results_df.at[p.id, 'Opt-in Wait'
                                                     ] = random.uniform(0,1)
                         # record lag-time between opting in and TA appointment, max 4 week window
-                        self.results_df.at[p.id, 'Opt-in Q Time'
+                        self.asst_results_df.at[p.id, 'Opt-in Q Time'
                                                     ] = random.uniform(0,4)
                         
                         # Now do Telephone Assessment
                         # decide if the patient is accepted following TA
                         if self.ta_accepted >= g.ta_accept_rate:
                             # Patient was rejected at TA stage
-                            self.results_df.at[p.id, 'TA Outcome'] = 0
+                            self.asst_results_df.at[p.id, 'TA Outcome'] = 0
 
                             # used to decide whether further parts of the pathway are run or not
                             self.ta_accepted = 0
                         else:    
                             # Patient was accepted at TA stage
-                            self.results_df.at[p.id, 'TA Outcome'] = 1
+                            self.asst_results_df.at[p.id, 'TA Outcome'] = 1
 
                                 # used to decide whether further parts of the pathway are run or not
                             self.ta_accepted = 1
-        
+        print(self.asst_results_df)
+
         yield self.env.timeout(0)
 
         #print(f'Patient {p} assessment completed')
@@ -499,21 +507,22 @@ class Model:
     def calculate_weekly_results(self):
         # Take the mean of the queuing times and the maximum waiting list
         # across patients in this run of the model
+ 
         self.mean_screen_time = self.asst_results_df['Referral Time Screen'].mean()
         self.reject_ref_total = self.asst_results_df['Referral Rejected'].sum()
-        self.ref_tot_optin = self.asst_results_df['Opted In'].sum()
         self.mean_optin_wait = self.asst_results_df['Opt-in Wait'].mean()
-        self.mean_qtime_optin =  self.asst_results_df['Opt-in Q Time'].mean()
+        self.ref_tot_optin = self.asst_results_df['Opted In'].sum()
+        self.mean_qtime_optin = self.asst_results_df['Opt-in Q Time'].mean()
         self.tot_ta_accept = self.asst_results_df['TA Outcome'].sum()
 
     # This method calculates results over each single run
     def calculate_run_results(self):
-        # Take the mean of the queuing times and the maximum waiting lists
+        # Take the mean of the queuing times etc.
         self.mean_screen_time = self.asst_results_df['Referral Time Screen'].mean()
         self.reject_ref_total = self.asst_results_df['Referral Rejected'].sum()
-        self.ref_tot_optin = self.asst_results_df['Opted In'].sum()
         self.mean_optin_wait = self.asst_results_df['Opt-in Wait'].mean()
-        self.mean_qtime_ta =  self.asst_results_df['TA Q Time'].mean()
+        self.ref_tot_optin = self.asst_results_df['Opted In'].sum()
+        self.mean_qtime_ta =  self.asst_results_df['Opt-in Q Time'].mean()
         self.tot_ta_accept = self.asst_results_df['TA Outcome'].sum()
         # reset waiting lists ready for next run
         # g.number_on_triage_wl = 0
@@ -537,9 +546,9 @@ class Model:
         # Print the run number with the patient-level results from this run of
         # the model
         if print_run_results:
-            print(g.weekly_wl_posn)
+            #print(g.weekly_wl_posn)
             print (f"Run Number {self.run_number}")
-            print (self.results_df)
+            print (self.asst_results_df)
 
 # Class representing a Trial for our simulation - a batch of simulation runs.
 class Trial:
@@ -549,7 +558,8 @@ class Trial:
         self.df_trial_results = pd.DataFrame()
         self.df_trial_results["Run Number"] = [0]
         self.df_trial_results["Mean Screen Time"] = [0.0]
-        self.df_trial_results["Mean Opt-in Wait"] = [0]
+        self.df_trial_results["Total Referrals Rejected"] = [0]
+        self.df_trial_results["Mean Opt-in Wait"] = [0.0]
         self.df_trial_results["Total Opted In"] = [0]
         self.df_trial_results["Mean Q Time TA"] = [0.0]
         self.df_trial_results["Total Accepted"] = [0]
@@ -574,30 +584,31 @@ class Trial:
             my_model = Model(run)
             my_model.run(print_run_results=False)
 
-            self.df_trial_results.loc[run] =  [
+            self.df_trial_results.loc[run] = [
                 my_model.mean_screen_time,
                 my_model.reject_ref_total,
-                my_model.ref_tot_optin,
                 my_model.mean_optin_wait,
+                my_model.ref_tot_optin,
                 my_model.mean_qtime_ta,
                 my_model.tot_ta_accept,
                 ]
 
-            my_model.df_asst_weekly_stats = pd.DataFrame(my_model.asst_weekly_stats)
+            my_model.asst_weekly_stats = pd.DataFrame(my_model.asst_weekly_stats)
 
-            my_model.df_asst_weekly_stats['Run'] = run
+            my_model.asst_weekly_stats['Run'] = run
 
-            self.asst_weekly_stats.append(my_model.df_asst_weekly_stats)
+            #print(my_model.asst_weekly_stats)
+
+            self.asst_weekly_dfs.append(my_model.asst_weekly_stats)
                    
         # Once the trial (i.e. all runs) has completed, print the final results
-        return self.df_trial_results, pd.concat(self.asst_weekly_stats)
+        return self.df_trial_results, pd.concat(self.asst_weekly_dfs)
     
 my_trial = Trial()
-pd.set_option('display.max_rows', 1000)
+#pd.set_option('display.max_rows', 1000)
 # Call the run_trial method of our Trial class object
 
 df_trial_results, asst_weekly_stats = my_trial.run_trial()
 
 df_trial_results, asst_weekly_stats
-
         
