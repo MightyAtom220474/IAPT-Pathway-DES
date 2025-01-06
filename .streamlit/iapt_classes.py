@@ -80,7 +80,7 @@ class Patient:
     def __init__(self, p_id):
         # Patient
         self.id = p_id
-        self.patient_at_risk # used to determine DNA/Canx policy to apply
+        self.patient_at_risk = 0 # used to determine DNA/Canx policy to apply
 
         self.week_added = None # Week they were added to the waiting list (for debugging purposes)
 
@@ -143,6 +143,7 @@ class Model:
         # Referral
         self.asst_results_df['Week Number'] = [0]
         self.asst_results_df['Run Number'] = [0]
+        self.asst_results_df['At Risk'] = [0] # denotes at risk patient, 1 = Yes, 0 = No
         self.asst_results_df['Referral Time Screen'] = [0.0] # time in mins taken to screen referral
         self.asst_results_df['Referral Rejected'] = [0] # 1 = Yes, 0 = No
         self.asst_results_df['Referral Reviewed'] = [0] # 1 = Yes, 0 = No
@@ -163,7 +164,7 @@ class Model:
         self.step2_results_df['Patient ID'] = [1]
         self.step2_results_df['Week Number'] = [0]
         self.step2_results_df['Run Number'] = [0]
-        self.step2_results_df['Step2 Route'] = [] # which Step2 pathway the patient was sent down
+        self.step2_results_df['Step2 Route'] = ['NA'] # which Step2 pathway the patient was sent down
         self.step2_results_df['Session Number'] = [0]
         self.step2_results_df['Session Time'] = [0.0]
         self.step2_results_df['Session Attendance'] = [0]
@@ -179,7 +180,7 @@ class Model:
         self.step3_results_df['Patient ID'] = [1]
         self.step3_results_df['Week Number'] = [0]
         self.step3_results_df['Run Number'] = [0]
-        self.step3_results_df['Step2 Route'] = [] # which Step2 pathway the patient was sent down
+        self.step3_results_df['Step3 Route'] = ['NA'] # which Step2 pathway the patient was sent down
         self.step3_results_df['Session Number'] = [0]
         self.step3_results_df['Session Time'] = [0.0]
         self.step3_results_df['Session Attendance'] = [0]
@@ -234,7 +235,7 @@ class Model:
             self.asst_weekly_stats.append(
                 {
                  'Week Number':self.week_number,
-                 'Referral Screen Mins':self.ref_total_screen,   
+                 'Referral Screen Mins':self.ref_tot_screen,   
                  'Referrals Rejected':self.ref_tot_reject,
                  'Referrals Delay Opt-in':self.ref_optin_delay,
                  'Referrals Opted-in':self.ref_tot_optin,
@@ -249,15 +250,15 @@ class Model:
             #step2_amount_to_fill = g.step2_resource - self.step2_res.level
             #step3_amount_to_fill = g.step3_resource - self.step3_res.level
 
-            if asst_amount_to_fill > 0:
-                if g.debug_level >= 2:
-                    print(f"Asst Level: {self.asst_res.level}")
-                    print(f"Putting in {asst_amount_to_fill}")
+            # if asst_amount_to_fill > 0:
+            #     if g.debug_level >= 2:
+            #         print(f"Asst Level: {self.asst_res.level}")
+            #         print(f"Putting in {asst_amount_to_fill}")
 
-                self.asst_res.put(asst_amount_to_fill)
+            #     self.asst_res.put(asst_amount_to_fill)
 
-                if g.debug_level >= 2:
-                    print(f"New Asst Level: {self.asst_res.level}")
+            #     if g.debug_level >= 2:
+            #         print(f"New Asst Level: {self.asst_res.level}")
 
             # if step2_amount_to_fill > 0:
             #     if g.debug_level >= 2:
@@ -276,8 +277,8 @@ class Model:
 
             #     self.step3_res.put(step3_amount_to_fill)
 
-                if g.debug_level >= 2:
-                    print(f"New Step3 Level: {self.step3_res.level}")
+                # if g.debug_level >= 2:
+                #     print(f"New Step3 Level: {self.step3_res.level}")
 
             # Wait one unit of simulation time (1 week)
             yield(self.env.timeout(1))
@@ -345,7 +346,7 @@ class Model:
         # decide whether the referral needs to go for review if not rejected
         self.requires_review = random.uniform(0,1)
         # decide whether the referral is rejected at review
-        self.review_reject = random.uniform(0,1)
+        self.asst_review_reject = random.uniform(0,1)
             # decide whether the Patient opts-in
         self.patient_optedin = random.uniform(0,1)
         # decide whether the Patient is accepted following TA
@@ -367,7 +368,7 @@ class Model:
         #print(f'Week {week_number}: Patient number {p.id} created')
 
         # check whether the referral was a straight reject or not
-        if self.reject_referral <= g.referral_rejection_rate:
+        if self.reject_referral <= g.referral_rej_rate:
 
             # if this referral is rejected mark as rejected
             self.asst_results_df.at[p.id, 'Run Number'] = self.run_number
@@ -411,10 +412,9 @@ class Model:
                         # set flag to show Patient failed to opt-in
                         self.asst_results_df.at[p.id, 'Opted In'] = 0
                         # therefore didn't wait to opt-in
-                        self.asst_results_df.at[p.id, 'Opt-in Wait'
-                                                    ] = 0
-                        self.asst_results_df.at[p.id, 'Opt-in Q Time'
-                                                    ] = 0
+                        self.asst_results_df.at[p.id, 'Opt-in Wait'] = 0
+                        # and didn't queue for TA appt
+                        self.asst_results_df.at[p.id, 'Opt-in Q Time'] = 0
                     else:    
                         # otherwise set flag to show they opted-in
                         self.asst_results_df.at[p.id, 'Opted In'] = 1
@@ -439,6 +439,9 @@ class Model:
 
                                 # used to decide whether further parts of the pathway are run or not
                             self.ta_accepted = 1
+        
+        # self.asst_results_df.fillna()
+
         print(self.asst_results_df)
 
         yield self.env.timeout(0)
@@ -519,7 +522,7 @@ class Trial:
         self.df_trial_results["Total Accepted"] = [0]
         self.df_trial_results.set_index("Run Number", inplace=True)
 
-        self.weekly_asst_dfs = []
+        self.asst_weekly_dfs = []
 
     # Method to print out the results from the trial.  In real world models,
     # you'd likely save them as well as (or instead of) printing them
