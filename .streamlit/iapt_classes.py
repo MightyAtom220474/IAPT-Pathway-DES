@@ -17,31 +17,49 @@ class g:
     mdt_freq = 2 # how often in weeks MDT takes place, longest time a review referral may wait for review
     review_rej_rate = 0.5 # % ref that got to MDT and get rejected
     base_waiting_list = 2741 # current number of patients on waiting list
-    referral_screen_time = 15 # average time it takes to screen one referral
+    referral_screen_time = 20 # average time it takes to screen one referral by a pwp
     opt_in_wait = 1 # no. of weeks patients have to opt in
     opt_in_qtime = 4 # longest period a patient will wait for tel assessment based on 4 week window for asst slots
     opt_in_rate = 0.75 # % of referrals that opt-in
     asst_6_weeks = 0.9 # % of referrals that are assessed within 6 weeks
+    
+    # TA
+    ta_time_mins = 60 # time allocated to each TA
     ta_accept_rate = 0.75 ##### assume 75% of TA's accepted, need to check this #####
 
     # Step 2
     step2_ratio = 0.85 # proportion of patients that go onto Step2 vs Step3
-    step2_routes = ['PwP','Dep','CBT'] # possible Step2 routes
-    step2_path_ratios = [0.4,0.3,0.3] # Step2 proportion for each route
+    step2_routes = ['PwP','Group'] # possible Step2 routes
+    step2_path_ratios = [0.94,0.06] # Step2 proportion for each route
     step2_pwp_sessions = 6 # number of PwP sessions at Step2
+    step2_pwp_1st_mins = 45 # minutes allocated for 1st pwp session
+    step2_pwp_fup_mins = 30 # minutes allocated for pwp follow-up session
+    step2_session_admin = 15 # number of mins of clinical admin per session
     step2_pwp_period = 16 # max number of weeks PwP delivered over
-    step2_group_range = [6,12] # range of possible group sessions
-    step2_asst_admin = 15 # number of mins of clinical admin per session
-
-
+    step2_group_sessions = 7 # number of group sessions
+    step2_group_session_mins = 240 # minutes allocated to pwp group session
+    step2_group_dna_rate = 0.216 # Wellbeing Workshop attendance 78.6%
+    
     # Step Moves
+    step2_step3_ratio = [0.85,0.15]
+    step_routes = ['Step2','Step3']
     step_up_rate = 0.05 # proportion of Step2 that get stepped up
     step_down_rate = 0.003 # proportion of Step3 that get stepped down
 
     # Step 3
     step3_ratio = 0.15 # proportion of patients that go onto Step3 vs Step2
-    step3_routes = ['PfCBT','Group','CBT','EMDR','DepC','DIT','IPT','CDEP'] # possible Step2 routes
-    step3_path_ratios = [0.1,0.25,0.25,0.05,0.05,0.1,0.1,0.1] # Step3 proportion for each route ##### Need to clarify exact split
+    step3_routes =['DepC','CBT'] # full pathway options = ['PfCBT','Group','CBT','EMDR','DepC','DIT','IPT','CDEP']
+    step3_path_ratios = [0.368,0.632]# [0.1,0.25,0.25,0.05,0.05,0.1,0.1,0.1] # Step3 proportion for each route ##### Need to clarify exact split
+    step3_cbt_sessions = 6 # number of PwP sessions at Step2
+    step3_cbt_1st_mins = 45 # minutes allocated for 1st cbt session
+    step3_cbt_fup_mins = 30 # minutes allocated for cbt follow-up session
+    step3_couns_dna_rate = 0.216 # Wellbeing Workshop attendance 78.6%
+    step3_session_admin = 15 # number of mins of clinical admin per session
+    step3_cbt_period = 16 # max number of weeks cbt delivered over
+    step3_couns_sessions = 6 # number of couns sessions
+    step3_couns_1st_mins = 45 # minutes allocated for 1st couns session
+    step3_couns_fup_mins = 30 # minutes allocated for couns follow-up session
+    step3_couns_dna_rate = 0.216 # Wellbeing Workshop attendance 78.6%
 
     # Staff
     supervision_time = 120 # 2 hours per month per modality ##### could use modulus for every 4th week
@@ -57,7 +75,12 @@ class g:
     hours_avail_cbt = 22.0
     hours_avail_couns = 22.0
     hours_avail_pwp = 21.0
-
+    ta_resource = number_staff_pwp * 3 # job plan = 3 TA per week per PwP
+    pwp_resource = number_staff_pwp * 12 # job plan = 3 x 1st + 9 x FUP per week per PwP
+    group_resource = number_staff_pwp * 12 #  job plan = 1 group per week per PwP, assume 12 per group 
+    cbt_resource = number_staff_cbt * 22 # job plan = 2 x 1st + 20 X FUP per cbt per week
+    couns_resource = number_staff_couns * 22 # job plan = 2 x 1st + 20 X FUP per cbt per week
+    
     # Simulation
     sim_duration = 52
     number_of_runs = 10
@@ -66,10 +89,18 @@ class g:
     # Result storage
     all_results = []
     weekly_wl_posn = pd.DataFrame() # container to hold w/l position at end of week
-    number_on_triage_wl = 0 # used to keep track of triage WL position
-    number_on_mdt_wl = 0 # used to keep track of MDT WL position
-    number_on_asst_wl = 0 # used to keep track of asst WL position
-
+    number_on_ta_wl = 0 # used to keep track of TA WL position
+    number_on_pwp_wl = 0 # used to keep track of PwP WL position
+    number_on_group_wl = 0 # used to keep track of groups WL position
+    number_on_cbt_wl = 0 # used to keep track of CBT WL position
+    number_on_couns_wl = 0 # used to keep track of Couns WL position
+    
+    # Caseload
+    number_on_pwp_cl = 0 # used to keep track of PwP caseload
+    number_on_group_cl = 0 # used to keep track of groups caseload
+    number_on_cbt_wl = 0 # used to keep track of CBT caseload
+    number_on_couns_wl = 0 # used to keep track of Couns caseload
+   
     # bring in past referral data
     referral_rate_lookup = pd.read_csv('talking_therapies_referral_rates.csv'
                                                                 ,index_col=0)
@@ -152,7 +183,11 @@ class Model:
         self.asst_results_df['Opted In'] = [0] # 1 = Yes, 0 = No
         self.asst_results_df['Opt-in Wait'] = [0.0] # time between opt-in notification and patient opting in
         self.asst_results_df['Opt-in Q Time'] = [0.0] # time between opting in and actual TA, 4 week window
+        self.asst_results_df['TA Q Time'] = [0.0] # time spent queueing for TA
+        self.asst_results_df['TA WL Posn'] = [0] # position in queue for TA
         self.asst_results_df['TA Outcome'] = [0] # 1 = Accepted, 0 = Rejected
+        self.asst_results_df['TA Mins'] = [0] # time allocated to completing TA
+        self.asst_results_df['Treatment Path'] = ['NA']
 
         # Indexing
         self.asst_results_df.set_index("Patient ID", inplace=True) 
@@ -165,9 +200,16 @@ class Model:
         self.step2_results_df['Week Number'] = [0]
         self.step2_results_df['Run Number'] = [0]
         self.step2_results_df['Step2 Route'] = ['NA'] # which Step2 pathway the patient was sent down
+        self.step2_results_df['PwP WL Posn'] = [0] # place in queue for PwP
+        self.step2_results_df['PwP Q Time'] = [0.0] # time spent queueing for PwP
+        self.step2_results_df['Group WL Posn'] = [0] # place in queue for Group
+        self.step2_results_df['Group Q Time'] = [0.0] # time spent queueing for Group
         self.step2_results_df['Session Number'] = [0]
-        self.step2_results_df['Session Time'] = [0.0]
-        self.step2_results_df['Session Attendance'] = [0]
+        self.step2_results_df['Session Time'] = [0] # clinical session time in mins
+        self.step2_results_df['Admin Time'] = [0] # admin session time in mins
+        self.step2_results_df['IsDNA'] = [0]
+        self.step2_results_df['IsDropOut'] = [0]
+        self.step2_results_df['Caseload'] = [0]
 
         # Indexing
         self.step2_results_df.set_index("Patient ID", inplace=True) 
@@ -181,9 +223,16 @@ class Model:
         self.step3_results_df['Week Number'] = [0]
         self.step3_results_df['Run Number'] = [0]
         self.step3_results_df['Step3 Route'] = ['NA'] # which Step2 pathway the patient was sent down
+        self.step3_results_df['CBT WL Posn'] = [0] # place in queue for CBT
+        self.step3_results_df['CBT Q Time'] = [0.0] # time spent queueing for CBT
+        self.step3_results_df['Couns WL Posn'] = [0] # place in queue for Couns
+        self.step3_results_df['Couns Q Time'] = [0.0] # time spent queueing for Couns
         self.step3_results_df['Session Number'] = [0]
         self.step3_results_df['Session Time'] = [0.0]
-        self.step3_results_df['Session Attendance'] = [0]
+        self.step3_results_df['Admin Time'] = [0] # admin session time in mins
+        self.step3_results_df['IsDNA'] = [0]
+        self.step3_results_df['IsDropOut'] = [0]
+        self.step3_results_df['Caseload'] = [0]
         
         # Indexing
         self.step3_results_df.set_index("Patient ID", inplace=True) 
@@ -207,13 +256,45 @@ class Model:
         # list to hold weekly Step3 statistics
         #self.step3_weekly_stats = []
 
+        ######### Create our resources which are appt slots for that week #########
+        ########## PwP ##########
+        self.ta_res = simpy.Container(
+            self.env,capacity=g.ta_resource,
+            init=g.ta_resource
+            )
+
+        self.pwp_res = simpy.Container(
+            self.env,
+            capacity=g.pwp_resource,
+            init=g.pwp_resource
+            )
+
+        self.group_res = simpy.Container(
+            self.env,
+            capacity=g.group_resource,
+            init=g.group_resource
+            )
+        ########## CBT ##########
+        self.cbt_res = simpy.Container(
+            self.env,
+            capacity=g.cbt_resource,
+            init=g.cbt_resource
+            )
+
+        ########## Counsellor ##########
+        self.couns_res = simpy.Container(
+            self.env,
+            capacity=g.couns_resource,
+            init=g.couns_resource
+            )
+
         while self.week_number <= number_of_weeks:
             if g.debug_level >= 1:
                 print(
                     f"""
-    ##################################
-    # Week {self.week_number}
-    ##################################
+                    ##################################
+                    # Week {self.week_number}
+                    ##################################
                     """
                     )
             
@@ -245,40 +326,70 @@ class Model:
                 )
             
             
-            # replenish resources
-            #asst_amount_to_fill = g.asst_resource - self.triage_res.level
-            #step2_amount_to_fill = g.step2_resource - self.step2_res.level
-            #step3_amount_to_fill = g.step3_resource - self.step3_res.level
+            ######### replenish resources ##########
+            ##### PwP #####
+            ta_amount_to_fill = g.ta_resource - self.ta_res.level
+            pwp_amount_to_fill = g.pwp_resource - self.pwp_res.level
+            group_amount_to_fill = g.group_resource - self.group_res.level
+            ##### CBT #####
+            cbt_amount_to_fill = g.cbt_resource - self.cbt_res.level
+            ##### Counsellor #####
+            couns_amount_to_fill = g.couns_resource - self.couns_res.level
+           
+            ##### PwP #####
+            if ta_amount_to_fill > 0:
+                if g.debug_level >= 2:
+                    print(f"TA Level: {self.ta_res.level}")
+                    print(f"Putting in {ta_amount_to_fill}")
 
-            # if asst_amount_to_fill > 0:
-            #     if g.debug_level >= 2:
-            #         print(f"Asst Level: {self.asst_res.level}")
-            #         print(f"Putting in {asst_amount_to_fill}")
+                self.ta_res.put(ta_amount_to_fill)
 
-            #     self.asst_res.put(asst_amount_to_fill)
+                if g.debug_level >= 2:
+                    print(f"New TA Level: {self.ta_res.level}")
 
-            #     if g.debug_level >= 2:
-            #         print(f"New Asst Level: {self.asst_res.level}")
+            if pwp_amount_to_fill > 0:
+                if g.debug_level >= 2:
+                    print(f"PwP Level: {self.pwp_res.level}")
+                    print(f"Putting in {pwp_amount_to_fill}")
 
-            # if step2_amount_to_fill > 0:
-            #     if g.debug_level >= 2:
-            #         print(f"Step2 Level: {self.step2_res.level}")
-            #         print(f"Putting in {step2_amount_to_fill}")
+                self.pwp_res.put(pwp_amount_to_fill)
 
-            #     self.mdt_res.put(step2_amount_to_fill)
+                if g.debug_level >= 2:
+                    print(f"New PwP Level: {self.pwp_res.level}")
 
-            #     if g.debug_level >= 2:
-            #         print(f"New Step2 Level: {self.step2_res.level}")
+            if group_amount_to_fill > 0:
+                if g.debug_level >= 2:
+                    print(f"Group Level: {self.group_res.level}")
+                    print(f"Putting in {group_amount_to_fill}")
 
-            # if step3_amount_to_fill > 0:
-            #     if g.debug_level >= 2:
-            #         print(f"Step3 Level: {self.step3_res.level}")
-            #         print(f"Putting in {step3_amount_to_fill}")
+                self.group_res.put(group_amount_to_fill)
 
-            #     self.step3_res.put(step3_amount_to_fill)
+                if g.debug_level >= 2:
+                    print(f"New Group Level: {self.group_res.level}")
 
-                # if g.debug_level >= 2:
-                #     print(f"New Step3 Level: {self.step3_res.level}")
+            ##### CBT #####
+
+            if cbt_amount_to_fill > 0:
+                if g.debug_level >= 2:
+                    print(f"CBT Level: {self.cbt_res.level}")
+                    print(f"Putting in {cbt_amount_to_fill}")
+
+                self.cbt_res.put(cbt_amount_to_fill)
+
+                if g.debug_level >= 2:
+                    print(f"New CBT Level: {self.cbt_res.level}")
+
+            ##### Counsellor #####
+
+            if couns_amount_to_fill > 0:
+                if g.debug_level >= 2:
+                    print(f"Couns Level: {self.couns_res.level}")
+                    print(f"Putting in {couns_amount_to_fill}")
+
+                self.couns_res.put(couns_amount_to_fill)
+
+                if g.debug_level >= 2:
+                    print(f"New Couns Level: {self.fcouns_res.level}")
 
             # Wait one unit of simulation time (1 week)
             yield(self.env.timeout(1))
@@ -337,8 +448,7 @@ class Model:
 
         yield(self.env.timeout(1))
 
-
-    ###### assessment part of the pathway
+    ###### assessment part of the pathway #####
     def patient_asst_pathway(self, week_number):
 
         # decide whether the referral was rejected at screening stage
@@ -425,7 +535,38 @@ class Model:
                         self.asst_results_df.at[p.id, 'Opt-in Q Time'
                                                     ] = random.uniform(0,4)
                         
-                        # Now do Telephone Assessment
+                        start_q_ta = self.env.now
+
+                        g.number_on_ta_wl += 1
+
+                        # Record where the patient is on the TA WL
+                        self.results_df.at[p.id, "TA WL Posn"] = \
+                                                            g.number_on_pwp_ta_wl
+
+                        # Request a Triage resource from the container
+                        with self.ta_res.get(1) as ta_req:
+                            yield ta_req
+
+                        #print(f'Patient {p} started TA')
+
+                        # as each patient reaches this stage take them off TA wl
+                        g.number_on_ta_wl -= 1
+
+                        if g.debug_level >= 2:
+                            print(f'Week {self.env.now}: Patient number {p.id} (added week {p.week_added}) put through TA')
+
+                        end_q_ta = self.env.now
+
+                        # Calculate how long patient queued for TA
+                        self.q_time_ta = end_q_ta - start_q_ta
+                        # Record how long patient queued for TA
+                        self.asst_results_df.at[p.id, 'TA Q Time'] = self.q_time_ta
+                                
+                        # Now do Telephone Assessment using mean and varying
+                        self.asst_results_df.at[p.id, 'TA Mins'
+                                                        ] = self.random_normal(
+                                                        g.ta_time_mins
+                                                        ,g.std_dev)
                         # decide if the patient is accepted following TA
                         if self.ta_accepted >= g.ta_accept_rate:
                             # Patient was rejected at TA stage
@@ -440,9 +581,15 @@ class Model:
                                 # used to decide whether further parts of the pathway are run or not
                             self.ta_accepted = 1
         
-        # self.asst_results_df.fillna()
+        # decide which pathway the patient has been allocated to
+        # Select 2 options based on the given probabilities
+        self.selected_step = random.choices(g.step_routes, weights=g.step2_step3_ratio, k=50)
 
-        print(self.asst_results_df)
+        self.asst_results_df.at[p.id, 'Treatment Path'] = self.selected_step
+        # assign to a variable ready for next step
+        selected_path = self.selected_step
+
+        # print(self.asst_results_df)
 
         yield self.env.timeout(0)
 
@@ -455,22 +602,415 @@ class Model:
         # reset referral counter ready for next batch
         self.referral_counter = 0
 
+        self.env.process(self.pathway_runner(p,selected_path))
+
         # Freeze this instance of this function in place for one
         # unit of time i.e. 1 week
         #yield self.env.timeout(1)
 
         return self.asst_results_df
+
+    def pathway_runner(self, p, selected_path):
+        
+        if self.selected_path == 'Step2':
+            self.env.process(self.patient_step2_pathway(p))
+        else:
+            self.env.process(self.patient_step3_pathway(p))
     
-    # def calculate_weekly_results(self):
-    #     # Take the mean of the queuing times and the maximum waiting list
-    #     # across patients in this run of the model
- 
-    #     self.mean_screen_time = self.asst_results_df['Referral Time Screen'].mean()
-    #     self.reject_ref_total = self.asst_results_df['Referral Rejected'].sum()
-    #     self.mean_optin_wait = self.asst_results_df['Opt-in Wait'].mean()
-    #     self.ref_tot_optin = self.asst_results_df['Opted In'].sum()
-    #     self.mean_qtime_optin = self.asst_results_df['Opt-in Q Time'].mean()
-    #     self.tot_ta_accept = self.asst_results_df['TA Outcome'].sum()
+    ###### step2 pathway #####
+    def patient_step2_pathway(self, p):
+        # Select one of 2 treatment options based on the given probabilities
+        self.selected_step2_pathway = random.choices(g.step2_routes, 
+                                                weights=g.step2_path_ratios,
+                                                k=self.referrals_this_week)
+
+        self.step2_results_df.at[p.id, 'Treatment Route'
+                                            ] = self.selected_step2_pathway
+        
+        # push the patient down the chosen step2 route
+        if self.selected_step2_pathway == 'PWP':
+            self.env.process(self.step2_pwp_process(p))
+        else:
+            self.env.process(self.step2_group_process(p))
+
+     ###### step2 pathway #####
+    def patient_step3_pathway(self, p):
+        # Select one of 2 treatment options based on the given probabilities
+        self.selected_step3_pathway = random.choices(g.step3_routes, 
+                                                weights=g.step3_path_ratios,
+                                                k=self.referrals_this_week)
+
+        self.step3_results_df.at[p.id, 'Treatment Route'
+                                            ] = self.selected_step3_pathway
+        
+        # push the patient down the chosen step2 route
+        if self.selected_step2_pathway == 'CBT':
+            self.env.process(self.step3_cbt_process(p))
+        else:
+            self.env.process(self.step3_couns_process(p))
+
+    def step2_pwp_process(self,p):
+
+        # counter for number of group sessions
+        self.pwp_session_counter = 0
+        # counter for applying DNA policy
+        self.pwp_dna_counter = 0
+
+        g.number_on_pwp_wl += 1
+
+        start_q_pwp = self.env.now
+
+        # Record where the patient is on the TA WL
+        self.results_df.at[p.id, 'PwP WL Posn'] = \
+                                            g.number_on_pwp_wl
+
+        # Request a PwP resource from the container
+        with self.pwp_res.get(1) as pwp_req:
+            yield pwp_req
+
+        # add to caseload
+        g.number_on_pwp_cl +=1
+
+        # print(f'Patient {p} started PwP')
+
+        # as each patient reaches this stage take them off PwP wl
+        g.number_on_pwp_wl -= 1
+
+        if g.debug_level >= 2:
+            print(f'Week {self.env.now}: Patient number {p.id} (added week {p.week_added}) put through PwP')
+
+        end_q_pwp = self.env.now
+
+        # Calculate how long patient queued for TA
+        self.q_time_pwp = end_q_pwp - start_q_pwp
+        # Record how long patient queued for TA
+        self.asst_results_df.at[p.id, 'PwP Q Time'] = self.q_time_pwp
+
+        while self.pwp_session_counter <= g.step2_pwp_sessions:
+            
+            # increment the pwp session counter by 1
+            self.pwp_session_counter += 1
+
+            # record the pwp session number for the patient
+            self.step2_results_df.at[p.id, 'Session Number'] = self.pwp_session_counter
+
+            # keep going for all number sessions or until patient DNA's twice
+            while self.pwp_dna_counter < 2:
+                   
+                # record stats for the patient against this session number
+                self.step2_results_df.at[p.id,'Patient ID'] = p
+                self.step2_results_df.at[p.id,'Week Number'] = self.week_number
+                self.step2_results_df.at[p.id,'Run Number'] = self.run_number
+                self.step2_results_df_results_df.at[p.id, 'Treatment Route'
+                                                    ] = self.selected_step2_pathway
+                
+                # decide whether the session was DNA'd
+                self.dna_pwp_session = random.uniform(0,1)
+                
+                if self.dna_pwp_session <= g.step2_pwp_dna_rate:
+                    self.step2_results_df.at[p.id, 'IsDNA'] = 1
+                    self.pwp_dna_counter += 1
+                    # if session is DNA just record admin mins as clinical time will be used elsewhere
+                    self.step2_results_df.at[p.id,'Admin Time'] = g.step2_session_admin
+                else:
+                    self.step2_results_df.at[p.id, 'IsDNA'] = 0
+                    if self.pwp_session_counter == 1:
+                        # if it's the 1st session use 1st session time
+                        self.step2_results_df.at[p.id,'Session Time'] = g.step2_pwp_1st_mins
+                        self.step2_results_df.at[p.id,'Admin Time'] = g.step2_session_admin 
+                    else:
+                        # otherwise use follow-up session time
+                        self.step2_results_df.at[p.id,'Session Time'] = g.step2_pwp_fup_mins
+                        self.step2_results_df.at[p.id,'Admin Time'] = g.step2_session_admin
+                
+        # record whether patient dropped out before completing pwP
+        if self.pwp_dna_counter >= 2:
+            self.step2_results_df.at[p.id, 'IsDropOut'] = 1
+        else:
+            self.step2_results_df.at[p.id, 'IsDropOut'] = 0
+
+        # remove from Step 2 Caseload as have either completed treatment or dropped out
+        self.step2_results_df.at[p.id, 'Caseload'] = 0
+
+        # reset counters for pwp sessions
+        self.pwp_session_counter = 0
+        self.pwp_dna_counter = 0
+
+        # remove from caseload
+        g.number_on_pwp_cl -=1
+
+        yield self.env.timeout(0)
+
+    def step2_group_process(self,p):
+
+        # counter for number of group sessions
+        self.group_session_counter = 0
+        # counter for applying DNA policy
+        self.group_dna_counter = 0
+
+        g.number_on_group_wl += 1
+
+        start_q_group = self.env.now
+
+        # Record where the patient is on the TA WL
+        self.results_df.at[p.id, 'Group WL Posn'] = \
+                                            g.number_on_group_wl
+
+        # Request a Group resource from the container
+        with self.group_res.get(1) as group_req:
+            yield group_req
+
+        # add to caseload
+        g.number_on_group_cl +=1
+        
+        # print(f'Patient {p} started PwP')
+
+        # as each patient reaches this stage take them off Group wl
+        g.number_on_group_wl -= 1
+
+        if g.debug_level >= 2:
+            print(f'Week {self.env.now}: Patient number {p.id} (added week {p.week_added}) put through Groups')
+
+        end_q_group = self.env.now
+
+        # Calculate how long patient queued for groups
+        self.q_time_group = end_q_group - start_q_group
+        # Record how long patient queued for groups
+        self.asst_results_df.at[p.id, 'Group Q Time'] = self.q_time_group
+
+        while self.group_session_counter <= g.step2_group_sessions:
+            
+            # increment the group session counter by 1
+            self.group_session_counter += 1
+
+            # record the session number for the patient
+            self.step2_results_df.at[p.id, 'Session Number'] = self.group_session_counter
+            # mark patient as still on Step2 Caseload
+            self.step2_results_df.at[p.id, 'Caseload'] = 1
+
+            # keep going for all number sessions or until patient DNA's twice
+            while self.group_dna_counter < 2:
+                   
+                # record stats for the patient against this session number
+                self.step2_results_df.at[p.id,'Patient ID'] = p
+                self.step2_results_df.at[p.id,'Week Number'] = self.week_number
+                self.step2_results_df.at[p.id,'Run Number'] = self.run_number
+                self.step2_results_df_results_df.at[p.id, 'Treatment Route'
+                                                    ] = self.selected_step2_pathway
+                
+                # decide whether the session was DNA'd
+                self.dna_group_session = random.uniform(0,1)
+                
+                if self.dna_group_session <= g.step2_group_dna_rate:
+                    self.step2_results_df.at[p.id, 'IsDNA'] = 1
+                    self.group_dna_counter += 1
+                    self.step2_results_df.at[p.id,'Admin Time'] = g.step2_session_admin 
+                else:
+                    self.step2_results_df.at[p.id, 'IsDNA'] = 0
+                    self.step2_results_df.at[p.id,'Session Time'] = g.step2_group_session_mins
+                    self.step2_results_df.at[p.id,'Admin Time'] = g.step2_session_admin
+
+        # record whether patient dropped out before completing Wellbeing Workshop
+        if self.group_dna_counter >= 2:
+            self.step2_results_df.at[p.id, 'IsDropOut'] = 1
+        else:
+            self.step2_results_df.at[p.id, 'IsDropOut'] = 0
+        # remove from Step 2 Caseload as have either completed treatment or dropped out
+        self.step2_results_df.at[p.id, 'Caseload'] = 0
+
+        # reset counters for group sessions
+        self.group_session_counter = 0
+        self.group_dna_counter = 0
+
+        # remove from caseload
+        g.number_on_group_cl -=1
+
+        yield self.env.timeout(0)
+
+    def step3_cbt_process(self,p):
+
+        # counter for number of cbt sessions
+        self.cbt_session_counter = 0
+        # counter for applying DNA policy
+        self.cbt_dna_counter = 0
+
+        g.number_on_cbt_wl += 1
+
+        start_q_cbt = self.env.now
+
+        # Record where the patient is on the cbt WL
+        self.results_df.at[p.id, 'CBT WL Posn'] = \
+                                            g.number_on_cbt_wl
+
+        # Request a cbt resource from the container
+        with self.cbt_res.get(1) as cbt_req:
+            yield cbt_req
+
+        # add to caseload
+        g.number_on_cbt_cl +=1
+
+        # print(f'Patient {p} started CBT')
+
+        # as each patient reaches this stage take them off CBT wl
+        g.number_on_cbt_wl -= 1
+
+        if g.debug_level >= 2:
+            print(f'Week {self.env.now}: Patient number {p.id} (added week {p.week_added}) put through CBT')
+
+        end_q_cbt = self.env.now
+
+        # Calculate how long patient queued for CBT
+        self.q_time_cbt = end_q_cbt - start_q_cbt
+        # Record how long patient queued for CBT
+        self.asst_results_df.at[p.id, 'CBT Q Time'] = self.q_time_cbt
+
+        while self.cbt_session_counter <= g.step3_cbt_sessions:
+            
+            # increment the cbt session counter by 1
+            self.cbt_session_counter += 1
+
+            # record the cbt session number for the patient
+            self.step3_results_df.at[p.id, 'Session Number'] = self.cbt_session_counter
+
+            # keep going for all number sessions or until patient DNA's twice
+            while self.cbt_dna_counter < 2:
+                   
+                # record stats for the patient against this session number
+                self.step3_results_df.at[p.id,'Patient ID'] = p
+                self.step3_results_df.at[p.id,'Week Number'] = self.week_number
+                self.step3_results_df.at[p.id,'Run Number'] = self.run_number
+                self.step3_results_df_results_df.at[p.id, 'Treatment Route'
+                                                    ] = self.selected_step3_pathway
+                
+                # decide whether the session was DNA'd
+                self.dna_cbt_session = random.uniform(0,1)
+                
+                if self.dna_cbt_session <= g.step3_cbt_dna_rate:
+                    self.step3_results_df.at[p.id, 'IsDNA'] = 1
+                    self.cbt_dna_counter += 1
+                    # if session is DNA just record admin mins as clinical time will be used elsewhere
+                    self.step3_results_df.at[p.id,'Admin Time'] = g.step3_session_admin
+                else:
+                    self.step3_results_df.at[p.id, 'IsDNA'] = 0
+                    if self.cbt_session_counter == 1:
+                        # if it's the 1st session use 1st session time
+                        self.step3_results_df.at[p.id,'Session Time'] = g.step3_cbt_1st_mins
+                        self.step3_results_df.at[p.id,'Admin Time'] = g.step3_session_admin 
+                    else:
+                        # otherwise use follow-up session time
+                        self.step3_results_df.at[p.id,'Session Time'] = g.step3_cbt_fup_mins
+                        self.step3_results_df.at[p.id,'Admin Time'] = g.step3_session_admin
+                
+        # record whether patient dropped out before completing Wellbeing Workshop
+        if self.cbt_dna_counter >= 2:
+            self.step3_results_df.at[p.id, 'IsDropOut'] = 1
+        else:
+            self.step3_results_df.at[p.id, 'IsDropOut'] = 0
+
+        # remove from Step 3 Caseload as have either completed treatment or dropped out
+        self.step3_results_df.at[p.id, 'Caseload'] = 0
+
+        # reset counters for cbt sessions
+        self.cbt_session_counter = 0
+        self.cbt_dna_counter = 0
+
+        # remove from caseload
+        g.number_on_cbt_cl -=1
+
+        yield self.env.timeout(0)
+
+    def step3_couns_process(self,p):
+
+        # counter for number of couns sessions
+        self.couns_session_counter = 0
+        # counter for applying DNA policy
+        self.couns_dna_counter = 0
+
+        g.number_on_couns_wl += 1
+
+        start_q_couns = self.env.now
+
+        # Record where the patient is on the TA WL
+        self.results_df.at[p.id, 'Couns WL Posn'] = \
+                                            g.number_on_couns_wl
+
+        # Request a Couns resource from the container
+        with self.couns_res.get(1) as couns_req:
+            yield couns_req
+
+        # add to caseload
+        g.number_on_couns_cl +=1
+
+        # print(f'Patient {p} started Couns')
+
+        # as each patient reaches this stage take them off PwP wl
+        g.number_on_couns_wl -= 1
+
+        if g.debug_level >= 2:
+            print(f'Week {self.env.now}: Patient number {p.id} (added week {p.week_added}) put through Couns')
+
+        end_q_couns = self.env.now
+
+        # Calculate how long patient queued for TA
+        self.q_time_couns = end_q_couns - start_q_couns
+        # Record how long patient queued for TA
+        self.asst_results_df.at[p.id, 'Couns Q Time'] = self.q_time_couns
+
+        while self.couns_session_counter <= g.step3_couns_sessions:
+            
+            # increment the group session counter by 1
+            self.couns_session_counter += 1
+
+            # record the session number for the patient
+            self.step3_results_df.at[p.id, 'Session Number'] = self.group_session_counter
+            # mark patient as still on Step2 Caseload
+            self.step3_results_df.at[p.id, 'Caseload'] = 1
+
+            # keep going for all number sessions or until patient DNA's twice
+            while self.couns_dna_counter < 2:
+                   
+                # record stats for the patient against this session number
+                self.step3_results_df.at[p.id,'Patient ID'] = p
+                self.step3_results_df.at[p.id,'Week Number'] = self.week_number
+                self.step3_results_df.at[p.id,'Run Number'] = self.run_number
+                self.step3_results_df_results_df.at[p.id, 'Treatment Route'
+                                                    ] = self.selected_step3_pathway
+                
+                # decide whether the session was DNA'd
+                self.dna_couns_session = random.uniform(0,1)
+                
+                if self.dna_couns_session <= g.step3_couns_dna_rate:
+                    self.step3_results_df.at[p.id, 'IsDNA'] = 1
+                    self.couns_dna_counter += 1
+                    # if session is DNA just record admin mins as clinical time will be used elsewhere
+                    self.step3_results_df.at[p.id,'Admin Time'] = g.step3_session_admin
+                else:
+                    self.step3_results_df.at[p.id, 'IsDNA'] = 0
+                    if self.couns_session_counter == 1:
+                        # if it's the 1st session use 1st session time
+                        self.step3_results_df.at[p.id,'Session Time'] = g.step3_couns_1st_mins
+                        self.step3_results_df.at[p.id,'Admin Time'] = g.step3_session_admin 
+                    else:
+                        # otherwise use follow-up session time
+                        self.step3_results_df.at[p.id,'Session Time'] = g.step3_couns_fup_mins
+                        self.step3_results_df.at[p.id,'Admin Time'] = g.step3_session_admin
+
+        # record whether patient dropped out before completing Wellbeing Workshop
+        if self.couns_dna_counter >= 2:
+            self.step3_results_df.at[p.id, 'IsDropOut'] = 1
+        else:
+            self.step3_results_df.at[p.id, 'IsDropOut'] = 0
+        # remove from Step 2 Caseload as have either completed treatment or dropped out
+        self.step3_results_df.at[p.id, 'Caseload'] = 0
+
+        # reset counters for couns sessions
+        self.couns_session_counter = 0
+        self.couns_dna_counter = 0
+
+        # add to caseload
+        g.number_on_couns_cl -=1
+
+        yield self.env.timeout(0)
 
     # This method calculates results over each single run
     def calculate_run_results(self):
