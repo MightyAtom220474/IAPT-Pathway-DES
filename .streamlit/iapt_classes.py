@@ -53,7 +53,7 @@ class g:
     step3_cbt_sessions = 12 # number of PwP sessions at Step2
     step3_cbt_1st_mins = 45 # minutes allocated for 1st cbt session
     step3_cbt_fup_mins = 30 # minutes allocated for cbt follow-up session
-    step3_couns_dna_rate = 0.216 # Wellbeing Workshop attendance 78.6%
+    step3_cbt_dna_rate = 0.216 # Wellbeing Workshop attendance 78.6%
     step3_session_admin = 15 # number of mins of clinical admin per session
     step3_cbt_period = 16 # max number of weeks cbt delivered over
     step3_couns_sessions = 8 # number of couns sessions
