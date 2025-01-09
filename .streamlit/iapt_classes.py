@@ -970,7 +970,7 @@ class Model:
             self.couns_session_counter += 1
 
             # record the session number for the patient
-            self.step3_results_df.at[p.id, 'Session Number'] = self.group_session_counter
+            self.step3_results_df.at[p.id, 'Session Number'] = self.couns_session_counter
             # mark patient as still on Step2 Caseload
             self.step3_results_df.at[p.id, 'Caseload'] = 1
 
