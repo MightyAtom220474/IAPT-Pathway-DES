@@ -663,7 +663,7 @@ class Model:
         start_q_pwp = self.env.now
 
         # Record where the patient is on the TA WL
-        self.results_df.at[p.id, 'PwP WL Posn'] = \
+        self.step2_results_df.at[p.id, 'PwP WL Posn'] = \
                                             g.number_on_pwp_wl
 
         # Request a PwP resource from the container
@@ -703,7 +703,7 @@ class Model:
                 self.step2_results_df.at[p.id,'Patient ID'] = p
                 self.step2_results_df.at[p.id,'Week Number'] = self.week_number
                 self.step2_results_df.at[p.id,'Run Number'] = self.run_number
-                self.step2_results_df_results_df.at[p.id, 'Treatment Route'
+                self.step2_results_df.at[p.id, 'Treatment Route'
                                                     ] = self.selected_step2_pathway
 
                 # decide whether the session was DNA'd
@@ -757,7 +757,7 @@ class Model:
         start_q_group = self.env.now
 
         # Record where the patient is on the TA WL
-        self.results_df.at[p.id, 'Group WL Posn'] = \
+        self.step2_results_df.at[p.id, 'Group WL Posn'] = \
                                             g.number_on_group_wl
 
         # Request a Group resource from the container
@@ -799,7 +799,7 @@ class Model:
                 self.step2_results_df.at[p.id,'Patient ID'] = p
                 self.step2_results_df.at[p.id,'Week Number'] = self.week_number
                 self.step2_results_df.at[p.id,'Run Number'] = self.run_number
-                self.step2_results_df_results_df.at[p.id, 'Treatment Route'
+                self.step2_results_df.at[p.id, 'Treatment Route'
                                                     ] = self.selected_step2_pathway
 
                 # decide whether the session was DNA'd
@@ -845,7 +845,7 @@ class Model:
         start_q_cbt = self.env.now
 
         # Record where the patient is on the cbt WL
-        self.results_df.at[p.id, 'CBT WL Posn'] = \
+        self.step3_results_df.at[p.id, 'CBT WL Posn'] = \
                                             g.number_on_cbt_wl
 
         # Request a cbt resource from the container
@@ -885,7 +885,7 @@ class Model:
                 self.step3_results_df.at[p.id,'Patient ID'] = p
                 self.step3_results_df.at[p.id,'Week Number'] = self.week_number
                 self.step3_results_df.at[p.id,'Run Number'] = self.run_number
-                self.step3_results_df_results_df.at[p.id, 'Treatment Route'
+                self.step3_results_df.at[p.id, 'Treatment Route'
                                                     ] = self.selected_step3_pathway
 
                 # decide whether the session was DNA'd
@@ -939,7 +939,7 @@ class Model:
         start_q_couns = self.env.now
 
         # Record where the patient is on the TA WL
-        self.results_df.at[p.id, 'Couns WL Posn'] = \
+        self.step3_results_df.at[p.id, 'Couns WL Posn'] = \
                                             g.number_on_couns_wl
 
         # Request a Couns resource from the container
@@ -981,7 +981,7 @@ class Model:
                 self.step3_results_df.at[p.id,'Patient ID'] = p
                 self.step3_results_df.at[p.id,'Week Number'] = self.week_number
                 self.step3_results_df.at[p.id,'Run Number'] = self.run_number
-                self.step3_results_df_results_df.at[p.id, 'Treatment Route'
+                self.step3_results_df.at[p.id, 'Treatment Route'
                                                     ] = self.selected_step3_pathway
 
                 # decide whether the session was DNA'd
