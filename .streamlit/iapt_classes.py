@@ -1110,10 +1110,11 @@ class Trial:
         # Once the trial (i.e. all runs) has completed, print the final results and combine all the weekly dataframes
         return self.df_trial_results, pd.concat(self.asst_weekly_dfs)
 
-my_trial = Trial()
-#pd.set_option('display.max_rows', 1000)
-# Call the run_trial method of our Trial class object
+if __name__ == "__main__":
+    my_trial = Trial()
+    #pd.set_option('display.max_rows', 1000)
+    # Call the run_trial method of our Trial class object
 
-df_trial_results, asst_weekly_dfs = my_trial.run_trial()
+    df_trial_results, asst_weekly_dfs = my_trial.run_trial()
 
-df_trial_results, asst_weekly_dfs
+    df_trial_results, asst_weekly_dfs
