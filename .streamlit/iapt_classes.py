@@ -592,9 +592,9 @@ class Model:
         # reset referral counter ready for next batch
         self.referral_counter = 0
 
-        self.env.process(self.pathway_runner(p.id))
+        yield self.env.process(self.pathway_runner(p))
 
-        yield self.env.timeout(0)
+        # yield self.env.timeout(0)
 
         return self.asst_results_df
 
@@ -605,9 +605,9 @@ class Model:
         print(f'Patient {p.id} sent down {self.selected_step} pathway')
 
         if self.selected_step == 'Step2':
-            self.env.process(self.patient_step2_pathway(p))
+            yield self.env.process(self.patient_step2_pathway(p))
         else:
-            self.env.process(self.patient_step3_pathway(p))
+            yield self.env.process(self.patient_step3_pathway(p))
 
     ###### step2 pathway #####
     def patient_step2_pathway(self, patient):
@@ -625,9 +625,9 @@ class Model:
 
         # push the patient down the chosen step2 route
         if self.selected_step2_pathway == 'PWP':
-            self.env.process(self.step2_pwp_process(p))
+            yield self.env.process(self.step2_pwp_process(p))
         else:
-            self.env.process(self.step2_group_process(p))
+            yield self.env.process(self.step2_group_process(p))
 
      ###### step2 pathway #####
     def patient_step3_pathway(self, patient):
@@ -645,9 +645,9 @@ class Model:
 
         # push the patient down the chosen step2 route
         if self.selected_step3_pathway == 'CBT':
-            self.env.process(self.step3_cbt_process(p))
+            yield self.env.process(self.step3_cbt_process(p))
         else:
-            self.env.process(self.step3_couns_process(p))
+            yield self.env.process(self.step3_couns_process(p))
 
     def step2_pwp_process(self,patient):
 
