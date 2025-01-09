@@ -98,8 +98,8 @@ class g:
     # Caseload
     number_on_pwp_cl = 0 # used to keep track of PwP caseload
     number_on_group_cl = 0 # used to keep track of groups caseload
-    number_on_cbt_wl = 0 # used to keep track of CBT caseload
-    number_on_couns_wl = 0 # used to keep track of Couns caseload
+    number_on_cbt_cl = 0 # used to keep track of CBT caseload
+    number_on_couns_cl = 0 # used to keep track of Couns caseload
 
     # bring in past referral data
     referral_rate_lookup = pd.read_csv('talking_therapies_referral_rates.csv'
