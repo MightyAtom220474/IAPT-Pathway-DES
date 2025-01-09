@@ -25,7 +25,7 @@ class g:
     
     # TA
     ta_time_mins = 60 # time allocated to each TA
-    ta_accept_rate = 0.75 ##### assume 75% of TA's accepted, need to check this #####
+    ta_accept_rate = 0.7 ##### assume 70% of TA's accepted, need to check this #####
 
     # Step 2
     step2_ratio = 0.85 # proportion of patients that go onto Step2 vs Step3
@@ -50,13 +50,13 @@ class g:
     step3_ratio = 0.15 # proportion of patients that go onto Step3 vs Step2
     step3_routes =['DepC','CBT'] # full pathway options = ['PfCBT','Group','CBT','EMDR','DepC','DIT','IPT','CDEP']
     step3_path_ratios = [0.368,0.632]# [0.1,0.25,0.25,0.05,0.05,0.1,0.1,0.1] # Step3 proportion for each route ##### Need to clarify exact split
-    step3_cbt_sessions = 6 # number of PwP sessions at Step2
+    step3_cbt_sessions = 12 # number of PwP sessions at Step2
     step3_cbt_1st_mins = 45 # minutes allocated for 1st cbt session
     step3_cbt_fup_mins = 30 # minutes allocated for cbt follow-up session
     step3_couns_dna_rate = 0.216 # Wellbeing Workshop attendance 78.6%
     step3_session_admin = 15 # number of mins of clinical admin per session
     step3_cbt_period = 16 # max number of weeks cbt delivered over
-    step3_couns_sessions = 6 # number of couns sessions
+    step3_couns_sessions = 8 # number of couns sessions
     step3_couns_1st_mins = 45 # minutes allocated for 1st couns session
     step3_couns_fup_mins = 30 # minutes allocated for couns follow-up session
     step3_couns_dna_rate = 0.216 # Wellbeing Workshop attendance 78.6%
@@ -324,8 +324,7 @@ class Model:
                  'TA Total Accept':self.asst_tot_accept                
                 }
                 )
-            
-            
+                        
             ######### replenish resources ##########
             ##### PwP #####
             ta_amount_to_fill = g.ta_resource - self.ta_res.level
@@ -389,23 +388,13 @@ class Model:
                 self.couns_res.put(couns_amount_to_fill)
 
                 if g.debug_level >= 2:
-                    print(f"New Couns Level: {self.fcouns_res.level}")
+                    print(f"New Couns Level: {self.couns_res.level}")
 
             # Wait one unit of simulation time (1 week)
             yield(self.env.timeout(1))
 
             # increment week number by 1 week
             self.week_number += 1
-
-        # After all weeks processed combine all weekly stats
-        # self.combined_asst_weekly = pd.concat(self.asst_weekly_stats
-        #                                       ,ignore_index=False)
-
-        # self.combined_step2_weekly = pd.concat(self.step2_weekly_stats
-        #                                        ,ignore_index=False)
-
-        # self.combined_step3_weekly = pd.concat(self.step3_weekly_stats
-        #                                        ,ignore_index=False)
 
     ##### generator function that represents the DES generator for referrals
     def generator_patient_referrals(self):
@@ -424,13 +413,19 @@ class Model:
             print(f'Week {self.week_number}: {self.referrals_this_week}' 
                                                     'referrals generated')
             print('')
-            # print(f'Still remaining on triage WL from last week: {g.number_on_triage_wl}')
+            # print(f'Still remaining on TA WL from last week: {g.number_on_ta_wl}')
 
             # print('')
-            # print(f'Still remaining on mdt WL from last week: {g.number_on_mdt_wl}')
+            # print(f'Still remaining on PwP WL from last week: {g.number_on_pwp_wl}')
 
             # print('')
-            # print(f'Still remaining on Assessment WL from last week: {g.number_on_asst_wl}')
+            # print(f'Still remaining on Group WL from last week: {g.number_on_group_wl}')
+
+            # print('')
+            # print(f'Still remaining on CBT WL from last week: {g.number_on_cbt_wl}')
+
+            # print('')
+            # print(f'Still remaining on Couns WL from last week: {g.number_on_couns_wl}')
             # print("----------------")
 
         self.referral_counter = 0
@@ -540,8 +535,8 @@ class Model:
                         g.number_on_ta_wl += 1
 
                         # Record where the patient is on the TA WL
-                        self.results_df.at[p.id, "TA WL Posn"] = \
-                                                            g.number_on_pwp_ta_wl
+                        self.asst_results_df.at[p.id, "TA WL Posn"] = \
+                                                            g.number_on_ta_wl
 
                         # Request a Triage resource from the container
                         with self.ta_res.get(1) as ta_req:
@@ -583,48 +578,49 @@ class Model:
         
         # decide which pathway the patient has been allocated to
         # Select 2 options based on the given probabilities
-        self.selected_step = random.choices(g.step_routes, weights=g.step2_step3_ratio, k=50)
+        self.step_options = random.choices(g.step_routes, weights=g.step2_step3_ratio, k=50)
+        
+        #print(self.selected_step)
+        self.selected_step = random.choice(self.step_options)
+
+        print(self.selected_step)
 
         self.asst_results_df.at[p.id, 'Treatment Path'] = self.selected_step
-        # assign to a variable ready for next step
-        selected_path = self.selected_step
-
+        
         # print(self.asst_results_df)
-
-        yield self.env.timeout(0)
-
-        #print(f'Patient {p} assessment completed')
-        # # replenish resources ready for next week
-        # self.triage_res.put(g.triage_resource)
-        # self.mdt_res.put(g.mdt_resource)
-        # self.asst_res.put(g.asst_resource)
 
         # reset referral counter ready for next batch
         self.referral_counter = 0
 
-        self.env.process(self.pathway_runner(p,selected_path))
+        self.env.process(self.pathway_runner(p.id))
 
-        # Freeze this instance of this function in place for one
-        # unit of time i.e. 1 week
-        #yield self.env.timeout(1)
+        yield self.env.timeout(0)
 
         return self.asst_results_df
 
-    def pathway_runner(self, p, selected_path):
+    def pathway_runner(self, patient):
+
+        p = patient
+
+        print(f'Patient {p.id} sent down {self.selected_step} pathway')
         
-        if self.selected_path == 'Step2':
+        if self.selected_step == 'Step2':
             self.env.process(self.patient_step2_pathway(p))
         else:
             self.env.process(self.patient_step3_pathway(p))
     
     ###### step2 pathway #####
-    def patient_step2_pathway(self, p):
+    def patient_step2_pathway(self, patient):
+        
+        p = patient
         # Select one of 2 treatment options based on the given probabilities
-        self.selected_step2_pathway = random.choices(g.step2_routes, 
+        self.step2_pathway_options = random.choices(g.step2_routes, 
                                                 weights=g.step2_path_ratios,
                                                 k=self.referrals_this_week)
-
-        self.step2_results_df.at[p.id, 'Treatment Route'
+        
+        self.selected_step2_pathway = random.choice(self.step2_pathway_options)
+       
+        self.step2_results_df.at[p.id, 'Step2 Route'
                                             ] = self.selected_step2_pathway
         
         # push the patient down the chosen step2 route
@@ -634,22 +630,28 @@ class Model:
             self.env.process(self.step2_group_process(p))
 
      ###### step2 pathway #####
-    def patient_step3_pathway(self, p):
+    def patient_step3_pathway(self, patient):
+        
+        p = patient
         # Select one of 2 treatment options based on the given probabilities
-        self.selected_step3_pathway = random.choices(g.step3_routes, 
+        self.step3_pathway_options = random.choices(g.step3_routes, 
                                                 weights=g.step3_path_ratios,
                                                 k=self.referrals_this_week)
-
-        self.step3_results_df.at[p.id, 'Treatment Route'
+        
+        self.selected_step3_pathway = random.choice(self.step3_pathway_options)
+       
+        self.step3_results_df.at[p.id, 'Step3 Route'
                                             ] = self.selected_step3_pathway
         
         # push the patient down the chosen step2 route
-        if self.selected_step2_pathway == 'CBT':
+        if self.selected_step3_pathway == 'CBT':
             self.env.process(self.step3_cbt_process(p))
         else:
             self.env.process(self.step3_couns_process(p))
 
-    def step2_pwp_process(self,p):
+    def step2_pwp_process(self,patient):
+
+        p = patient
 
         # counter for number of group sessions
         self.pwp_session_counter = 0
@@ -741,7 +743,9 @@ class Model:
 
         yield self.env.timeout(0)
 
-    def step2_group_process(self,p):
+    def step2_group_process(self,patient):
+
+        p = patient
 
         # counter for number of group sessions
         self.group_session_counter = 0
@@ -827,7 +831,9 @@ class Model:
 
         yield self.env.timeout(0)
 
-    def step3_cbt_process(self,p):
+    def step3_cbt_process(self,patient):
+
+        p = patient
 
         # counter for number of cbt sessions
         self.cbt_session_counter = 0
@@ -919,7 +925,9 @@ class Model:
 
         yield self.env.timeout(0)
 
-    def step3_couns_process(self,p):
+    def step3_couns_process(self,patient):
+
+        p = patient
 
         # counter for number of couns sessions
         self.couns_session_counter = 0

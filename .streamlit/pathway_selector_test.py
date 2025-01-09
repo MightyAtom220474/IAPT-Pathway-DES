@@ -77,7 +77,11 @@ class g:
 # Select 2 options based on the given probabilities
 selected_step = random.choices(g.step_routes, weights=g.step2_step3_ratio, k=50)
 
+selected_path = random.choice(selected_step)
+
 print(selected_step)
+
+print(selected_path)
 
 # Select 2 options based on the given probabilities
 selected_step2_pathway = random.choices(g.step2_routes, weights=g.step2_path_ratios, k=50)
