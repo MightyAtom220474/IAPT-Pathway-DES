@@ -22,7 +22,7 @@ class g:
     opt_in_qtime = 4 # longest period a patient will wait for tel assessment based on 4 week window for asst slots
     opt_in_rate = 0.75 # % of referrals that opt-in
     asst_6_weeks = 0.9 # % of referrals that are assessed within 6 weeks
-    
+
     # TA
     ta_time_mins = 60 # time allocated to each TA
     ta_accept_rate = 0.7 ##### assume 70% of TA's accepted, need to check this #####
@@ -39,7 +39,7 @@ class g:
     step2_group_sessions = 7 # number of group sessions
     step2_group_session_mins = 240 # minutes allocated to pwp group session
     step2_group_dna_rate = 0.216 # Wellbeing Workshop attendance 78.6%
-    
+
     # Step Moves
     step2_step3_ratio = [0.85,0.15]
     step_routes = ['Step2','Step3']
@@ -77,10 +77,10 @@ class g:
     hours_avail_pwp = 21.0
     ta_resource = number_staff_pwp * 3 # job plan = 3 TA per week per PwP
     pwp_resource = number_staff_pwp * 12 # job plan = 3 x 1st + 9 x FUP per week per PwP
-    group_resource = number_staff_pwp * 12 #  job plan = 1 group per week per PwP, assume 12 per group 
+    group_resource = number_staff_pwp * 12 #  job plan = 1 group per week per PwP, assume 12 per group
     cbt_resource = number_staff_cbt * 22 # job plan = 2 x 1st + 20 X FUP per cbt per week
     couns_resource = number_staff_couns * 22 # job plan = 2 x 1st + 20 X FUP per cbt per week
-    
+
     # Simulation
     sim_duration = 52
     number_of_runs = 10
@@ -94,18 +94,18 @@ class g:
     number_on_group_wl = 0 # used to keep track of groups WL position
     number_on_cbt_wl = 0 # used to keep track of CBT WL position
     number_on_couns_wl = 0 # used to keep track of Couns WL position
-    
+
     # Caseload
     number_on_pwp_cl = 0 # used to keep track of PwP caseload
     number_on_group_cl = 0 # used to keep track of groups caseload
     number_on_cbt_wl = 0 # used to keep track of CBT caseload
     number_on_couns_wl = 0 # used to keep track of Couns caseload
-   
+
     # bring in past referral data
     referral_rate_lookup = pd.read_csv('talking_therapies_referral_rates.csv'
                                                                 ,index_col=0)
     #print(referral_rate_lookup)
-    
+
 # Patient to capture flow of patient through pathway
 class Patient:
     def __init__(self, p_id):
@@ -125,7 +125,7 @@ class Patient:
         self.opt_in_qtime = 0 # how much of 4 week TA app window was used
         self.attended_ta = 0 # did the patient attend TA appointment
 
-        
+
         # Step2
         self.step2_path_route = [] # string, which Step2 path they took
         self.step2_place_on_wl = 0 # position they are on Step2 waiting list
@@ -139,11 +139,11 @@ class Patient:
         self.step3_session_count = 0 # counter for no. of sessions have had
         self.step3_drop_out = 0 # did they drop out during Step2
         self.step3_week_number = 0 # counter for which week number they are on
-        
+
 # Staff class to be run weekly by week runner to record staff non-clinical time
 class Staff:
     def __init__(self, s_id):
-        
+
         # Staff attributes
         self.id = s_id
         self.staff_type = [] # what type of staff i.e. CBT, PwP, Couns
@@ -155,7 +155,7 @@ class Staff:
         self.staff_time_breaks = 0 # staff time for breaks
         self.staff_time_huddle = 0 # staff time for counsellor huddle
         self.staff_time_cpd = 0 # staff time for CPD
-        
+
 class Model:
 # Constructor to set up the model for a run. We pass in a run number when
 # we create a new model
@@ -190,12 +190,12 @@ class Model:
         self.asst_results_df['Treatment Path'] = ['NA']
 
         # Indexing
-        self.asst_results_df.set_index("Patient ID", inplace=True) 
+        self.asst_results_df.set_index("Patient ID", inplace=True)
 
         # Step2
         # Create a new DataFrame that will store opt-in results against the patient ID
         self.step2_results_df = pd.DataFrame()
-        
+
         self.step2_results_df['Patient ID'] = [1]
         self.step2_results_df['Week Number'] = [0]
         self.step2_results_df['Run Number'] = [0]
@@ -212,13 +212,13 @@ class Model:
         self.step2_results_df['Caseload'] = [0]
 
         # Indexing
-        self.step2_results_df.set_index("Patient ID", inplace=True) 
+        self.step2_results_df.set_index("Patient ID", inplace=True)
 
         # Step3
         # Create a new DataFrame that will store Step3 results against the patient ID
         # Create a new DataFrame that will store opt-in results against the patient ID
         self.step3_results_df = pd.DataFrame()
-        
+
         self.step3_results_df['Patient ID'] = [1]
         self.step3_results_df['Week Number'] = [0]
         self.step3_results_df['Run Number'] = [0]
@@ -233,9 +233,9 @@ class Model:
         self.step3_results_df['IsDNA'] = [0]
         self.step3_results_df['IsDropOut'] = [0]
         self.step3_results_df['Caseload'] = [0]
-        
+
         # Indexing
-        self.step3_results_df.set_index("Patient ID", inplace=True) 
+        self.step3_results_df.set_index("Patient ID", inplace=True)
 
     # random number generator for activity times
     def random_normal(self, mean, std_dev):
@@ -297,7 +297,7 @@ class Model:
                     ##################################
                     """
                     )
-            
+
             # Start up the referral generator function
             self.env.process(self.generator_patient_referrals())
 
@@ -311,20 +311,20 @@ class Model:
             self.ref_tot_optin = self.asst_results_df['Opted In'].sum()
             self.ref_optin_wait = self.asst_results_df['Opt-in Q Time'].mean()
             self.asst_tot_accept = self.asst_results_df['TA Outcome'].sum()
-            
+
             # weekly waiting list positions
             self.asst_weekly_stats.append(
                 {
                  'Week Number':self.week_number,
-                 'Referral Screen Mins':self.ref_tot_screen,   
+                 'Referral Screen Mins':self.ref_tot_screen,
                  'Referrals Rejected':self.ref_tot_reject,
                  'Referrals Delay Opt-in':self.ref_optin_delay,
                  'Referrals Opted-in':self.ref_tot_optin,
                  'Referrals Wait Opt-in':self.ref_optin_wait,
-                 'TA Total Accept':self.asst_tot_accept                
+                 'TA Total Accept':self.asst_tot_accept
                 }
                 )
-                        
+
             ######### replenish resources ##########
             ##### PwP #####
             ta_amount_to_fill = g.ta_resource - self.ta_res.level
@@ -334,7 +334,7 @@ class Model:
             cbt_amount_to_fill = g.cbt_resource - self.cbt_res.level
             ##### Counsellor #####
             couns_amount_to_fill = g.couns_resource - self.couns_res.level
-           
+
             ##### PwP #####
             if ta_amount_to_fill > 0:
                 if g.debug_level >= 2:
@@ -400,17 +400,17 @@ class Model:
     def generator_patient_referrals(self):
 
         # get the number of referrals that week based on the mean + seasonal variance
-        self.referrals_this_week = round(g.mean_referrals_pw + 
-                                    (g.mean_referrals_pw * 
+        self.referrals_this_week = round(g.mean_referrals_pw +
+                                    (g.mean_referrals_pw *
                                     g.referral_rate_lookup.at[
                                     self.week_number+1,'PCVar'])) # weeks start at 1
 
         print(self.referrals_this_week)
 
         print(self.referrals_this_week)
-                
+
         if g.debug_level >= 1:
-            print(f'Week {self.week_number}: {self.referrals_this_week}' 
+            print(f'Week {self.week_number}: {self.referrals_this_week}'
                                                     'referrals generated')
             print('')
             # print(f'Still remaining on TA WL from last week: {g.number_on_ta_wl}')
@@ -456,7 +456,7 @@ class Model:
         self.patient_optedin = random.uniform(0,1)
         # decide whether the Patient is accepted following TA
         self.ta_accepted = random.uniform(0,1)
-        
+
         # Increment the patient counter by 1
         self.patient_counter += 1
 
@@ -494,7 +494,7 @@ class Model:
             if self.requires_review >= g.referral_review_rate:
                 # set flag to show Patient didn't require review
                 self.asst_results_df.at[p.id, 'Referral Reviewed'] = 0
-                
+
                 self.asst_results_df.at[p.id, 'Review Wait'] = 0
 
             else:
@@ -508,7 +508,7 @@ class Model:
                 if self.asst_review_reject <= g.review_rej_rate:
                     # set flag to show Patient was rejected at review
                     self.asst_results_df.at[p.id, 'Review Rejected'] = 1
-                else:    
+                else:
                     # otherwise set flag to show they were accepted and go to opt-in
                     self.asst_results_df.at[p.id, 'Review Rejected'] = 0
 
@@ -520,7 +520,7 @@ class Model:
                         self.asst_results_df.at[p.id, 'Opt-in Wait'] = 0
                         # and didn't queue for TA appt
                         self.asst_results_df.at[p.id, 'Opt-in Q Time'] = 0
-                    else:    
+                    else:
                         # otherwise set flag to show they opted-in
                         self.asst_results_df.at[p.id, 'Opted In'] = 1
                         # record how long they took to opt-in, 1 week window
@@ -529,7 +529,7 @@ class Model:
                         # record lag-time between opting in and TA appointment, max 4 week window
                         self.asst_results_df.at[p.id, 'Opt-in Q Time'
                                                     ] = random.uniform(0,4)
-                        
+
                         start_q_ta = self.env.now
 
                         g.number_on_ta_wl += 1
@@ -556,7 +556,7 @@ class Model:
                         self.q_time_ta = end_q_ta - start_q_ta
                         # Record how long patient queued for TA
                         self.asst_results_df.at[p.id, 'TA Q Time'] = self.q_time_ta
-                                
+
                         # Now do Telephone Assessment using mean and varying
                         self.asst_results_df.at[p.id, 'TA Mins'
                                                         ] = self.random_normal(
@@ -569,24 +569,24 @@ class Model:
 
                             # used to decide whether further parts of the pathway are run or not
                             self.ta_accepted = 0
-                        else:    
+                        else:
                             # Patient was accepted at TA stage
                             self.asst_results_df.at[p.id, 'TA Outcome'] = 1
 
                                 # used to decide whether further parts of the pathway are run or not
                             self.ta_accepted = 1
-        
+
         # decide which pathway the patient has been allocated to
         # Select 2 options based on the given probabilities
         self.step_options = random.choices(g.step_routes, weights=g.step2_step3_ratio, k=50)
-        
+
         #print(self.selected_step)
         self.selected_step = random.choice(self.step_options)
 
         print(self.selected_step)
 
         self.asst_results_df.at[p.id, 'Treatment Path'] = self.selected_step
-        
+
         # print(self.asst_results_df)
 
         # reset referral counter ready for next batch
@@ -603,26 +603,26 @@ class Model:
         p = patient
 
         print(f'Patient {p.id} sent down {self.selected_step} pathway')
-        
+
         if self.selected_step == 'Step2':
             self.env.process(self.patient_step2_pathway(p))
         else:
             self.env.process(self.patient_step3_pathway(p))
-    
+
     ###### step2 pathway #####
     def patient_step2_pathway(self, patient):
-        
+
         p = patient
         # Select one of 2 treatment options based on the given probabilities
-        self.step2_pathway_options = random.choices(g.step2_routes, 
+        self.step2_pathway_options = random.choices(g.step2_routes,
                                                 weights=g.step2_path_ratios,
                                                 k=self.referrals_this_week)
-        
+
         self.selected_step2_pathway = random.choice(self.step2_pathway_options)
-       
+
         self.step2_results_df.at[p.id, 'Step2 Route'
                                             ] = self.selected_step2_pathway
-        
+
         # push the patient down the chosen step2 route
         if self.selected_step2_pathway == 'PWP':
             self.env.process(self.step2_pwp_process(p))
@@ -631,18 +631,18 @@ class Model:
 
      ###### step2 pathway #####
     def patient_step3_pathway(self, patient):
-        
+
         p = patient
         # Select one of 2 treatment options based on the given probabilities
-        self.step3_pathway_options = random.choices(g.step3_routes, 
+        self.step3_pathway_options = random.choices(g.step3_routes,
                                                 weights=g.step3_path_ratios,
                                                 k=self.referrals_this_week)
-        
+
         self.selected_step3_pathway = random.choice(self.step3_pathway_options)
-       
+
         self.step3_results_df.at[p.id, 'Step3 Route'
                                             ] = self.selected_step3_pathway
-        
+
         # push the patient down the chosen step2 route
         if self.selected_step3_pathway == 'CBT':
             self.env.process(self.step3_cbt_process(p))
@@ -689,7 +689,7 @@ class Model:
         self.asst_results_df.at[p.id, 'PwP Q Time'] = self.q_time_pwp
 
         while self.pwp_session_counter <= g.step2_pwp_sessions:
-            
+
             # increment the pwp session counter by 1
             self.pwp_session_counter += 1
 
@@ -698,17 +698,17 @@ class Model:
 
             # keep going for all number sessions or until patient DNA's twice
             while self.pwp_dna_counter < 2:
-                   
+
                 # record stats for the patient against this session number
                 self.step2_results_df.at[p.id,'Patient ID'] = p
                 self.step2_results_df.at[p.id,'Week Number'] = self.week_number
                 self.step2_results_df.at[p.id,'Run Number'] = self.run_number
                 self.step2_results_df_results_df.at[p.id, 'Treatment Route'
                                                     ] = self.selected_step2_pathway
-                
+
                 # decide whether the session was DNA'd
                 self.dna_pwp_session = random.uniform(0,1)
-                
+
                 if self.dna_pwp_session <= g.step2_pwp_dna_rate:
                     self.step2_results_df.at[p.id, 'IsDNA'] = 1
                     self.pwp_dna_counter += 1
@@ -719,12 +719,12 @@ class Model:
                     if self.pwp_session_counter == 1:
                         # if it's the 1st session use 1st session time
                         self.step2_results_df.at[p.id,'Session Time'] = g.step2_pwp_1st_mins
-                        self.step2_results_df.at[p.id,'Admin Time'] = g.step2_session_admin 
+                        self.step2_results_df.at[p.id,'Admin Time'] = g.step2_session_admin
                     else:
                         # otherwise use follow-up session time
                         self.step2_results_df.at[p.id,'Session Time'] = g.step2_pwp_fup_mins
                         self.step2_results_df.at[p.id,'Admin Time'] = g.step2_session_admin
-                
+
         # record whether patient dropped out before completing pwP
         if self.pwp_dna_counter >= 2:
             self.step2_results_df.at[p.id, 'IsDropOut'] = 1
@@ -766,7 +766,7 @@ class Model:
 
         # add to caseload
         g.number_on_group_cl +=1
-        
+
         # print(f'Patient {p} started PwP')
 
         # as each patient reaches this stage take them off Group wl
@@ -783,7 +783,7 @@ class Model:
         self.asst_results_df.at[p.id, 'Group Q Time'] = self.q_time_group
 
         while self.group_session_counter <= g.step2_group_sessions:
-            
+
             # increment the group session counter by 1
             self.group_session_counter += 1
 
@@ -794,21 +794,21 @@ class Model:
 
             # keep going for all number sessions or until patient DNA's twice
             while self.group_dna_counter < 2:
-                   
+
                 # record stats for the patient against this session number
                 self.step2_results_df.at[p.id,'Patient ID'] = p
                 self.step2_results_df.at[p.id,'Week Number'] = self.week_number
                 self.step2_results_df.at[p.id,'Run Number'] = self.run_number
                 self.step2_results_df_results_df.at[p.id, 'Treatment Route'
                                                     ] = self.selected_step2_pathway
-                
+
                 # decide whether the session was DNA'd
                 self.dna_group_session = random.uniform(0,1)
-                
+
                 if self.dna_group_session <= g.step2_group_dna_rate:
                     self.step2_results_df.at[p.id, 'IsDNA'] = 1
                     self.group_dna_counter += 1
-                    self.step2_results_df.at[p.id,'Admin Time'] = g.step2_session_admin 
+                    self.step2_results_df.at[p.id,'Admin Time'] = g.step2_session_admin
                 else:
                     self.step2_results_df.at[p.id, 'IsDNA'] = 0
                     self.step2_results_df.at[p.id,'Session Time'] = g.step2_group_session_mins
@@ -871,7 +871,7 @@ class Model:
         self.asst_results_df.at[p.id, 'CBT Q Time'] = self.q_time_cbt
 
         while self.cbt_session_counter <= g.step3_cbt_sessions:
-            
+
             # increment the cbt session counter by 1
             self.cbt_session_counter += 1
 
@@ -880,17 +880,17 @@ class Model:
 
             # keep going for all number sessions or until patient DNA's twice
             while self.cbt_dna_counter < 2:
-                   
+
                 # record stats for the patient against this session number
                 self.step3_results_df.at[p.id,'Patient ID'] = p
                 self.step3_results_df.at[p.id,'Week Number'] = self.week_number
                 self.step3_results_df.at[p.id,'Run Number'] = self.run_number
                 self.step3_results_df_results_df.at[p.id, 'Treatment Route'
                                                     ] = self.selected_step3_pathway
-                
+
                 # decide whether the session was DNA'd
                 self.dna_cbt_session = random.uniform(0,1)
-                
+
                 if self.dna_cbt_session <= g.step3_cbt_dna_rate:
                     self.step3_results_df.at[p.id, 'IsDNA'] = 1
                     self.cbt_dna_counter += 1
@@ -901,12 +901,12 @@ class Model:
                     if self.cbt_session_counter == 1:
                         # if it's the 1st session use 1st session time
                         self.step3_results_df.at[p.id,'Session Time'] = g.step3_cbt_1st_mins
-                        self.step3_results_df.at[p.id,'Admin Time'] = g.step3_session_admin 
+                        self.step3_results_df.at[p.id,'Admin Time'] = g.step3_session_admin
                     else:
                         # otherwise use follow-up session time
                         self.step3_results_df.at[p.id,'Session Time'] = g.step3_cbt_fup_mins
                         self.step3_results_df.at[p.id,'Admin Time'] = g.step3_session_admin
-                
+
         # record whether patient dropped out before completing Wellbeing Workshop
         if self.cbt_dna_counter >= 2:
             self.step3_results_df.at[p.id, 'IsDropOut'] = 1
@@ -965,7 +965,7 @@ class Model:
         self.asst_results_df.at[p.id, 'Couns Q Time'] = self.q_time_couns
 
         while self.couns_session_counter <= g.step3_couns_sessions:
-            
+
             # increment the group session counter by 1
             self.couns_session_counter += 1
 
@@ -976,17 +976,17 @@ class Model:
 
             # keep going for all number sessions or until patient DNA's twice
             while self.couns_dna_counter < 2:
-                   
+
                 # record stats for the patient against this session number
                 self.step3_results_df.at[p.id,'Patient ID'] = p
                 self.step3_results_df.at[p.id,'Week Number'] = self.week_number
                 self.step3_results_df.at[p.id,'Run Number'] = self.run_number
                 self.step3_results_df_results_df.at[p.id, 'Treatment Route'
                                                     ] = self.selected_step3_pathway
-                
+
                 # decide whether the session was DNA'd
                 self.dna_couns_session = random.uniform(0,1)
-                
+
                 if self.dna_couns_session <= g.step3_couns_dna_rate:
                     self.step3_results_df.at[p.id, 'IsDNA'] = 1
                     self.couns_dna_counter += 1
@@ -997,7 +997,7 @@ class Model:
                     if self.couns_session_counter == 1:
                         # if it's the 1st session use 1st session time
                         self.step3_results_df.at[p.id,'Session Time'] = g.step3_couns_1st_mins
-                        self.step3_results_df.at[p.id,'Admin Time'] = g.step3_session_admin 
+                        self.step3_results_df.at[p.id,'Admin Time'] = g.step3_session_admin
                     else:
                         # otherwise use follow-up session time
                         self.step3_results_df.at[p.id,'Session Time'] = g.step3_couns_fup_mins
@@ -1106,10 +1106,10 @@ class Trial:
             #print(my_model.asst_weekly_stats)
             # append stats for that week to asst dataframe
             self.asst_weekly_dfs.append(my_model.asst_weekly_stats)
-                   
+
         # Once the trial (i.e. all runs) has completed, print the final results and combine all the weekly dataframes
         return self.df_trial_results, pd.concat(self.asst_weekly_dfs)
-    
+
 my_trial = Trial()
 #pd.set_option('display.max_rows', 1000)
 # Call the run_trial method of our Trial class object
@@ -1117,4 +1117,3 @@ my_trial = Trial()
 df_trial_results, asst_weekly_dfs = my_trial.run_trial()
 
 df_trial_results, asst_weekly_dfs
-        
