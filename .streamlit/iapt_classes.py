@@ -293,9 +293,9 @@ class Model:
             if g.debug_level >= 1:
                 print(
                     f"""
-                    ##################################
-                    # Week {self.week_number}
-                    ##################################
+##################################
+# Week {self.week_number}
+##################################
                     """
                     )
 
@@ -340,7 +340,12 @@ class Model:
             ##### Counsellor #####
             couns_amount_to_fill = g.couns_resource - self.couns_res.level
 
-            ##### PwP #####
+            if g.debug_level >= 2:
+                if all([ta_amount_to_fill == 0, pwp_amount_to_fill == 0, group_amount_to_fill == 0,
+                        cbt_amount_to_fill == 0, couns_amount_to_fill == 0]):
+                    print("All resources already full - no filling required")
+                    print("")
+
             if ta_amount_to_fill > 0:
                 if g.debug_level >= 2:
                     print(f"TA Level: {self.ta_res.level}")
