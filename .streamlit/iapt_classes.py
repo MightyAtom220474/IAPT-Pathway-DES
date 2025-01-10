@@ -125,6 +125,7 @@ class Patient:
         self.opt_in_qtime = 0 # how much of 4 week TA app window was used
         self.attended_ta = 0 # did the patient attend TA appointment
 
+        self.initial_step = [] # string, whether they were step 2 or step 3
 
         # Step2
         self.step2_path_route = [] # string, which Step2 path they took
@@ -586,6 +587,7 @@ class Model:
         print(self.selected_step)
 
         self.asst_results_df.at[p.id, 'Treatment Path'] = self.selected_step
+        p.initial_step = self.selected_step
 
         # print(self.asst_results_df)
 
