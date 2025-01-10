@@ -658,7 +658,7 @@ class Model:
         else:
             print(f'PATHWAY RUNNER: Patient {p.id} sent down {p.initial_step} pathway')
 
-        if self.selected_step == 'Step2':
+        if p.initial_step == 'Step2':
             yield self.env.process(self.patient_step2_pathway(p))
         else:
             yield self.env.process(self.patient_step3_pathway(p))
@@ -673,12 +673,13 @@ class Model:
                                                 k=self.referrals_this_week)
 
         self.selected_step2_pathway = random.choice(self.step2_pathway_options)
+        p.step2_path_route = self.selected_step2_pathway
 
         self.step2_results_df.at[p.id, 'Step2 Route'
                                             ] = self.selected_step2_pathway
 
         # push the patient down the chosen step2 route
-        if self.selected_step2_pathway == 'PWP':
+        if p.step2_path_route == 'PWP':
             yield self.env.process(self.step2_pwp_process(p))
         else:
             yield self.env.process(self.step2_group_process(p))
@@ -697,11 +698,13 @@ class Model:
 
         self.selected_step3_pathway = random.choice(self.step3_pathway_options)
 
+        p.step3_path_route = self.selected_step3_pathway
+
         self.step3_results_df.at[p.id, 'Step3 Route'
                                             ] = self.selected_step3_pathway
 
         # push the patient down the chosen step2 route
-        if self.selected_step3_pathway == 'CBT':
+        if p.step3_path_route == 'CBT':
             yield self.env.process(self.step3_cbt_process(p))
         else:
             yield self.env.process(self.step3_couns_process(p))
