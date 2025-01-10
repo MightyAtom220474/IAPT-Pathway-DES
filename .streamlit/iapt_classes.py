@@ -618,6 +618,9 @@ class Model:
                                 # used to decide whether further parts of the pathway are run or not
                             self.ta_accepted = 1
 
+        # SR NOTE - I'm not sure this indent level is correct?
+        # Seem to be getting some who were rejected at assessment still getting a step selected?
+
         # decide which pathway the patient has been allocated to
         # Select 2 options based on the given probabilities
         self.step_options = random.choices(g.step_routes, weights=g.step2_step3_ratio, k=50)
@@ -636,7 +639,7 @@ class Model:
         # print(self.asst_results_df)
 
         # reset referral counter ready for next batch
-        self.referral_counter = 0
+        self.referral_counter = 0     # SR NOTE - don't think this is needed here? As patient-level pathway
 
         if g.debug_level >=2:
                 print(f"-- Pathway Runner Initiated --")
