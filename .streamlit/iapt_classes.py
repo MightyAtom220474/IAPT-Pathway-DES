@@ -327,6 +327,10 @@ class Model:
                 )
 
             ######### replenish resources ##########
+            if g.debug_level >= 2:
+                print("")
+                print("== Replenishing Resources==")
+
             ##### PwP #####
             ta_amount_to_fill = g.ta_resource - self.ta_res.level
             pwp_amount_to_fill = g.pwp_resource - self.pwp_res.level
@@ -394,6 +398,17 @@ class Model:
             # Wait one unit of simulation time (1 week)
             yield(self.env.timeout(1))
 
+            if g.debug_level >= 1:
+                print(
+                    f"""
+
+#----------------------------------
+# Week {self.week_number} Complete
+#----------------------------------
+
+                    """
+                    )
+
             # increment week number by 1 week
             self.week_number += 1
 
@@ -406,13 +421,13 @@ class Model:
                                     g.referral_rate_lookup.at[
                                     self.week_number+1,'PCVar'])) # weeks start at 1
 
-        print(self.referrals_this_week)
+        # print(f"Referrals generated this week: {self.referrals_this_week}")
 
-        print(self.referrals_this_week)
+        # print(self.referrals_this_week)
 
         if g.debug_level >= 1:
             print(f'Week {self.week_number}: {self.referrals_this_week}'
-                                                    'referrals generated')
+                                                    ' referrals generated')
             print('')
             # print(f'Still remaining on TA WL from last week: {g.number_on_ta_wl}')
 
@@ -464,6 +479,9 @@ class Model:
         # Create a new patient from Patient Class
         p = Patient(self.patient_counter)
         p.week_added = week_number
+        if g.debug_level >=2:
+                print('')
+                print(f"==== Patient {p.id} Generated ====")
 
         # all referrals get screened
         self.asst_results_df.at[p.id, 'Referral Time Screen'
@@ -482,6 +500,9 @@ class Model:
             self.asst_results_df.at[p.id, 'Week Number'] = self.week_number
 
             self.asst_results_df.at[p.id, 'Referral Rejected'] = 1
+
+            if g.debug_level >=2:
+                print(f"Patient {p.id} Rejected")
 
         else:
 
@@ -505,18 +526,27 @@ class Model:
                 self.asst_results_df.at[p.id, 'Review Wait'] = random.uniform(0,
                                                                 g.mdt_freq)
 
+                if g.debug_level >=2:
+                    print(f"Patient {p.id} Required Review")
+
                 # decide if they were rejected at Review
                 if self.asst_review_reject <= g.review_rej_rate:
                     # set flag to show Patient was rejected at review
                     self.asst_results_df.at[p.id, 'Review Rejected'] = 1
+                    if g.debug_level >=2:
+                        print(f"Patient {p.id} Rejected at review")
                 else:
                     # otherwise set flag to show they were accepted and go to opt-in
                     self.asst_results_df.at[p.id, 'Review Rejected'] = 0
+                    if g.debug_level >=2:
+                        print(f"Patient {p.id} Accepted at Review - go to opt-in")
 
                     # now decide whether the patient opted-in or not
                     if self.patient_optedin >= g.opt_in_rate:
                         # set flag to show Patient failed to opt-in
                         self.asst_results_df.at[p.id, 'Opted In'] = 0
+                        if g.debug_level >=2:
+                            print(f"Patient {p.id} Failed to Opt In")
                         # therefore didn't wait to opt-in
                         self.asst_results_df.at[p.id, 'Opt-in Wait'] = 0
                         # and didn't queue for TA appt
@@ -524,6 +554,8 @@ class Model:
                     else:
                         # otherwise set flag to show they opted-in
                         self.asst_results_df.at[p.id, 'Opted In'] = 1
+                        if g.debug_level >=2:
+                            print(f"Patient {p.id} Opted In")
                         # record how long they took to opt-in, 1 week window
                         self.asst_results_df.at[p.id, 'Opt-in Wait'
                                                     ] = random.uniform(0,1)
@@ -567,12 +599,16 @@ class Model:
                         if self.ta_accepted >= g.ta_accept_rate:
                             # Patient was rejected at TA stage
                             self.asst_results_df.at[p.id, 'TA Outcome'] = 0
+                            if g.debug_level >=2:
+                                print(f"Patient {p.id} Rejected at TA Stage")
 
                             # used to decide whether further parts of the pathway are run or not
                             self.ta_accepted = 0
                         else:
                             # Patient was accepted at TA stage
                             self.asst_results_df.at[p.id, 'TA Outcome'] = 1
+                            if g.debug_level >=2:
+                                print(f"Patient {p.id} Accepted at TA Stage")
 
                                 # used to decide whether further parts of the pathway are run or not
                             self.ta_accepted = 1
@@ -584,7 +620,10 @@ class Model:
         #print(self.selected_step)
         self.selected_step = random.choice(self.step_options)
 
-        print(self.selected_step)
+        if self.selected_step == "Step3":
+            print(f"Selected step: **{self.selected_step}**")
+        else:
+            print(f"Selected step: {self.selected_step}")
 
         self.asst_results_df.at[p.id, 'Treatment Path'] = self.selected_step
         p.initial_step = self.selected_step
@@ -594,6 +633,8 @@ class Model:
         # reset referral counter ready for next batch
         self.referral_counter = 0
 
+        if g.debug_level >=2:
+                print(f"-- Pathway Runner Initiated --")
         yield self.env.process(self.pathway_runner(p))
 
         # yield self.env.timeout(0)
@@ -604,7 +645,10 @@ class Model:
 
         p = patient
 
-        print(f'Patient {p.id} sent down {self.selected_step} pathway')
+        if p.initial_step == 'Step3':
+            print(f'PATHWAY RUNNER: Patient {p.id} sent down **{p.initial_step}** pathway')
+        else:
+            print(f'PATHWAY RUNNER: Patient {p.id} sent down {p.initial_step} pathway')
 
         if self.selected_step == 'Step2':
             yield self.env.process(self.patient_step2_pathway(p))
@@ -631,6 +675,9 @@ class Model:
         else:
             yield self.env.process(self.step2_group_process(p))
 
+        if g.debug_level >=2:
+                print(f"FUNC PROCESS patient_step2_pathway: Patient {p.id} Initiating {p.step2_path_route} Step 2 Route")
+
      ###### step2 pathway #####
     def patient_step3_pathway(self, patient):
 
@@ -650,6 +697,9 @@ class Model:
             yield self.env.process(self.step3_cbt_process(p))
         else:
             yield self.env.process(self.step3_couns_process(p))
+
+        if g.debug_level >=2:
+                print(f"FUNC PROCESS patient_step3_pathway: Patient {p.id} Initiating {p.step3_path_route} Step 3 Route")
 
     def step2_pwp_process(self,patient):
 
@@ -681,7 +731,7 @@ class Model:
         g.number_on_pwp_wl -= 1
 
         if g.debug_level >= 2:
-            print(f'Week {self.env.now}: Patient number {p.id} (added week {p.week_added}) put through PwP')
+            print(f'FUNC PROCESS step2_pwp_process: Week {self.env.now}: Patient number {p.id} (added week {p.week_added}) put through PwP')
 
         end_q_pwp = self.env.now
 
@@ -775,7 +825,7 @@ class Model:
         g.number_on_group_wl -= 1
 
         if g.debug_level >= 2:
-            print(f'Week {self.env.now}: Patient number {p.id} (added week {p.week_added}) put through Groups')
+            print(f'FUNC PROCESS step2_group_process: Week {self.env.now}: Patient number {p.id} (added week {p.week_added}) put through Groups')
 
         end_q_group = self.env.now
 
@@ -785,6 +835,8 @@ class Model:
         self.asst_results_df.at[p.id, 'Group Q Time'] = self.q_time_group
 
         while self.group_session_counter <= g.step2_group_sessions:
+            if g.debug_level >= 2:
+                print(f'FUNC PROCESS step2_group_process: Week {self.env.now}: Patient number {p.id} (added week {p.week_added}) on Group Session {self.group_session_counter}')
 
             # increment the group session counter by 1
             self.group_session_counter += 1
@@ -863,7 +915,7 @@ class Model:
         g.number_on_cbt_wl -= 1
 
         if g.debug_level >= 2:
-            print(f'Week {self.env.now}: Patient number {p.id} (added week {p.week_added}) put through CBT')
+            print(f'FUNC PROCESS step3_cbt_process: Week {self.env.now}: Patient number {p.id} (added week {p.week_added}) put through CBT')
 
         end_q_cbt = self.env.now
 
@@ -957,7 +1009,7 @@ class Model:
         g.number_on_couns_wl -= 1
 
         if g.debug_level >= 2:
-            print(f'Week {self.env.now}: Patient number {p.id} (added week {p.week_added}) put through Couns')
+            print(f'FUNC PROCESS step3_couns_process: Week {self.env.now}: Patient number {p.id} (added week {p.week_added}) put through Couns')
 
         end_q_couns = self.env.now
 
