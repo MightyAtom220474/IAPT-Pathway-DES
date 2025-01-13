@@ -32,6 +32,7 @@ class g:
     step2_routes = ['PwP','Group'] # possible Step2 routes
     step2_path_ratios = [0.94,0.06] # Step2 proportion for each route
     step2_pwp_sessions = 6 # number of PwP sessions at Step2
+    step2_pwp_dna_rate = 0.15 # ##### assume 15% DNA rate for PwP
     step2_pwp_1st_mins = 45 # minutes allocated for 1st pwp session
     step2_pwp_fup_mins = 30 # minutes allocated for pwp follow-up session
     step2_session_admin = 15 # number of mins of clinical admin per session
@@ -676,7 +677,7 @@ class Model:
                                             ] = self.selected_step2_pathway
 
         # push the patient down the chosen step2 route
-        if p.step2_path_route == 'PWP':
+        if p.step2_path_route == 'PwP':
             yield self.env.process(self.step2_pwp_process(p))
         else:
             yield self.env.process(self.step2_group_process(p))
@@ -754,7 +755,10 @@ class Model:
         # Record how long patient queued for TA
         self.asst_results_df.at[p.id, 'PwP Q Time'] = self.q_time_pwp
 
-        while self.pwp_session_counter <= g.step2_pwp_sessions:
+        while self.pwp_session_counter < g.step2_pwp_sessions and self.pwp_dna_counter < 2:
+
+            if g.debug_level >= 2:
+                print(f'FUNC PROCESS step2_pwp_process: Week {self.env.now}: Patient number {p.id} (added week {p.week_added}) on PwP Session {self.pwp_session_counter}')
 
             # increment the pwp session counter by 1
             self.pwp_session_counter += 1
@@ -762,40 +766,45 @@ class Model:
             # record the pwp session number for the patient
             self.step2_results_df.at[p.id, 'Session Number'] = self.pwp_session_counter
 
-            # keep going for all number sessions or until patient DNA's twice
-            while self.pwp_dna_counter < 2:
-
-                # record stats for the patient against this session number
-                self.step2_results_df.at[p.id,'Patient ID'] = p
-                self.step2_results_df.at[p.id,'Week Number'] = self.week_number
-                self.step2_results_df.at[p.id,'Run Number'] = self.run_number
-                self.step2_results_df.at[p.id, 'Treatment Route'
-                                                    ] = self.selected_step2_pathway
+            
+            # record stats for the patient against this session number
+            self.step2_results_df.at[p.id,'Patient ID'] = p
+            self.step2_results_df.at[p.id,'Week Number'] = self.week_number + self.pwp_session_counter
+            self.step2_results_df.at[p.id,'Run Number'] = self.run_number
+            self.step2_results_df.at[p.id, 'Treatment Route'
+                                                ] = self.selected_step2_pathway
 
                 # decide whether the session was DNA'd
-                self.dna_pwp_session = random.uniform(0,1)
+            self.dna_pwp_session = random.uniform(0,1)
 
-                if self.dna_pwp_session <= g.step2_pwp_dna_rate:
-                    self.step2_results_df.at[p.id, 'IsDNA'] = 1
-                    self.pwp_dna_counter += 1
-                    # if session is DNA just record admin mins as clinical time will be used elsewhere
+            if self.dna_pwp_session <= g.step2_pwp_dna_rate:
+                self.step2_results_df.at[p.id, 'IsDNA'] = 1
+                self.pwp_dna_counter += 1
+                # if session is DNA just record admin mins as clinical time will be used elsewhere
+                self.step2_results_df.at[p.id,'Admin Time'] = g.step2_session_admin
+                if g.debug_level >= 2:
+                    print(f'Patient number {p.id} on {self.selected_step2_pathway} Session {self.pwp_session_counter} DNA number {self.pwp_dna_counter}')
+                
+            else:
+                self.step2_results_df.at[p.id, 'IsDNA'] = 0
+                if self.pwp_session_counter == 1:
+                    # if it's the 1st session use 1st session time
+                    self.step2_results_df.at[p.id,'Session Time'] = g.step2_pwp_1st_mins
                     self.step2_results_df.at[p.id,'Admin Time'] = g.step2_session_admin
                 else:
-                    self.step2_results_df.at[p.id, 'IsDNA'] = 0
-                    if self.pwp_session_counter == 1:
-                        # if it's the 1st session use 1st session time
-                        self.step2_results_df.at[p.id,'Session Time'] = g.step2_pwp_1st_mins
-                        self.step2_results_df.at[p.id,'Admin Time'] = g.step2_session_admin
-                    else:
-                        # otherwise use follow-up session time
-                        self.step2_results_df.at[p.id,'Session Time'] = g.step2_pwp_fup_mins
-                        self.step2_results_df.at[p.id,'Admin Time'] = g.step2_session_admin
+                    # otherwise use follow-up session time
+                    self.step2_results_df.at[p.id,'Session Time'] = g.step2_pwp_fup_mins
+                    self.step2_results_df.at[p.id,'Admin Time'] = g.step2_session_admin
 
         # record whether patient dropped out before completing pwP
         if self.pwp_dna_counter >= 2:
             self.step2_results_df.at[p.id, 'IsDropOut'] = 1
+            if g.debug_level >= 2:
+                print(f'Patient number {p.id} dropped out of {self.selected_step2_pathway} treatment')
         else:
             self.step2_results_df.at[p.id, 'IsDropOut'] = 0
+            if g.debug_level >= 2:
+                print(f'Patient number {p.id} completed {self.selected_step2_pathway} treatment')
 
         # remove from Step 2 Caseload as have either completed treatment or dropped out
         self.step2_results_df.at[p.id, 'Caseload'] = 0
@@ -854,7 +863,7 @@ class Model:
         # Record how long patient queued for groups
         self.asst_results_df.at[p.id, 'Group Q Time'] = self.q_time_group
 
-        while self.group_session_counter <= g.step2_group_sessions:
+        while self.group_session_counter < g.step2_group_sessions and self.group_dna_counter < 2:
             if g.debug_level >= 2:
                 print(f'FUNC PROCESS step2_group_process: Week {self.env.now}: Patient number {p.id} (added week {p.week_added}) on Group Session {self.group_session_counter}')
 
@@ -866,33 +875,34 @@ class Model:
             # mark patient as still on Step2 Caseload
             self.step2_results_df.at[p.id, 'Caseload'] = 1
 
-            # keep going for all number sessions or until patient DNA's twice
-            while self.group_dna_counter < 2:
+            # record stats for the patient against this session number
+            self.step2_results_df.at[p.id,'Patient ID'] = p
+            self.step2_results_df.at[p.id,'Week Number'] = self.week_number
+            self.step2_results_df.at[p.id,'Run Number'] = self.run_number
+            self.step2_results_df.at[p.id, 'Treatment Route'
+                                                ] = self.selected_step2_pathway
 
-                # record stats for the patient against this session number
-                self.step2_results_df.at[p.id,'Patient ID'] = p
-                self.step2_results_df.at[p.id,'Week Number'] = self.week_number
-                self.step2_results_df.at[p.id,'Run Number'] = self.run_number
-                self.step2_results_df.at[p.id, 'Treatment Route'
-                                                    ] = self.selected_step2_pathway
+            # decide whether the session was DNA'd
+            self.dna_group_session = random.uniform(0,1)
 
-                # decide whether the session was DNA'd
-                self.dna_group_session = random.uniform(0,1)
-
-                if self.dna_group_session <= g.step2_group_dna_rate:
-                    self.step2_results_df.at[p.id, 'IsDNA'] = 1
-                    self.group_dna_counter += 1
-                    self.step2_results_df.at[p.id,'Admin Time'] = g.step2_session_admin
-                else:
-                    self.step2_results_df.at[p.id, 'IsDNA'] = 0
-                    self.step2_results_df.at[p.id,'Session Time'] = g.step2_group_session_mins
-                    self.step2_results_df.at[p.id,'Admin Time'] = g.step2_session_admin
+            if self.dna_group_session <= g.step2_group_dna_rate:
+                self.step2_results_df.at[p.id, 'IsDNA'] = 1
+                self.group_dna_counter += 1
+                self.step2_results_df.at[p.id,'Admin Time'] = g.step2_session_admin
+            else:
+                self.step2_results_df.at[p.id, 'IsDNA'] = 0
+                self.step2_results_df.at[p.id,'Session Time'] = g.step2_group_session_mins
+                self.step2_results_df.at[p.id,'Admin Time'] = g.step2_session_admin
 
         # record whether patient dropped out before completing Wellbeing Workshop
         if self.group_dna_counter >= 2:
             self.step2_results_df.at[p.id, 'IsDropOut'] = 1
+            if g.debug_level >= 2:
+                print(f'Patient number {p.id} dropped out of {self.selected_step2_pathway} treatment')
         else:
             self.step2_results_df.at[p.id, 'IsDropOut'] = 0
+            if g.debug_level >= 2:
+                print(f'Patient number {p.id} completed {self.selected_step2_pathway} treatment')
         # remove from Step 2 Caseload as have either completed treatment or dropped out
         self.step2_results_df.at[p.id, 'Caseload'] = 0
 
@@ -950,7 +960,10 @@ class Model:
         # Record how long patient queued for CBT
         self.asst_results_df.at[p.id, 'CBT Q Time'] = self.q_time_cbt
 
-        while self.cbt_session_counter <= g.step3_cbt_sessions:
+        while self.cbt_session_counter < g.step3_cbt_sessions and self.cbt_dna_counter < 2:
+
+            if g.debug_level >= 2:
+                print(f'FUNC PROCESS step3_cbt_process: Week {self.env.now}: Patient number {p.id} (added week {p.week_added}) on CBT Session {self.cbt_session_counter}')
 
             # increment the cbt session counter by 1
             self.cbt_session_counter += 1
@@ -958,40 +971,41 @@ class Model:
             # record the cbt session number for the patient
             self.step3_results_df.at[p.id, 'Session Number'] = self.cbt_session_counter
 
-            # keep going for all number sessions or until patient DNA's twice
-            while self.cbt_dna_counter < 2:
+            # record stats for the patient against this session number
+            self.step3_results_df.at[p.id,'Patient ID'] = p
+            self.step3_results_df.at[p.id,'Week Number'] = self.week_number
+            self.step3_results_df.at[p.id,'Run Number'] = self.run_number
+            self.step3_results_df.at[p.id, 'Treatment Route'
+                                                ] = self.selected_step3_pathway
 
-                # record stats for the patient against this session number
-                self.step3_results_df.at[p.id,'Patient ID'] = p
-                self.step3_results_df.at[p.id,'Week Number'] = self.week_number
-                self.step3_results_df.at[p.id,'Run Number'] = self.run_number
-                self.step3_results_df.at[p.id, 'Treatment Route'
-                                                    ] = self.selected_step3_pathway
+            # decide whether the session was DNA'd
+            self.dna_cbt_session = random.uniform(0,1)
 
-                # decide whether the session was DNA'd
-                self.dna_cbt_session = random.uniform(0,1)
-
-                if self.dna_cbt_session <= g.step3_cbt_dna_rate:
-                    self.step3_results_df.at[p.id, 'IsDNA'] = 1
-                    self.cbt_dna_counter += 1
-                    # if session is DNA just record admin mins as clinical time will be used elsewhere
+            if self.dna_cbt_session <= g.step3_cbt_dna_rate:
+                self.step3_results_df.at[p.id, 'IsDNA'] = 1
+                self.cbt_dna_counter += 1
+                # if session is DNA just record admin mins as clinical time will be used elsewhere
+                self.step3_results_df.at[p.id,'Admin Time'] = g.step3_session_admin
+            else:
+                self.step3_results_df.at[p.id, 'IsDNA'] = 0
+                if self.cbt_session_counter == 1:
+                    # if it's the 1st session use 1st session time
+                    self.step3_results_df.at[p.id,'Session Time'] = g.step3_cbt_1st_mins
                     self.step3_results_df.at[p.id,'Admin Time'] = g.step3_session_admin
                 else:
-                    self.step3_results_df.at[p.id, 'IsDNA'] = 0
-                    if self.cbt_session_counter == 1:
-                        # if it's the 1st session use 1st session time
-                        self.step3_results_df.at[p.id,'Session Time'] = g.step3_cbt_1st_mins
-                        self.step3_results_df.at[p.id,'Admin Time'] = g.step3_session_admin
-                    else:
-                        # otherwise use follow-up session time
-                        self.step3_results_df.at[p.id,'Session Time'] = g.step3_cbt_fup_mins
-                        self.step3_results_df.at[p.id,'Admin Time'] = g.step3_session_admin
+                    # otherwise use follow-up session time
+                    self.step3_results_df.at[p.id,'Session Time'] = g.step3_cbt_fup_mins
+                    self.step3_results_df.at[p.id,'Admin Time'] = g.step3_session_admin
 
         # record whether patient dropped out before completing Wellbeing Workshop
         if self.cbt_dna_counter >= 2:
             self.step3_results_df.at[p.id, 'IsDropOut'] = 1
+            if g.debug_level >= 2:
+                print(f'Patient number {p.id} dropped out of {self.selected_step3_pathway} treatment')
         else:
             self.step3_results_df.at[p.id, 'IsDropOut'] = 0
+            if g.debug_level >= 2:
+                print(f'Patient number {p.id} completed {self.selected_step3_pathway} treatment')
 
         # remove from Step 3 Caseload as have either completed treatment or dropped out
         self.step3_results_df.at[p.id, 'Caseload'] = 0
@@ -1050,8 +1064,10 @@ class Model:
         # Record how long patient queued for TA
         self.asst_results_df.at[p.id, 'Couns Q Time'] = self.q_time_couns
 
-        while self.couns_session_counter <= g.step3_couns_sessions:
+        while self.couns_session_counter < g.step3_couns_sessions and self.couns_dna_counter < 2:
 
+            if g.debug_level >= 2:
+                print(f'FUNC PROCESS step3_couns_process: Week {self.env.now}: Patient number {p.id} (added week {p.week_added}) on Couns Session {self.couns_session_counter}')
             # increment the group session counter by 1
             self.couns_session_counter += 1
 
@@ -1060,40 +1076,41 @@ class Model:
             # mark patient as still on Step2 Caseload
             self.step3_results_df.at[p.id, 'Caseload'] = 1
 
-            # keep going for all number sessions or until patient DNA's twice
-            while self.couns_dna_counter < 2:
+            # record stats for the patient against this session number
+            self.step3_results_df.at[p.id,'Patient ID'] = p
+            self.step3_results_df.at[p.id,'Week Number'] = self.week_number
+            self.step3_results_df.at[p.id,'Run Number'] = self.run_number
+            self.step3_results_df.at[p.id, 'Treatment Route'
+                                                ] = self.selected_step3_pathway
 
-                # record stats for the patient against this session number
-                self.step3_results_df.at[p.id,'Patient ID'] = p
-                self.step3_results_df.at[p.id,'Week Number'] = self.week_number
-                self.step3_results_df.at[p.id,'Run Number'] = self.run_number
-                self.step3_results_df.at[p.id, 'Treatment Route'
-                                                    ] = self.selected_step3_pathway
+            # decide whether the session was DNA'd
+            self.dna_couns_session = random.uniform(0,1)
 
-                # decide whether the session was DNA'd
-                self.dna_couns_session = random.uniform(0,1)
-
-                if self.dna_couns_session <= g.step3_couns_dna_rate:
-                    self.step3_results_df.at[p.id, 'IsDNA'] = 1
-                    self.couns_dna_counter += 1
-                    # if session is DNA just record admin mins as clinical time will be used elsewhere
+            if self.dna_couns_session <= g.step3_couns_dna_rate:
+                self.step3_results_df.at[p.id, 'IsDNA'] = 1
+                self.couns_dna_counter += 1
+                # if session is DNA just record admin mins as clinical time will be used elsewhere
+                self.step3_results_df.at[p.id,'Admin Time'] = g.step3_session_admin
+            else:
+                self.step3_results_df.at[p.id, 'IsDNA'] = 0
+                if self.couns_session_counter == 1:
+                    # if it's the 1st session use 1st session time
+                    self.step3_results_df.at[p.id,'Session Time'] = g.step3_couns_1st_mins
                     self.step3_results_df.at[p.id,'Admin Time'] = g.step3_session_admin
                 else:
-                    self.step3_results_df.at[p.id, 'IsDNA'] = 0
-                    if self.couns_session_counter == 1:
-                        # if it's the 1st session use 1st session time
-                        self.step3_results_df.at[p.id,'Session Time'] = g.step3_couns_1st_mins
-                        self.step3_results_df.at[p.id,'Admin Time'] = g.step3_session_admin
-                    else:
-                        # otherwise use follow-up session time
-                        self.step3_results_df.at[p.id,'Session Time'] = g.step3_couns_fup_mins
-                        self.step3_results_df.at[p.id,'Admin Time'] = g.step3_session_admin
+                    # otherwise use follow-up session time
+                    self.step3_results_df.at[p.id,'Session Time'] = g.step3_couns_fup_mins
+                    self.step3_results_df.at[p.id,'Admin Time'] = g.step3_session_admin
 
         # record whether patient dropped out before completing Wellbeing Workshop
         if self.couns_dna_counter >= 2:
             self.step3_results_df.at[p.id, 'IsDropOut'] = 1
+            if g.debug_level >= 2:
+                print(f'Patient number {p.id} dropped out of {self.selected_step3_pathway} treatment')
         else:
             self.step3_results_df.at[p.id, 'IsDropOut'] = 0
+            if g.debug_level >= 2:
+                print(f'Patient number {p.id} completed {self.selected_step3_pathway} treatment')
         # remove from Step 2 Caseload as have either completed treatment or dropped out
         self.step3_results_df.at[p.id, 'Caseload'] = 0
 
