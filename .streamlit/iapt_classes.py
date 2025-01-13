@@ -618,36 +618,33 @@ class Model:
                                 # used to decide whether further parts of the pathway are run or not
                             self.ta_accepted = 1
 
-        # SR NOTE - I'm not sure this indent level is correct?
-        # Seem to be getting some who were rejected at assessment still getting a step selected?
+                            if self.ta_accepted == 1 :
 
-        # decide which pathway the patient has been allocated to
-        # Select 2 options based on the given probabilities
-        self.step_options = random.choices(g.step_routes, weights=g.step2_step3_ratio, k=50)
+                                # if patient was accepted decide which pathway the patient has been allocated to
+                                # Select 2 options based on the given probabilities
+                                self.step_options = random.choices(g.step_routes, weights=g.step2_step3_ratio, k=50)
 
-        #print(self.selected_step)
-        self.selected_step = random.choice(self.step_options)
+                                #print(self.selected_step)
+                                self.selected_step = random.choice(self.step_options)
 
-        if self.selected_step == "Step3":
-            print(f"Selected step: **{self.selected_step}**")
-        else:
-            print(f"Selected step: {self.selected_step}")
+                                if self.selected_step == "Step3":
+                                    print(f"Selected step: **{self.selected_step}**")
+                                else:
+                                    print(f"Selected step: {self.selected_step}")
 
-        self.asst_results_df.at[p.id, 'Treatment Path'] = self.selected_step
-        p.initial_step = self.selected_step
+                                self.asst_results_df.at[p.id, 'Treatment Path'] = self.selected_step
+                                p.initial_step = self.selected_step
 
+                                if g.debug_level >=2:
+                                    print(f"-- Pathway Runner Initiated --")
+                                yield self.env.process(self.pathway_runner(p))
+
+                                return self.asst_results_df
+
+                            else:
+                                # otherwise proceed to next patient
+                                yield self.env.timeout(0)
         # print(self.asst_results_df)
-
-        # reset referral counter ready for next batch
-        self.referral_counter = 0     # SR NOTE - don't think this is needed here? As patient-level pathway
-
-        if g.debug_level >=2:
-                print(f"-- Pathway Runner Initiated --")
-        yield self.env.process(self.pathway_runner(p))
-
-        # yield self.env.timeout(0)
-
-        return self.asst_results_df
 
     def pathway_runner(self, patient):
 
@@ -723,6 +720,9 @@ class Model:
 
         g.number_on_pwp_wl += 1
 
+        if g.debug_level >=2:
+            print(f'{p.step2_path_route} RUNNER: Patient {p.id} added to {p.step2_path_route} waiting list')
+
         start_q_pwp = self.env.now
 
         # Record where the patient is on the TA WL
@@ -740,6 +740,9 @@ class Model:
 
         # as each patient reaches this stage take them off PwP wl
         g.number_on_pwp_wl -= 1
+
+        if g.debug_level >=2:
+            print(f'{p.step2_path_route} RUNNER: Patient {p.id} removed from {p.step2_path_route} waiting list')
 
         if g.debug_level >= 2:
             print(f'FUNC PROCESS step2_pwp_process: Week {self.env.now}: Patient number {p.id} (added week {p.week_added}) put through PwP')
@@ -817,6 +820,9 @@ class Model:
 
         g.number_on_group_wl += 1
 
+        if g.debug_level >=2:
+            print(f'{p.step2_path_route} RUNNER: Patient {p.id} added to {p.step2_path_route} waiting list')
+
         start_q_group = self.env.now
 
         # Record where the patient is on the TA WL
@@ -834,6 +840,9 @@ class Model:
 
         # as each patient reaches this stage take them off Group wl
         g.number_on_group_wl -= 1
+
+        if g.debug_level >=2:
+            print(f'{p.step2_path_route} RUNNER: Patient {p.id} removed from {p.step2_path_route} waiting list')
 
         if g.debug_level >= 2:
             print(f'FUNC PROCESS step2_group_process: Week {self.env.now}: Patient number {p.id} (added week {p.week_added}) put through Groups')
@@ -907,6 +916,9 @@ class Model:
 
         g.number_on_cbt_wl += 1
 
+        if g.debug_level >=2:
+            print(f'{p.step3_path_route} RUNNER: Patient {p.id} added to {p.step3_path_route} waiting list')
+
         start_q_cbt = self.env.now
 
         # Record where the patient is on the cbt WL
@@ -924,6 +936,9 @@ class Model:
 
         # as each patient reaches this stage take them off CBT wl
         g.number_on_cbt_wl -= 1
+
+        if g.debug_level >=2:
+            print(f'{p.step3_path_route} RUNNER: Patient {p.id} removed from {p.step3_path_route} waiting list')
 
         if g.debug_level >= 2:
             print(f'FUNC PROCESS step3_cbt_process: Week {self.env.now}: Patient number {p.id} (added week {p.week_added}) put through CBT')
@@ -1001,6 +1016,9 @@ class Model:
 
         g.number_on_couns_wl += 1
 
+        if g.debug_level >=2:
+            print(f'{p.step3_path_route} RUNNER: Patient {p.id} added to {p.step3_path_route} waiting list')
+
         start_q_couns = self.env.now
 
         # Record where the patient is on the TA WL
@@ -1018,6 +1036,9 @@ class Model:
 
         # as each patient reaches this stage take them off PwP wl
         g.number_on_couns_wl -= 1
+
+        if g.debug_level >=2:
+            print(f'{p.step3_path_route} RUNNER: Patient {p.id} removed from {p.step3_path_route} waiting list')
 
         if g.debug_level >= 2:
             print(f'FUNC PROCESS step3_couns_process: Week {self.env.now}: Patient number {p.id} (added week {p.week_added}) put through Couns')
