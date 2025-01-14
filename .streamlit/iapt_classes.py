@@ -38,6 +38,7 @@ class g:
     step2_session_admin = 15 # number of mins of clinical admin per session
     step2_pwp_period = 16 # max number of weeks PwP delivered over
     step2_group_sessions = 7 # number of group sessions
+    step2_group_size = 12 # size a group needs to be before it can be run
     step2_group_session_mins = 240 # minutes allocated to pwp group session
     step2_group_dna_rate = 0.216 # Wellbeing Workshop attendance 78.6%
 
@@ -623,7 +624,7 @@ class Model:
 
                                 # if patient was accepted decide which pathway the patient has been allocated to
                                 # Select 2 options based on the given probabilities
-                                self.step_options = random.choices(g.step_routes, weights=g.step2_step3_ratio, k=50)
+                                self.step_options = random.choices(g.step_routes, weights=g.step2_step3_ratio, k=self.referrals_this_week)
 
                                 #print(self.selected_step)
                                 self.selected_step = random.choice(self.step_options)
@@ -680,7 +681,7 @@ class Model:
         if p.step2_path_route == 'PwP':
             yield self.env.process(self.step2_pwp_process(p))
         else:
-            yield self.env.process(self.step2_group_process(p))
+            yield self.env.process(self.step2_group_store(p))
 
         if g.debug_level >=2:
                 print(f"FUNC PROCESS patient_step2_pathway: Patient {p.id} Initiating {p.step2_path_route} Step 2 Route")
@@ -817,7 +818,31 @@ class Model:
         g.number_on_pwp_cl -=1
 
         yield self.env.timeout(0)
+    
+    # store up patients until there are enough to run a group
+    def step2_group_store(self,patient):
 
+        p = patient
+        
+        # create a simpy store to hold the patients until the group has enough members
+        self.group_store = simpy.Store(
+                                        self.env,
+                                        capacity=g.step2_group_size,
+                                        )
+        
+        while len(self.group_store.items) < g.step2_group_size:
+        
+            yield self.group_store.put(p)
+
+            if len(self.group_store.items) >= g.step2_group_size:
+
+                if g.debug_level >=2:
+                    print(f'Group is now full, putting {len(self.group_store.items)} through group therapy')
+
+                p = yield self.group_store.get()
+
+                yield self.env.process(self.step2_group_process(p))
+    
     def step2_group_process(self,patient):
 
         p = patient
