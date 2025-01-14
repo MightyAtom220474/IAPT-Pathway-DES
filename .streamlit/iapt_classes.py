@@ -2,6 +2,7 @@ import simpy
 import random
 import numpy as np
 import pandas as pd
+import math
 
 class g:
 
@@ -66,7 +67,7 @@ class g:
     supervision_time = 120 # 2 hours per month per modality ##### could use modulus for every 4th week
     break_time = 100 # 20 mins per day
     wellbeing_time = 120 # 2 hours allocated per month
-    counsellors_huddle = 120 # 30 hrs p/w or 1 hr per fortnight
+    counsellors_huddle = 30 # 30 mins p/w or 1 hr per fortnight
     cpd_time = 225 # half day per month CPD
 
     # Job Plans
@@ -148,6 +149,7 @@ class Staff:
 
         # Staff attributes
         self.id = s_id
+        self.week_number = 0 # the week number the staff activity is being recorded for
         self.staff_type = [] # what type of staff i.e. CBT, PwP, Couns
         self.staff_hours_avail = 0 # how many hours p/w they work
         self.staff_band = 0 # what staff band
@@ -239,6 +241,27 @@ class Model:
         # Indexing
         self.step3_results_df.set_index("Patient ID", inplace=True)
 
+        # Staff
+        # staff counters separated by 100 to ensure no overlap in staff ID's when recording
+        self.pwp_staff_counter = 100
+        self.group_staff_counter = 200
+        self.cbt_staff_counter = 300
+        self.couns_staff_counter = 400
+
+        self.staff_results_df = pd.DataFrame()
+
+        self.staff_results_df['Staff ID'] = [1]
+        self.staff_results_df['Week Number'] = [0]
+        self.staff_results_df['Run Number'] = [0]
+        self.staff_results_df['Job Role'] = ['NA']
+        self.staff_results_df['Supervision Mins'] = [0]
+        self.staff_results_df['Break Mins'] = [0]
+        self.staff_results_df['Wellbeing Mins'] = [0]
+        self.staff_results_df['Huddle Mins'] = [0]
+        self.staff_results_df['CPD Mins'] = [0]
+
+        self.staff_results_df.set_index("Staff ID", inplace=True)
+
     # random number generator for activity times
     def random_normal(self, mean, std_dev):
         while True:
@@ -303,7 +326,8 @@ class Model:
             # Start up the referral generator function
             self.env.process(self.generator_patient_referrals())
 
-            ########## need to start up the generator for non-clinical time here too ##########
+            # start up the staff entity generator
+            self.env.process(self.staff_entity_generator(self.week_number))
 
             self.ref_tot_screen = self.asst_results_df[
                                                 'Referral Time Screen'].sum()
@@ -465,7 +489,54 @@ class Model:
 
         yield(self.env.timeout(1))
 
+
+
     ###### assessment part of the pathway #####
+    def staff_entity_generator(self, week_number):
+
+        self.env.process(self.pwp_staff_generator(week_number))
+        # self.env.process(self.group_staff_generator(week_number))
+        # self.env.process(self.cbt_staff_generator(week_number))
+        # self.env.process(self.couns_staff_generator(week_number))
+
+        yield(self.env.timeout(0))
+
+    def pwp_staff_generator(self,week_number):
+
+        self.pwp_counter = 0
+       
+        # iterate through the PwP staff accounting for half WTE's
+        # counter only increments by 0.5 so in effect each staff member
+        # will get processed twice each week
+        while self.pwp_counter <= g.number_staff_pwp:
+
+            # Increment the staff counter by 0.5
+            self.pwp_counter += 0.5
+
+            # Create a new staff member from Staff Class
+            s = Staff(self.pwp_staff_counter+(self.pwp_counter*2))
+
+            if g.debug_level >=2:
+                print('')
+                print(f"==== Staff {s.id} Generated ====")
+            
+            self.staff_results_df.at[s.id,'Week Number'] = week_number
+            self.staff_results_df.at[s.id,'Run Number'] = self.run_number
+            self.staff_results_df.at[s.id,'Job Role'] = 'PwP'
+            self.staff_results_df.at[s.id,'Break Mins'] = g.break_time/2
+            #self.staff_results_df.at[s.id,'Huddle Mins'] = g.huddle_time # counsellors only
+            
+            # monthly staff activities
+            if self.week_number % 4 == 0:
+                
+                self.staff_results_df.at[s.id,'Supervision Mins'] = g.supervision_time/2
+                self.staff_results_df.at[s.id,'Wellbeing Mins'] = g.wellbeing_time/2
+                self.staff_results_df.at[s.id,'CPD Mins'] = g.cpd_time/2
+        
+        # reset the staff counter back to original level once all staff have been processed
+        self.pwp_staff_counter = 100
+
+    ###### assessment part of the clinical pathway #####
     def patient_asst_pathway(self, week_number):
 
         # decide whether the referral was rejected at screening stage
