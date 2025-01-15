@@ -69,7 +69,7 @@ class g:
     wellbeing_time = 120 # 2 hours allocated per month
     counsellors_huddle = 30 # 30 mins p/w or 1 hr per fortnight
     cpd_time = 225 # half day per month CPD
-
+    
     # Job Plans
     number_staff_cbt = 9.0
     number_staff_couns = 10.0
@@ -212,7 +212,7 @@ class Model:
         self.step2_results_df['Session Time'] = [0] # clinical session time in mins
         self.step2_results_df['Admin Time'] = [0] # admin session time in mins
         self.step2_results_df['IsDNA'] = [0]
-        self.step2_results_df['IsDropOut'] = [0]
+        self.step2_results_df['IsDropout'] = [0]
         self.step2_results_df['Caseload'] = [0]
 
         # Indexing
@@ -235,7 +235,7 @@ class Model:
         self.step3_results_df['Session Time'] = [0.0]
         self.step3_results_df['Admin Time'] = [0] # admin session time in mins
         self.step3_results_df['IsDNA'] = [0]
-        self.step3_results_df['IsDropOut'] = [0]
+        self.step3_results_df['IsDropout'] = [0]
         self.step3_results_df['Caseload'] = [0]
 
         # Indexing
@@ -277,9 +277,12 @@ class Model:
         # list to hold weekly asst statistics
         self.asst_weekly_stats = []
         # list to hold weekly Step2 statistics
-        #self.step2_weekly_stats = []
+        self.step2_weekly_stats = []
         # list to hold weekly Step3 statistics
-        #self.step3_weekly_stats = []
+        self.step3_weekly_stats = []
+        # list to hold weekly Staff statistics
+        self.staff_weekly_stats = []
+
 
         ######### Create our resources which are appt slots for that week #########
         ########## PwP ##########
@@ -328,28 +331,159 @@ class Model:
 
             # start up the staff entity generator
             self.env.process(self.staff_entity_generator(self.week_number))
-
-            self.ref_tot_screen = self.asst_results_df[
+            
+            ##### record all weekly results #####
+            ## Screening & TA
+            self.asst_tot_screen = self.asst_results_df[
                                                 'Referral Time Screen'].sum()
-            self.ref_tot_reject = self.asst_results_df[
+            self.asst_tot_reject = self.asst_results_df[
                                                 'Referral Rejected'].sum()
-            self.ref_optin_delay = self.asst_results_df['Opt-in Wait'].mean()
-            self.ref_tot_optin = self.asst_results_df['Opted In'].sum()
-            self.ref_optin_wait = self.asst_results_df['Opt-in Q Time'].mean()
+            self.asst_optin_delay = self.asst_results_df['Opt-in Wait'].mean()
+            self.asst_tot_optin = self.asst_results_df['Opted In'].sum()
+            self.asst_optin_wait = self.asst_results_df['Opt-in Q Time'].mean()
             self.asst_tot_accept = self.asst_results_df['TA Outcome'].sum()
 
-            # weekly waiting list positions
             self.asst_weekly_stats.append(
                 {
                  'Week Number':self.week_number,
-                 'Referral Screen Mins':self.ref_tot_screen,
-                 'Referrals Rejected':self.ref_tot_reject,
-                 'Referrals Delay Opt-in':self.ref_optin_delay,
-                 'Referrals Opted-in':self.ref_tot_optin,
-                 'Referrals Wait Opt-in':self.ref_optin_wait,
+                 'Referral Screen Mins':self.asst_tot_screen,
+                 'Referrals Rejected':self.asst_tot_reject,
+                 'Referrals Delay Opt-in':self.asst_optin_delay,
+                 'Referrals Opted-in':self.asst_tot_optin,
+                 'Referrals Wait Opt-in':self.asst_optin_wait,
                  'TA Total Accept':self.asst_tot_accept
                 }
                 )
+            
+            ## Step2
+            self.step2_route_list = ['PwP','Group']
+            # create summary stats for each of the Step2 routes
+            for i, route_name in enumerate(self.step2_route_list):
+                # filter data for appropriate route
+                self.step2_results_df_filtered = self.step2_results_df[
+                                        self.step2_results_df["Step2 Route"]==route_name]
+                # filter data to remove default rows
+                # self.step2_results_df_filtered = self.step2_results_df_filtered[
+                #                         self.step2_results_df_filtered["Step2 Route"]!='NA']
+                
+                ## Step2
+                self.step2_route = route_name
+                if route_name == 'PwP':
+                    self.step2_max_wl = g.number_on_pwp_wl
+                else:
+                    self.step2_max_wl = g.number_on_group_wl
+                if route_name == 'PwP':
+                    self.step2_avg_wait = self.step2_results_df_filtered["PwP Q Time"].mean()
+                else:
+                    self.step2_avg_wait = self.step2_results_df_filtered["Group Q Time"].mean()
+                self.step2_tot_clin = self.step2_results_df_filtered['Session Time'].sum()
+                self.step2_tot_admin = self.step2_results_df_filtered['Admin Time'].sum()
+                self.step2_tot_sess = self.step2_results_df_filtered['Session Number'].count()
+                self.step2_tot_dna = self.step2_results_df_filtered['IsDNA'].sum()
+                self.step2_tot_dropout = self.step2_results_df_filtered['IsDropout'].sum()
+                self.step2_tot_complete = self.step2_results_df_filtered['IsDropout'
+                                            ].count()-self.step2_results_df_filtered[
+                                            'IsDropout'].sum()
+                if route_name == 'PwP':
+                    self.step2_tot_caseload = g.number_on_pwp_cl
+                else:
+                    self.step2_tot_caseload = g.number_on_group_cl
+                # weekly Step2 Activity
+                self.step2_weekly_stats.append(
+                    {
+                    'Route Name':self.step2_route,
+                    'Week Number':self.week_number,
+                    'Step2 WL':self.step2_max_wl,
+                    'Step2 Q Time':self.step2_avg_wait,
+                    'Step2 Clin Mins':self.step2_tot_clin,
+                    'Step2 Admin Mins':self.step2_tot_admin,
+                    'Step2 Sessions':self.step2_tot_sess,
+                    'Step2 DNAs':self.step2_tot_dna,
+                    'Step2 Dropout':self.step2_tot_dropout,
+                    'Step2 Complete':self.step2_tot_complete,
+                    'Step2 Caseload':self.step2_tot_caseload
+                    }
+                    )
+            
+            ## Step3
+            self.step3_route_list = ['CBT','Couns']
+            # create summary stats for each of the Step3 routes
+            for i, route_name in enumerate(self.step3_route_list):
+                # filter data for appropriate route
+                self.step3_results_df_filtered = self.step3_results_df[
+                                        self.step3_results_df["Step3 Route"]==route_name]
+
+                # filter data to remove default rows
+                self.step3_results_df_filtered = self.step3_results_df_filtered[
+                                        self.step3_results_df_filtered["Step3 Route"]!='NA']
+                
+                ## Step3
+                self.step3_route = route_name
+                if route_name == 'CBT':
+                    self.step3_max_wl = g.number_on_cbt_wl
+                else:
+                    self.step3_max_wl = g.number_on_couns_wl
+                if route_name == 'CBT':
+                    self.step3_avg_wait = self.step3_results_df_filtered["CBT Q Time"].mean()
+                else:
+                    self.step3_avg_wait = self.step3_results_df_filtered["Couns Q Time"].mean()
+                self.step3_tot_clin = self.step3_results_df_filtered['Session Time'].sum()
+                self.step3_tot_admin = self.step3_results_df_filtered['Admin Time'].sum()
+                self.step3_tot_sess = self.step3_results_df_filtered['Session Number'].count()
+                self.step3_tot_dna = self.step3_results_df_filtered['IsDNA'].sum()
+                self.step3_tot_dropout = self.step3_results_df_filtered['IsDropout'].sum()
+                self.step3_tot_complete = self.step3_results_df_filtered['IsDropout'
+                                            ].count()-self.step3_results_df_filtered[
+                                            'IsDropout'].sum()
+                if route_name == 'CBT':
+                    self.step3_tot_caseload = g.number_on_cbt_cl
+                else:
+                    self.step3_tot_caseload = g.number_on_couns_cl
+                # weekly Step3 Activity
+                self.step3_weekly_stats.append(
+                    {
+                    'Route Name':self.step3_route,
+                    'Week Number':self.week_number,
+                    'Step3 WL':self.step3_max_wl,
+                    'Step3 Q Time':self.step3_avg_wait,
+                    'Step3 Clin Mins':self.step3_tot_clin,
+                    'Step3 Admin Mins':self.step3_tot_admin,
+                    'Step3 Sessions':self.step3_tot_sess,
+                    'Step3 DNAs':self.step3_tot_dna,
+                    'Step3 Dropout':self.step3_tot_dropout,
+                    'Step3 Complete':self.step3_tot_complete,
+                    'Step3 Caseload':self.step3_tot_caseload
+                    }
+                    )
+            
+            ## Staff
+            self.job_role_list = ['PwP','CBT','Couns']
+            # create summary stats for each of the job roles
+            for i, job_role in enumerate(self.job_role_list):
+                # filter data for appropriate route
+                self.staff_results_df_filtered = self.staff_results_df[
+                                        self.staff_results_df["Job Role"]==job_role]
+            
+                self.job_role_name = job_role
+                
+                self.staff_tot_superv = self.staff_results_df_filtered['Supervision Mins'].sum()
+                self.staff_tot_break = self.staff_results_df_filtered['Break Mins'].sum()
+                self.staff_tot_wellb = self.staff_results_df_filtered['Wellbeing Mins'].sum()
+                self.staff_tot_huddle = self.staff_results_df_filtered['Huddle Mins'].sum()
+                self.staff_tot_cpd = self.staff_results_df_filtered['CPD Mins'].sum()
+ 
+                # weekly staff non-clinical activity
+                self.staff_weekly_stats.append(
+                    {
+                    'Job Role':self.job_role_name,
+                    'Week Number':self.week_number,
+                    'Supervision Mins':self.staff_tot_superv,
+                    'Break Mins':self.staff_tot_break,
+                    'Wellbeing Mins':self.staff_tot_wellb,
+                    'Huddle Mins':self.staff_tot_huddle,
+                    'CPD Mins':self.staff_tot_cpd
+                    }
+                    )
 
             ######### replenish resources ##########
             if g.debug_level >= 2:
@@ -489,8 +623,6 @@ class Model:
 
         yield(self.env.timeout(1))
 
-
-
     ###### assessment part of the pathway #####
     def staff_entity_generator(self, week_number):
 
@@ -508,7 +640,7 @@ class Model:
         # iterate through the PwP staff accounting for half WTE's
         # counter only increments by 0.5 so in effect each staff member
         # will get processed twice each week
-        while self.pwp_counter <= g.number_staff_pwp:
+        while self.pwp_counter < g.number_staff_pwp:
 
             # Increment the staff counter by 0.5
             self.pwp_counter += 0.5
@@ -545,7 +677,7 @@ class Model:
         # iterate through the CBT staff accounting for half WTE's
         # counter only increments by 0.5 so in effect each staff member
         # will get processed twice each week
-        while self.cbt_counter <= g.number_staff_cbt:
+        while self.cbt_counter < g.number_staff_cbt:
 
             # Increment the staff counter by 0.5
             self.cbt_counter += 0.5
@@ -582,7 +714,7 @@ class Model:
         # iterate through the Couns staff accounting for half WTE's
         # counter only increments by 0.5 so in effect each staff member
         # will get processed twice each week
-        while self.couns_counter <= g.number_staff_couns:
+        while self.couns_counter < g.number_staff_couns:
 
             # Increment the staff counter by 0.5
             self.couns_counter += 0.5
@@ -598,7 +730,7 @@ class Model:
             self.staff_results_df.at[s.id,'Run Number'] = self.run_number
             self.staff_results_df.at[s.id,'Job Role'] = 'Couns'
             self.staff_results_df.at[s.id,'Break Mins'] = g.break_time/2
-            self.staff_results_df.at[s.id,'Huddle Mins'] = g.huddle_time/2 # Couns only
+            self.staff_results_df.at[s.id,'Huddle Mins'] = g.counsellors_huddle/2 # Couns only
             
             # monthly staff activities
             if self.week_number % 4 == 0:
@@ -1279,16 +1411,22 @@ class Model:
         self.ref_tot_optin = self.asst_results_df['Opted In'].sum()
         self.mean_qtime_ta =  self.asst_results_df['Opt-in Q Time'].mean()
         self.tot_ta_accept = self.asst_results_df['TA Outcome'].sum()
-        # reset waiting lists ready for next run
-        # g.number_on_triage_wl = 0
-        # g.number_on_mdt_wl = 0
-        # g.number_on_asst_wl = 0
+        
+        # reset waiting lists and caseloads ready for next run
+        g.number_on_pwp_wl = 0
+        g.number_on_group_wl = 0
+        g.number_on_cbt_wl = 0
+        g.number_on_couns_wl = 0
+        g.number_on_pwp_cl = 0
+        g.number_on_group_cl = 0
+        g.number_on_cbt_cl = 0
+        g.number_on_couns_cl = 0
 
     # The run method starts up the DES entity generators, runs the simulation,
     # and in turns calls anything we need to generate results for the run
     def run(self, print_run_results=True):
 
-        # Start up the referral generator to create new referrals
+        # Start up the week to start processing patients
         self.env.process(self.week_runner(g.sim_duration))
 
         # Run the model for the duration specified in g class
@@ -1321,6 +1459,9 @@ class Trial:
         self.df_trial_results.set_index("Run Number", inplace=True)
 
         self.asst_weekly_dfs = []
+        self.step2_weekly_dfs = []
+        self.step3_weekly_dfs = []
+        self.staff_weekly_dfs = []
 
     # Method to print out the results from the trial.  In real world models,
     # you'd likely save them as well as (or instead of) printing them
@@ -1350,21 +1491,30 @@ class Trial:
 
             # turn weekly stats into a dataframe
             my_model.asst_weekly_stats = pd.DataFrame(my_model.asst_weekly_stats)
+            my_model.step2_weekly_stats = pd.DataFrame(my_model.step2_weekly_stats)
+            my_model.step3_weekly_stats = pd.DataFrame(my_model.step3_weekly_stats)
+            my_model.staff_weekly_stats = pd.DataFrame(my_model.staff_weekly_stats)
             # add the run number to the dataframe
             my_model.asst_weekly_stats['Run'] = run
+            my_model.step2_weekly_stats['Run'] = run
+            my_model.step3_weekly_stats['Run'] = run
+            my_model.staff_weekly_stats['Run'] = run
 
             #print(my_model.asst_weekly_stats)
-            # append stats for that week to asst dataframe
+            # append stats for that week to each combined dataframe
             self.asst_weekly_dfs.append(my_model.asst_weekly_stats)
+            self.step2_weekly_dfs.append(my_model.step2_weekly_stats)
+            self.step3_weekly_dfs.append(my_model.step3_weekly_stats)
+            self.staff_weekly_dfs.append(my_model.staff_weekly_stats)
 
         # Once the trial (i.e. all runs) has completed, print the final results and combine all the weekly dataframes
-        return self.df_trial_results, pd.concat(self.asst_weekly_dfs)
+        return self.df_trial_results, pd.concat(self.asst_weekly_dfs), pd.concat(self.step2_weekly_dfs), pd.concat(self.step3_weekly_dfs), pd.concat(self.staff_weekly_dfs)
 
 if __name__ == "__main__":
     my_trial = Trial()
     #pd.set_option('display.max_rows', 1000)
     # Call the run_trial method of our Trial class object
 
-    df_trial_results, asst_weekly_dfs = my_trial.run_trial()
+    df_trial_results, asst_weekly_dfs, step2_weekly_dfs, step3_weekly_dfs, staff_weekly_dfs = my_trial.run_trial()
 
-    df_trial_results, asst_weekly_dfs
+    df_trial_results, asst_weekly_dfs, step2_weekly_dfs, step3_weekly_dfs, staff_weekly_dfs
