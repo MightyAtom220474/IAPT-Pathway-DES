@@ -244,9 +244,9 @@ class Model:
         # Staff
         # staff counters separated by 100 to ensure no overlap in staff ID's when recording
         self.pwp_staff_counter = 100
-        self.group_staff_counter = 200
-        self.cbt_staff_counter = 300
-        self.couns_staff_counter = 400
+        #self.group_staff_counter = 200 # not needed as covered by PwP
+        self.cbt_staff_counter = 200
+        self.couns_staff_counter = 300
 
         self.staff_results_df = pd.DataFrame()
 
@@ -494,10 +494,10 @@ class Model:
     ###### assessment part of the pathway #####
     def staff_entity_generator(self, week_number):
 
-        self.env.process(self.pwp_staff_generator(week_number))
-        # self.env.process(self.group_staff_generator(week_number))
-        # self.env.process(self.cbt_staff_generator(week_number))
-        # self.env.process(self.couns_staff_generator(week_number))
+        yield self.env.process(self.pwp_staff_generator(week_number))
+        # self.env.process(self.group_staff_generator(week_number)) # not needed as covered by pwp
+        yield self.env.process(self.cbt_staff_generator(week_number))
+        yield self.env.process(self.couns_staff_generator(week_number))
 
         yield(self.env.timeout(0))
 
@@ -518,7 +518,7 @@ class Model:
 
             if g.debug_level >=2:
                 print('')
-                print(f"==== Staff {s.id} Generated ====")
+                print(f"==== PwP Staff {s.id} Generated ====")
             
             self.staff_results_df.at[s.id,'Week Number'] = week_number
             self.staff_results_df.at[s.id,'Run Number'] = self.run_number
@@ -533,8 +533,84 @@ class Model:
                 self.staff_results_df.at[s.id,'Wellbeing Mins'] = g.wellbeing_time/2
                 self.staff_results_df.at[s.id,'CPD Mins'] = g.cpd_time/2
         
+        yield(self.env.timeout(0))
+        
         # reset the staff counter back to original level once all staff have been processed
         self.pwp_staff_counter = 100
+
+    def cbt_staff_generator(self,week_number):
+
+        self.cbt_counter = 0
+       
+        # iterate through the CBT staff accounting for half WTE's
+        # counter only increments by 0.5 so in effect each staff member
+        # will get processed twice each week
+        while self.cbt_counter <= g.number_staff_cbt:
+
+            # Increment the staff counter by 0.5
+            self.cbt_counter += 0.5
+
+            # Create a new staff member from Staff Class
+            s = Staff(self.cbt_staff_counter+(self.cbt_counter*2))
+
+            if g.debug_level >=2:
+                print('')
+                print(f"==== CBT Staff {s.id} Generated ====")
+            
+            self.staff_results_df.at[s.id,'Week Number'] = week_number
+            self.staff_results_df.at[s.id,'Run Number'] = self.run_number
+            self.staff_results_df.at[s.id,'Job Role'] = 'CBT'
+            self.staff_results_df.at[s.id,'Break Mins'] = g.break_time/2
+            #self.staff_results_df.at[s.id,'Huddle Mins'] = g.huddle_time # counsellors only
+            
+            # monthly staff activities
+            if self.week_number % 4 == 0:
+                
+                self.staff_results_df.at[s.id,'Supervision Mins'] = g.supervision_time/2
+                self.staff_results_df.at[s.id,'Wellbeing Mins'] = g.wellbeing_time/2
+                self.staff_results_df.at[s.id,'CPD Mins'] = g.cpd_time/2
+        
+        yield(self.env.timeout(0))
+        
+        # reset the staff counter back to original level once all staff have been processed
+        self.cbt_staff_counter = 200
+
+    def couns_staff_generator(self,week_number):
+
+        self.couns_counter = 0
+       
+        # iterate through the Couns staff accounting for half WTE's
+        # counter only increments by 0.5 so in effect each staff member
+        # will get processed twice each week
+        while self.couns_counter <= g.number_staff_couns:
+
+            # Increment the staff counter by 0.5
+            self.couns_counter += 0.5
+
+            # Create a new staff member from Staff Class
+            s = Staff(self.couns_staff_counter+(self.couns_counter*2))
+
+            if g.debug_level >=2:
+                print('')
+                print(f"==== Couns Staff {s.id} Generated ====")
+            
+            self.staff_results_df.at[s.id,'Week Number'] = week_number
+            self.staff_results_df.at[s.id,'Run Number'] = self.run_number
+            self.staff_results_df.at[s.id,'Job Role'] = 'Couns'
+            self.staff_results_df.at[s.id,'Break Mins'] = g.break_time/2
+            self.staff_results_df.at[s.id,'Huddle Mins'] = g.huddle_time/2 # Couns only
+            
+            # monthly staff activities
+            if self.week_number % 4 == 0:
+                
+                self.staff_results_df.at[s.id,'Supervision Mins'] = g.supervision_time/2
+                self.staff_results_df.at[s.id,'Wellbeing Mins'] = g.wellbeing_time/2
+                self.staff_results_df.at[s.id,'CPD Mins'] = g.cpd_time/2
+        
+        yield(self.env.timeout(0))
+        
+        # reset the staff counter back to original level once all staff have been processed
+        self.couns_staff_counter = 300
 
     ###### assessment part of the clinical pathway #####
     def patient_asst_pathway(self, week_number):
