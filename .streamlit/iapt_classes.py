@@ -960,6 +960,8 @@ class Model:
         if p.step2_path_route == 'PwP':
             yield self.env.process(self.step2_pwp_process(p))
         else:
+            if g.debug_level >=2:
+                print(f"Patient {p.id} sent to Group store")
             yield self.env.process(self.step2_group_store(p))
 
         if g.debug_level >=2:
@@ -1063,7 +1065,9 @@ class Model:
                 # if session is DNA just record admin mins as clinical time will be used elsewhere
                 self.step2_results_df.at[p.id,'Admin Time'] = g.step2_session_admin
                 if g.debug_level >= 2:
-                    print(f'Patient number {p.id} on {self.selected_step2_pathway} Session {self.pwp_session_counter} DNA number {self.pwp_dna_counter}')
+                    print(f'Patient number {p.id} on {self.selected_step2_pathway} Session'
+                           f'{self.pwp_session_counter} DNA number' 
+                           f'{self.pwp_dna_counter}')
                 
             else:
                 self.step2_results_df.at[p.id, 'IsDNA'] = 0
@@ -1102,25 +1106,32 @@ class Model:
     def step2_group_store(self,patient):
 
         p = patient
+
+        if g.debug_level >= 2:
+                print(f'Patient number {p.id} sent to Group Store')
         
         # create a simpy store to hold the patients until the group has enough members
         self.group_store = simpy.Store(
                                         self.env,
                                         capacity=g.step2_group_size,
                                         )
-        
+        # store up patients until there are enough to run a group
         while len(self.group_store.items) < g.step2_group_size:
         
             yield self.group_store.put(p)
 
-            if len(self.group_store.items) >= g.step2_group_size:
+        if g.debug_level >=2:
+                print(f'Group is now full, putting {len(self.group_store.items)} through group therapy')
+        
+        # put all the stored patients through group therapy
+        while len(self.group_store.items) > 0:
 
-                if g.debug_level >=2:
-                    print(f'Group is now full, putting {len(self.group_store.items)} through group therapy')
+            p = yield self.group_store.get()
 
-                p = yield self.group_store.get()
+            if g.debug_level >=2:
+                print(f'Putting Patient {p.id} through Group Therapy, {len(self.group_store.items)} remaining')
 
-                yield self.env.process(self.step2_group_process(p))
+            yield self.env.process(self.step2_group_process(p))
     
     def step2_group_process(self,patient):
 
@@ -1183,7 +1194,7 @@ class Model:
             self.step2_results_df.at[p.id,'Patient ID'] = p
             self.step2_results_df.at[p.id,'Week Number'] = self.week_number
             self.step2_results_df.at[p.id,'Run Number'] = self.run_number
-            self.step2_results_df.at[p.id, 'Treatment Route'
+            self.step2_results_df.at[p.id,'Treatment Route'
                                                 ] = self.selected_step2_pathway
 
             # decide whether the session was DNA'd
@@ -1193,6 +1204,11 @@ class Model:
                 self.step2_results_df.at[p.id, 'IsDNA'] = 1
                 self.group_dna_counter += 1
                 self.step2_results_df.at[p.id,'Admin Time'] = g.step2_session_admin
+                if g.debug_level >= 2:
+                    print(f'Patient number {p.id} on {self.selected_step2_pathway}' 
+                          f'Session {self.group_session_counter} DNA number' 
+                          f'{self.group_dna_counter}')
+            
             else:
                 self.step2_results_df.at[p.id, 'IsDNA'] = 0
                 self.step2_results_df.at[p.id,'Session Time'] = g.step2_group_session_mins
@@ -1290,6 +1306,10 @@ class Model:
                 self.cbt_dna_counter += 1
                 # if session is DNA just record admin mins as clinical time will be used elsewhere
                 self.step3_results_df.at[p.id,'Admin Time'] = g.step3_session_admin
+                if g.debug_level >= 2:
+                    print(f'Patient number {p.id} on {self.selected_step3_pathway}' 
+                          f'Session {self.cbt_session_counter} DNA number' 
+                          f'{self.cbt_dna_counter}')
             else:
                 self.step3_results_df.at[p.id, 'IsDNA'] = 0
                 if self.cbt_session_counter == 1:
@@ -1395,6 +1415,10 @@ class Model:
                 self.couns_dna_counter += 1
                 # if session is DNA just record admin mins as clinical time will be used elsewhere
                 self.step3_results_df.at[p.id,'Admin Time'] = g.step3_session_admin
+                if g.debug_level >= 2:
+                    print(f'Patient number {p.id} on {self.selected_step3_pathway} Session'
+                           f'{self.couns_session_counter} DNA number' 
+                           f'{self.couns_dna_counter}')
             else:
                 self.step3_results_df.at[p.id, 'IsDNA'] = 0
                 if self.couns_session_counter == 1:
