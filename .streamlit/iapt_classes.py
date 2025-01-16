@@ -284,8 +284,7 @@ class Model:
         # list to hold weekly Staff statistics
         self.staff_weekly_stats = []
 
-
-        ######### Create our resources which are appt slots for that week #########
+        ######### Create our resources #########
         ########## PwP ##########
         self.ta_res = simpy.Container(
             self.env,capacity=g.ta_resource,
@@ -798,133 +797,144 @@ class Model:
             # Mark referral as accepted and move on to whether it needs a review
             self.asst_results_df.at[p.id, 'Referral Rejected'] = 0
 
+            print(f"Patient {p.id} Accepted")
+
             # Now decide whether the patient has previously been treated and needs to go for review
-            if self.requires_review >= g.referral_review_rate:
-                # set flag to show Patient didn't require review
-                self.asst_results_df.at[p.id, 'Referral Reviewed'] = 0
+            if self.requires_review >= g.referral_review_rate and self.asst_review_reject <= g.review_rej_rate:
+                
+                self.asst_results_df.at[p.id, 'Review Rejected'] = 1
+                
+                if g.debug_level >=2:
+                    print(f"Patient {p.id} Reviewed and Rejected at review")
 
-                self.asst_results_df.at[p.id, 'Review Wait'] = 0
-
-            else:
                 # set flag to show Patient required review
                 self.asst_results_df.at[p.id, 'Referral Reviewed'] = 1
                 # record how long they waited for MDT review between 0 and 2 weeks
                 self.asst_results_df.at[p.id, 'Review Wait'] = random.uniform(0,
                                                                 g.mdt_freq)
-
-                if g.debug_level >=2:
-                    print(f"Patient {p.id} Required Review")
-
-                # decide if they were rejected at Review
-                if self.asst_review_reject <= g.review_rej_rate:
-                    # set flag to show Patient was rejected at review
-                    self.asst_results_df.at[p.id, 'Review Rejected'] = 1
-                    if g.debug_level >=2:
-                        print(f"Patient {p.id} Rejected at review")
-                else:
-                    # otherwise set flag to show they were accepted and go to opt-in
+            
+            # patient doesn't need a review or does and was accepted                                                  g.mdt_freq)
+            else :
+                # patient required a review and was accepted
+                if self.requires_review >= g.referral_review_rate:
+                    # set flag to show Patient required review
+                    self.asst_results_df.at[p.id, 'Referral Reviewed'] = 1
+                    # therefore no review wait
+                    self.asst_results_df.at[p.id, 'Review Wait'] = random.uniform(0,
+                                                                g.mdt_freq)
+                    # set flag to show they were accepted and go to opt-in
                     self.asst_results_df.at[p.id, 'Review Rejected'] = 0
+                    
                     if g.debug_level >=2:
                         print(f"Patient {p.id} Accepted at Review - go to opt-in")
+                    
+                else:
+                    # patient didn't require a review
+                    self.asst_results_df.at[p.id, 'Referral Reviewed'] = 0
+                    # record how long they waited for MDT review between 0 and 2 weeks
+                    self.asst_results_df.at[p.id, 'Review Wait'] = 0
 
-                    # now decide whether the patient opted-in or not
-                    if self.patient_optedin >= g.opt_in_rate:
-                        # set flag to show Patient failed to opt-in
-                        self.asst_results_df.at[p.id, 'Opted In'] = 0
+                    if g.debug_level >=2:
+                        print(f"Patient {p.id} did not require a Review - go to opt-in")
+
+                # now we can carry on and decide whether the patient opted-in or not
+                if self.patient_optedin >= g.opt_in_rate:
+                    # set flag to show Patient failed to opt-in
+                    self.asst_results_df.at[p.id, 'Opted In'] = 0
+                    if g.debug_level >=2:
+                        print(f"Patient {p.id} Failed to Opt In")
+                    # therefore didn't wait to opt-in
+                    self.asst_results_df.at[p.id, 'Opt-in Wait'] = 0
+                    # and didn't queue for TA appt
+                    self.asst_results_df.at[p.id, 'Opt-in Q Time'] = 0
+                else:
+                    # otherwise set flag to show they opted-in
+                    self.asst_results_df.at[p.id, 'Opted In'] = 1
+                    if g.debug_level >=2:
+                        print(f"Patient {p.id} Opted In")
+                    # record how long they took to opt-in, 1 week window
+                    self.asst_results_df.at[p.id, 'Opt-in Wait'
+                                                ] = random.uniform(0,1)
+                    # record lag-time between opting in and TA appointment, max 4 week window
+                    self.asst_results_df.at[p.id, 'Opt-in Q Time'
+                                                ] = random.uniform(0,4)
+
+                    start_q_ta = self.env.now
+
+                    g.number_on_ta_wl += 1
+
+                    # Record where the patient is on the TA WL
+                    self.asst_results_df.at[p.id, "TA WL Posn"] = \
+                                                        g.number_on_ta_wl
+
+                    # Request a Triage resource from the container
+                    with self.ta_res.get(1) as ta_req:
+                        yield ta_req
+
+                    #print(f'Patient {p} started TA')
+
+                    # as each patient reaches this stage take them off TA wl
+                    g.number_on_ta_wl -= 1
+
+                    if g.debug_level >= 2:
+                        print(f'Week {self.env.now}: Patient number {p.id} (added week {p.week_added}) put through TA')
+
+                    end_q_ta = self.env.now
+
+                    # Calculate how long patient queued for TA
+                    self.q_time_ta = end_q_ta - start_q_ta
+                    # Record how long patient queued for TA
+                    self.asst_results_df.at[p.id, 'TA Q Time'] = self.q_time_ta
+
+                    # Now do Telephone Assessment using mean and varying
+                    self.asst_results_df.at[p.id, 'TA Mins'
+                                                    ] = self.random_normal(
+                                                    g.ta_time_mins
+                                                    ,g.std_dev)
+                    # decide if the patient is accepted following TA
+                    if self.ta_accepted >= g.ta_accept_rate:
+                        # Patient was rejected at TA stage
+                        self.asst_results_df.at[p.id, 'TA Outcome'] = 0
                         if g.debug_level >=2:
-                            print(f"Patient {p.id} Failed to Opt In")
-                        # therefore didn't wait to opt-in
-                        self.asst_results_df.at[p.id, 'Opt-in Wait'] = 0
-                        # and didn't queue for TA appt
-                        self.asst_results_df.at[p.id, 'Opt-in Q Time'] = 0
+                            print(f"Patient {p.id} Rejected at TA Stage")
+
+                        # used to decide whether further parts of the pathway are run or not
+                        self.ta_accepted = 0
                     else:
-                        # otherwise set flag to show they opted-in
-                        self.asst_results_df.at[p.id, 'Opted In'] = 1
+                        # Patient was accepted at TA stage
+                        self.asst_results_df.at[p.id, 'TA Outcome'] = 1
                         if g.debug_level >=2:
-                            print(f"Patient {p.id} Opted In")
-                        # record how long they took to opt-in, 1 week window
-                        self.asst_results_df.at[p.id, 'Opt-in Wait'
-                                                    ] = random.uniform(0,1)
-                        # record lag-time between opting in and TA appointment, max 4 week window
-                        self.asst_results_df.at[p.id, 'Opt-in Q Time'
-                                                    ] = random.uniform(0,4)
-
-                        start_q_ta = self.env.now
-
-                        g.number_on_ta_wl += 1
-
-                        # Record where the patient is on the TA WL
-                        self.asst_results_df.at[p.id, "TA WL Posn"] = \
-                                                            g.number_on_ta_wl
-
-                        # Request a Triage resource from the container
-                        with self.ta_res.get(1) as ta_req:
-                            yield ta_req
-
-                        #print(f'Patient {p} started TA')
-
-                        # as each patient reaches this stage take them off TA wl
-                        g.number_on_ta_wl -= 1
-
-                        if g.debug_level >= 2:
-                            print(f'Week {self.env.now}: Patient number {p.id} (added week {p.week_added}) put through TA')
-
-                        end_q_ta = self.env.now
-
-                        # Calculate how long patient queued for TA
-                        self.q_time_ta = end_q_ta - start_q_ta
-                        # Record how long patient queued for TA
-                        self.asst_results_df.at[p.id, 'TA Q Time'] = self.q_time_ta
-
-                        # Now do Telephone Assessment using mean and varying
-                        self.asst_results_df.at[p.id, 'TA Mins'
-                                                        ] = self.random_normal(
-                                                        g.ta_time_mins
-                                                        ,g.std_dev)
-                        # decide if the patient is accepted following TA
-                        if self.ta_accepted >= g.ta_accept_rate:
-                            # Patient was rejected at TA stage
-                            self.asst_results_df.at[p.id, 'TA Outcome'] = 0
-                            if g.debug_level >=2:
-                                print(f"Patient {p.id} Rejected at TA Stage")
+                            print(f"Patient {p.id} Accepted at TA Stage")
 
                             # used to decide whether further parts of the pathway are run or not
-                            self.ta_accepted = 0
-                        else:
-                            # Patient was accepted at TA stage
-                            self.asst_results_df.at[p.id, 'TA Outcome'] = 1
-                            if g.debug_level >=2:
-                                print(f"Patient {p.id} Accepted at TA Stage")
+                        self.ta_accepted = 1
 
-                                # used to decide whether further parts of the pathway are run or not
-                            self.ta_accepted = 1
+                        if self.ta_accepted == 1 :
 
-                            if self.ta_accepted == 1 :
+                            # if patient was accepted decide which pathway the patient has been allocated to
+                            # Select 2 options based on the given probabilities
+                            self.step_options = random.choices(g.step_routes, weights=g.step2_step3_ratio, k=self.referrals_this_week)
 
-                                # if patient was accepted decide which pathway the patient has been allocated to
-                                # Select 2 options based on the given probabilities
-                                self.step_options = random.choices(g.step_routes, weights=g.step2_step3_ratio, k=self.referrals_this_week)
+                            #print(self.selected_step)
+                            self.selected_step = random.choice(self.step_options)
 
-                                #print(self.selected_step)
-                                self.selected_step = random.choice(self.step_options)
-
-                                if self.selected_step == "Step3":
-                                    print(f"Selected step: **{self.selected_step}**")
-                                else:
-                                    print(f"Selected step: {self.selected_step}")
-
-                                self.asst_results_df.at[p.id, 'Treatment Path'] = self.selected_step
-                                p.initial_step = self.selected_step
-
-                                if g.debug_level >=2:
-                                    print(f"-- Pathway Runner Initiated --")
-                                yield self.env.process(self.pathway_runner(p))
-
-                                return self.asst_results_df
-
+                            if self.selected_step == "Step3":
+                                print(f"Selected step: **{self.selected_step}**")
                             else:
-                                # otherwise proceed to next patient
-                                yield self.env.timeout(0)
+                                print(f"Selected step: {self.selected_step}")
+
+                            self.asst_results_df.at[p.id, 'Treatment Path'] = self.selected_step
+                            p.initial_step = self.selected_step
+
+                            if g.debug_level >=2:
+                                print(f"-- Pathway Runner Initiated --")
+                            yield self.env.process(self.pathway_runner(p))
+
+                            return self.asst_results_df
+
+                        else:
+                            # otherwise proceed to next patient
+                            yield self.env.timeout(0)
         # print(self.asst_results_df)
 
     def pathway_runner(self, patient):
@@ -962,12 +972,30 @@ class Model:
         else:
             if g.debug_level >=2:
                 print(f"Patient {p.id} sent to Group store")
-            yield self.env.process(self.step2_group_store(p))
 
-        if g.debug_level >=2:
-                print(f"FUNC PROCESS patient_step2_pathway: Patient {p.id} Initiating {p.step2_path_route} Step 2 Route")
+            # store up patients until there are enough to run a group
+            while len(self.group_store.items) < g.step2_group_size:
+            
+                yield self.group_store.put(p)
 
-     ###### step2 pathway #####
+                self.start_q_group = self.env.now
+
+            if g.debug_level >=2:
+                    print(f'Group is now full, putting {len(self.group_store.items)} through group therapy')
+            
+            # put all the stored patients through group therapy
+            while len(self.group_store.items) > 0:
+
+                p = yield self.group_store.get()
+
+                if g.debug_level >=2:
+                    print(f'Putting Patient {p.id} through Group Therapy, {len(self.group_store.items)} remaining')
+                if g.debug_level >=2:
+                        print(f"FUNC PROCESS patient_step2_pathway: Patient {p.id} Initiating {p.step2_path_route} Step 2 Route")
+
+                yield self.env.process(self.step2_group_process(p))
+            
+    ###### step3 pathway #####
     def patient_step3_pathway(self, patient):
 
         p = patient
@@ -1103,35 +1131,35 @@ class Model:
         yield self.env.timeout(0)
     
     # store up patients until there are enough to run a group
-    def step2_group_store(self,patient):
+    # def step2_group_store(self,patient):
 
-        p = patient
+    #     p = patient
 
-        if g.debug_level >= 2:
-                print(f'Patient number {p.id} sent to Group Store')
+    #     if g.debug_level >= 2:
+    #             print(f'Patient number {p.id} sent to Group Store')
         
-        # create a simpy store to hold the patients until the group has enough members
-        self.group_store = simpy.Store(
-                                        self.env,
-                                        capacity=g.step2_group_size,
-                                        )
-        # store up patients until there are enough to run a group
-        while len(self.group_store.items) < g.step2_group_size:
+    #     # create a simpy store to hold the patients until the group has enough members
+    #     self.group_store = simpy.Store(
+    #                                     self.env,
+    #                                     capacity=g.step2_group_size,
+    #                                     )
+    #     # store up patients until there are enough to run a group
+    #     while len(self.group_store.items) < g.step2_group_size:
         
-            yield self.group_store.put(p)
+    #         yield self.group_store.put(p)
 
-        if g.debug_level >=2:
-                print(f'Group is now full, putting {len(self.group_store.items)} through group therapy')
+    #     if g.debug_level >=2:
+    #             print(f'Group is now full, putting {len(self.group_store.items)} through group therapy')
         
-        # put all the stored patients through group therapy
-        while len(self.group_store.items) > 0:
+    #     # put all the stored patients through group therapy
+    #     while len(self.group_store.items) > 0:
 
-            p = yield self.group_store.get()
+    #         p = yield self.group_store.get()
 
-            if g.debug_level >=2:
-                print(f'Putting Patient {p.id} through Group Therapy, {len(self.group_store.items)} remaining')
+    #         if g.debug_level >=2:
+    #             print(f'Putting Patient {p.id} through Group Therapy, {len(self.group_store.items)} remaining')
 
-            yield self.env.process(self.step2_group_process(p))
+    #         yield self.env.process(self.step2_group_process(p))
     
     def step2_group_process(self,patient):
 
@@ -1143,11 +1171,6 @@ class Model:
         self.group_dna_counter = 0
 
         g.number_on_group_wl += 1
-
-        if g.debug_level >=2:
-            print(f'{p.step2_path_route} RUNNER: Patient {p.id} added to {p.step2_path_route} waiting list')
-
-        start_q_group = self.env.now
 
         # Record where the patient is on the TA WL
         self.step2_results_df.at[p.id, 'Group WL Posn'] = \
@@ -1165,22 +1188,19 @@ class Model:
         # as each patient reaches this stage take them off Group wl
         g.number_on_group_wl -= 1
 
-        if g.debug_level >=2:
-            print(f'{p.step2_path_route} RUNNER: Patient {p.id} removed from {p.step2_path_route} waiting list')
-
         if g.debug_level >= 2:
             print(f'FUNC PROCESS step2_group_process: Week {self.env.now}: Patient number {p.id} (added week {p.week_added}) put through Groups')
 
-        end_q_group = self.env.now
+        self.end_q_group = self.env.now
 
         # Calculate how long patient queued for groups
-        self.q_time_group = end_q_group - start_q_group
+        self.q_time_group = self.end_q_group - self.start_q_group
         # Record how long patient queued for groups
         self.asst_results_df.at[p.id, 'Group Q Time'] = self.q_time_group
 
         while self.group_session_counter < g.step2_group_sessions and self.group_dna_counter < 2:
             if g.debug_level >= 2:
-                print(f'FUNC PROCESS step2_group_process: Week {self.env.now}: Patient number {p.id} (added week {p.week_added}) on Group Session {self.group_session_counter}')
+                print(f'Week {self.env.now+self.group_session_counter}: Patient number {p.id} (added week {p.week_added}) on Group Session {self.group_session_counter}')
 
             # increment the group session counter by 1
             self.group_session_counter += 1
@@ -1192,7 +1212,8 @@ class Model:
 
             # record stats for the patient against this session number
             self.step2_results_df.at[p.id,'Patient ID'] = p
-            self.step2_results_df.at[p.id,'Week Number'] = self.week_number
+            # artificially increase the week number so it reports as consecutive weeks not same week
+            self.step2_results_df.at[p.id,'Week Number'] = self.env.now+self.group_session_counter
             self.step2_results_df.at[p.id,'Run Number'] = self.run_number
             self.step2_results_df.at[p.id,'Treatment Route'
                                                 ] = self.selected_step2_pathway
@@ -1205,8 +1226,8 @@ class Model:
                 self.group_dna_counter += 1
                 self.step2_results_df.at[p.id,'Admin Time'] = g.step2_session_admin
                 if g.debug_level >= 2:
-                    print(f'Patient number {p.id} on {self.selected_step2_pathway}' 
-                          f'Session {self.group_session_counter} DNA number' 
+                    print(f'Patient number {p.id} on {self.selected_step2_pathway} ' 
+                          f'Session {self.group_session_counter} DNA number ' 
                           f'{self.group_dna_counter}')
             
             else:
@@ -1474,6 +1495,15 @@ class Model:
     # The run method starts up the DES entity generators, runs the simulation,
     # and in turns calls anything we need to generate results for the run
     def run(self, print_run_results=True):
+
+        # create a simpy store for this run to hold the patients until the group 
+        # has enough members. This will persist for an entire run has finished 
+        # and patients will be added to it and taken out of it as groups fill up 
+        # and are run
+        self.group_store = simpy.Store(
+                                        self.env,
+                                        capacity=g.step2_group_size
+                                        )
 
         # Start up the week to start processing patients
         self.env.process(self.week_runner(g.sim_duration))
