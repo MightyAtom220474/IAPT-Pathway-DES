@@ -39,7 +39,7 @@ class g:
     step2_session_admin = 15 # number of mins of clinical admin per session
     step2_pwp_period = 16 # max number of weeks PwP delivered over
     step2_group_sessions = 7 # number of group sessions
-    step2_group_size = 12 # size a group needs to be before it can be run
+    step2_group_size = 7 # size a group needs to be before it can be run
     step2_group_session_mins = 240 # minutes allocated to pwp group session
     step2_group_dna_rate = 0.216 # Wellbeing Workshop attendance 78.6%
 
@@ -973,6 +973,8 @@ class Model:
             if g.debug_level >=2:
                 print(f"Patient {p.id} sent to Group store")
 
+            p.step_path_route = self.selected_step2_pathway
+
             # store up patients until there are enough to run a group
             while len(self.group_store.items) < g.step2_group_size:
             
@@ -1130,37 +1132,6 @@ class Model:
 
         yield self.env.timeout(0)
     
-    # store up patients until there are enough to run a group
-    # def step2_group_store(self,patient):
-
-    #     p = patient
-
-    #     if g.debug_level >= 2:
-    #             print(f'Patient number {p.id} sent to Group Store')
-        
-    #     # create a simpy store to hold the patients until the group has enough members
-    #     self.group_store = simpy.Store(
-    #                                     self.env,
-    #                                     capacity=g.step2_group_size,
-    #                                     )
-    #     # store up patients until there are enough to run a group
-    #     while len(self.group_store.items) < g.step2_group_size:
-        
-    #         yield self.group_store.put(p)
-
-    #     if g.debug_level >=2:
-    #             print(f'Group is now full, putting {len(self.group_store.items)} through group therapy')
-        
-    #     # put all the stored patients through group therapy
-    #     while len(self.group_store.items) > 0:
-
-    #         p = yield self.group_store.get()
-
-    #         if g.debug_level >=2:
-    #             print(f'Putting Patient {p.id} through Group Therapy, {len(self.group_store.items)} remaining')
-
-    #         yield self.env.process(self.step2_group_process(p))
-    
     def step2_group_process(self,patient):
 
         p = patient
@@ -1189,7 +1160,7 @@ class Model:
         g.number_on_group_wl -= 1
 
         if g.debug_level >= 2:
-            print(f'FUNC PROCESS step2_group_process: Week {self.env.now}: Patient number {p.id} (added week {p.week_added}) put through Groups')
+            print(f'FUNC PROCESS step2_group_process: Week {self.env.now}: Patient number {p.id} (added week {p.week_added}) put through {p.step2_path_route}')
 
         self.end_q_group = self.env.now
 
@@ -1200,7 +1171,7 @@ class Model:
 
         while self.group_session_counter < g.step2_group_sessions and self.group_dna_counter < 2:
             if g.debug_level >= 2:
-                print(f'Week {self.env.now+self.group_session_counter}: Patient number {p.id} (added week {p.week_added}) on Group Session {self.group_session_counter}')
+                print(f'Week {self.env.now+self.group_session_counter}: Patient number {p.id} (added week {p.week_added}) on {p.step2_path_route} Session {self.group_session_counter}')
 
             # increment the group session counter by 1
             self.group_session_counter += 1
@@ -1216,7 +1187,7 @@ class Model:
             self.step2_results_df.at[p.id,'Week Number'] = self.env.now+self.group_session_counter
             self.step2_results_df.at[p.id,'Run Number'] = self.run_number
             self.step2_results_df.at[p.id,'Treatment Route'
-                                                ] = self.selected_step2_pathway
+                                                ] = p.step2_path_route
 
             # decide whether the session was DNA'd
             self.dna_group_session = random.uniform(0,1)
@@ -1226,7 +1197,7 @@ class Model:
                 self.group_dna_counter += 1
                 self.step2_results_df.at[p.id,'Admin Time'] = g.step2_session_admin
                 if g.debug_level >= 2:
-                    print(f'Patient number {p.id} on {self.selected_step2_pathway} ' 
+                    print(f'Patient number {p.id} on {p.step2_path_route} ' 
                           f'Session {self.group_session_counter} DNA number ' 
                           f'{self.group_dna_counter}')
             
@@ -1239,11 +1210,11 @@ class Model:
         if self.group_dna_counter >= 2:
             self.step2_results_df.at[p.id, 'IsDropOut'] = 1
             if g.debug_level >= 2:
-                print(f'Patient number {p.id} dropped out of {self.selected_step2_pathway} treatment')
+                print(f'Patient number {p.id} dropped out of {p.step2_path_route} treatment')
         else:
             self.step2_results_df.at[p.id, 'IsDropOut'] = 0
             if g.debug_level >= 2:
-                print(f'Patient number {p.id} completed {self.selected_step2_pathway} treatment')
+                print(f'Patient number {p.id} completed {p.step2_path_route} treatment')
         # remove from Step 2 Caseload as have either completed treatment or dropped out
         self.step2_results_df.at[p.id, 'Caseload'] = 0
 
