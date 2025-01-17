@@ -31,7 +31,7 @@ class g:
     # Step 2
     step2_ratio = 0.85 # proportion of patients that go onto Step2 vs Step3
     step2_routes = ['PwP','Group'] # possible Step2 routes
-    step2_path_ratios = [0.94,0.06] # Step2 proportion for each route
+    step2_path_ratios = [0.8,0.2] #[0.94,0.06] # Step2 proportion for each route
     step2_pwp_sessions = 6 # number of PwP sessions at Step2
     step2_pwp_dna_rate = 0.15 # ##### assume 15% DNA rate for PwP
     step2_pwp_1st_mins = 45 # minutes allocated for 1st pwp session
@@ -215,6 +215,7 @@ class Model:
         self.step2_results_df['IsDNA'] = [0]
         self.step2_results_df['IsDropout'] = [0]
         self.step2_results_df['Caseload'] = [0]
+        self.step2_results_df['IsStepDown'] = [0] # was the patent stepped down
 
         # Indexing
         self.step2_results_df.set_index("Patient ID", inplace=True)
@@ -238,6 +239,7 @@ class Model:
         self.step3_results_df['IsDNA'] = [0]
         self.step3_results_df['IsDropout'] = [0]
         self.step3_results_df['Caseload'] = [0]
+        self.step3_results_df['IsStepDown'] = [0] # was the patent stepped down
 
         # Indexing
         self.step3_results_df.set_index("Patient ID", inplace=True)
@@ -941,14 +943,11 @@ class Model:
 
         p = patient
 
-        if p.initial_step == 'Step3':
-            print(f'PATHWAY RUNNER: Patient {p.id} sent down **{p.initial_step}** pathway')
-        else:
-            print(f'PATHWAY RUNNER: Patient {p.id} sent down {p.initial_step} pathway')
-
         if p.initial_step == 'Step2':
+            print(f'PATHWAY RUNNER: Patient {p.id} sent down **{p.initial_step}** pathway')
             yield self.env.process(self.patient_step2_pathway(p))
         else:
+            print(f'PATHWAY RUNNER: Patient {p.id} sent down {p.initial_step} pathway')
             yield self.env.process(self.patient_step3_pathway(p))
 
     ###### step2 pathway #####
@@ -961,41 +960,40 @@ class Model:
                                                 k=self.referrals_this_week)
 
         self.selected_step2_pathway = random.choice(self.step2_pathway_options)
+        
         p.step2_path_route = self.selected_step2_pathway
 
         self.step2_results_df.at[p.id, 'Step2 Route'
-                                            ] = self.selected_step2_pathway
+                                            ] = p.step2_path_route
 
         # push the patient down the chosen step2 route
-        if p.step2_path_route == 'PwP':
+        if self.selected_step2_pathway == 'PwP':
             yield self.env.process(self.step2_pwp_process(p))
         else:
             if g.debug_level >=2:
                 print(f"Patient {p.id} sent to Group store")
-
-            p.step_path_route = self.selected_step2_pathway
-
-            # store up patients until there are enough to run a group
-            while len(self.group_store.items) < g.step2_group_size:
             
-                yield self.group_store.put(p)
+                self.group_store.put(p)
+
+                if g.debug_level >=2:
+                    print(f'Group store contains {len(self.group_store.items)} of possible {g.step2_group_size}')
 
                 self.start_q_group = self.env.now
 
-            if g.debug_level >=2:
-                    print(f'Group is now full, putting {len(self.group_store.items)} through group therapy')
-            
-            # put all the stored patients through group therapy
-            while len(self.group_store.items) > 0:
+                if len(self.group_store.items) == 7:
+                    if g.debug_level >=2:
+                        print(f'Group is now full, putting {len(self.group_store.items)} through group therapy')
+                    # put all the stored patients through group therapy
+                    while len(self.group_store.items) > 0:
 
-                p = yield self.group_store.get()
+                        p = yield self.group_store.get()
 
-                if g.debug_level >=2:
-                    print(f'Putting Patient {p.id} through Group Therapy, {len(self.group_store.items)} remaining')
-                if g.debug_level >=2:
-                        print(f"FUNC PROCESS patient_step2_pathway: Patient {p.id} Initiating {p.step2_path_route} Step 2 Route")
+                        if g.debug_level >=2:
+                            print(f'Putting Patient {p.id} through Group Therapy, {len(self.group_store.items)} remaining')
+                        if g.debug_level >=2:
+                                print(f"FUNC PROCESS patient_step2_pathway: Patient {p.id} Initiating {p.step2_path_route} Step 2 Route")
 
-                yield self.env.process(self.step2_group_process(p))
+                        yield self.env.process(self.step2_group_process(p))
             
     ###### step3 pathway #####
     def patient_step3_pathway(self, patient):
@@ -1011,10 +1009,10 @@ class Model:
         p.step3_path_route = self.selected_step3_pathway
 
         self.step3_results_df.at[p.id, 'Step3 Route'
-                                            ] = self.selected_step3_pathway
+                                            ] = p.step3_path_route
 
         # push the patient down the chosen step2 route
-        if p.step3_path_route == 'CBT':
+        if self.selected_step3_pathway == 'CBT':
             yield self.env.process(self.step3_cbt_process(p))
         else:
             yield self.env.process(self.step3_couns_process(p))
@@ -1058,7 +1056,7 @@ class Model:
             print(f'{p.step2_path_route} RUNNER: Patient {p.id} removed from {p.step2_path_route} waiting list')
 
         if g.debug_level >= 2:
-            print(f'FUNC PROCESS step2_pwp_process: Week {self.env.now}: Patient number {p.id} (added week {p.week_added}) put through PwP')
+            print(f'FUNC PROCESS step2_pwp_process: Week {self.env.now}: Patient number {p.id} (added week {p.week_added}) put through {p.step2_path_route}')
 
         end_q_pwp = self.env.now
 
@@ -1070,7 +1068,7 @@ class Model:
         while self.pwp_session_counter < g.step2_pwp_sessions and self.pwp_dna_counter < 2:
 
             if g.debug_level >= 2:
-                print(f'FUNC PROCESS step2_pwp_process: Week {self.env.now}: Patient number {p.id} (added week {p.week_added}) on PwP Session {self.pwp_session_counter}')
+                print(f'FUNC PROCESS step2_pwp_process: Week {self.env.now}: Patient number {p.id} (added week {p.week_added}) on {p.step2_path_route} Session {self.pwp_session_counter}')
 
             # increment the pwp session counter by 1
             self.pwp_session_counter += 1
@@ -1084,7 +1082,7 @@ class Model:
             self.step2_results_df.at[p.id,'Week Number'] = self.week_number + self.pwp_session_counter
             self.step2_results_df.at[p.id,'Run Number'] = self.run_number
             self.step2_results_df.at[p.id, 'Treatment Route'
-                                                ] = self.selected_step2_pathway
+                                                ] = p.step2_path_route
 
                 # decide whether the session was DNA'd
             self.dna_pwp_session = random.uniform(0,1)
@@ -1095,8 +1093,8 @@ class Model:
                 # if session is DNA just record admin mins as clinical time will be used elsewhere
                 self.step2_results_df.at[p.id,'Admin Time'] = g.step2_session_admin
                 if g.debug_level >= 2:
-                    print(f'Patient number {p.id} on {self.selected_step2_pathway} Session'
-                           f'{self.pwp_session_counter} DNA number' 
+                    print(f'Patient number {p.id} on {p.step2_path_route} Session '
+                           f'{self.pwp_session_counter} DNA number ' 
                            f'{self.pwp_dna_counter}')
                 
             else:
@@ -1114,11 +1112,11 @@ class Model:
         if self.pwp_dna_counter >= 2:
             self.step2_results_df.at[p.id, 'IsDropOut'] = 1
             if g.debug_level >= 2:
-                print(f'Patient number {p.id} dropped out of {self.selected_step2_pathway} treatment')
+                print(f'Patient number {p.id} dropped out of {p.step2_path_route} treatment')
         else:
             self.step2_results_df.at[p.id, 'IsDropOut'] = 0
             if g.debug_level >= 2:
-                print(f'Patient number {p.id} completed {self.selected_step2_pathway} treatment')
+                print(f'Patient number {p.id} completed {p.step2_path_route} treatment')
 
         # remove from Step 2 Caseload as have either completed treatment or dropped out
         self.step2_results_df.at[p.id, 'Caseload'] = 0
@@ -1263,7 +1261,7 @@ class Model:
             print(f'{p.step3_path_route} RUNNER: Patient {p.id} removed from {p.step3_path_route} waiting list')
 
         if g.debug_level >= 2:
-            print(f'FUNC PROCESS step3_cbt_process: Week {self.env.now}: Patient number {p.id} (added week {p.week_added}) put through CBT')
+            print(f'FUNC PROCESS step3_cbt_process: Week {self.env.now}: Patient number {p.id} (added week {p.week_added}) put through {p.step3_path_route}')
 
         end_q_cbt = self.env.now
 
@@ -1275,7 +1273,7 @@ class Model:
         while self.cbt_session_counter < g.step3_cbt_sessions and self.cbt_dna_counter < 2:
 
             if g.debug_level >= 2:
-                print(f'FUNC PROCESS step3_cbt_process: Week {self.env.now}: Patient number {p.id} (added week {p.week_added}) on CBT Session {self.cbt_session_counter}')
+                print(f'FUNC PROCESS step3_cbt_process: Week {self.env.now}: Patient number {p.id} (added week {p.week_added}) on {p.step3_path_route} Session {self.cbt_session_counter}')
 
             # increment the cbt session counter by 1
             self.cbt_session_counter += 1
@@ -1288,7 +1286,7 @@ class Model:
             self.step3_results_df.at[p.id,'Week Number'] = self.week_number
             self.step3_results_df.at[p.id,'Run Number'] = self.run_number
             self.step3_results_df.at[p.id, 'Treatment Route'
-                                                ] = self.selected_step3_pathway
+                                                ] = p.step3_path_route
 
             # decide whether the session was DNA'd
             self.dna_cbt_session = random.uniform(0,1)
@@ -1299,8 +1297,8 @@ class Model:
                 # if session is DNA just record admin mins as clinical time will be used elsewhere
                 self.step3_results_df.at[p.id,'Admin Time'] = g.step3_session_admin
                 if g.debug_level >= 2:
-                    print(f'Patient number {p.id} on {self.selected_step3_pathway}' 
-                          f'Session {self.cbt_session_counter} DNA number' 
+                    print(f'Patient number {p.id} on {p.step3_path_route}' 
+                          f' Session {self.cbt_session_counter} DNA number ' 
                           f'{self.cbt_dna_counter}')
             else:
                 self.step3_results_df.at[p.id, 'IsDNA'] = 0
@@ -1317,11 +1315,11 @@ class Model:
         if self.cbt_dna_counter >= 2:
             self.step3_results_df.at[p.id, 'IsDropOut'] = 1
             if g.debug_level >= 2:
-                print(f'Patient number {p.id} dropped out of {self.selected_step3_pathway} treatment')
+                print(f'Patient number {p.id} dropped out of {p.step3_path_route} treatment')
         else:
             self.step3_results_df.at[p.id, 'IsDropOut'] = 0
             if g.debug_level >= 2:
-                print(f'Patient number {p.id} completed {self.selected_step3_pathway} treatment')
+                print(f'Patient number {p.id} completed {p.step3_path_route} treatment')
 
         # remove from Step 3 Caseload as have either completed treatment or dropped out
         self.step3_results_df.at[p.id, 'Caseload'] = 0
@@ -1371,7 +1369,7 @@ class Model:
             print(f'{p.step3_path_route} RUNNER: Patient {p.id} removed from {p.step3_path_route} waiting list')
 
         if g.debug_level >= 2:
-            print(f'FUNC PROCESS step3_couns_process: Week {self.env.now}: Patient number {p.id} (added week {p.week_added}) put through Couns')
+            print(f'FUNC PROCESS step3_couns_process: Week {self.env.now}: Patient number {p.id} (added week {p.week_added}) put through {p.step3_path_route}')
 
         end_q_couns = self.env.now
 
@@ -1383,7 +1381,7 @@ class Model:
         while self.couns_session_counter < g.step3_couns_sessions and self.couns_dna_counter < 2:
 
             if g.debug_level >= 2:
-                print(f'FUNC PROCESS step3_couns_process: Week {self.env.now}: Patient number {p.id} (added week {p.week_added}) on Couns Session {self.couns_session_counter}')
+                print(f'FUNC PROCESS step3_couns_process: Week {self.env.now}: Patient number {p.id} (added week {p.week_added}) on {p.step3_path_route} Session {self.couns_session_counter}')
             # increment the group session counter by 1
             self.couns_session_counter += 1
 
@@ -1397,7 +1395,7 @@ class Model:
             self.step3_results_df.at[p.id,'Week Number'] = self.week_number
             self.step3_results_df.at[p.id,'Run Number'] = self.run_number
             self.step3_results_df.at[p.id, 'Treatment Route'
-                                                ] = self.selected_step3_pathway
+                                                ] = p.step3_path_route
 
             # decide whether the session was DNA'd
             self.dna_couns_session = random.uniform(0,1)
@@ -1408,7 +1406,7 @@ class Model:
                 # if session is DNA just record admin mins as clinical time will be used elsewhere
                 self.step3_results_df.at[p.id,'Admin Time'] = g.step3_session_admin
                 if g.debug_level >= 2:
-                    print(f'Patient number {p.id} on {self.selected_step3_pathway} Session'
+                    print(f'Patient number {p.id} on {p.step3_path_route} Session'
                            f'{self.couns_session_counter} DNA number' 
                            f'{self.couns_dna_counter}')
             else:
@@ -1426,11 +1424,11 @@ class Model:
         if self.couns_dna_counter >= 2:
             self.step3_results_df.at[p.id, 'IsDropOut'] = 1
             if g.debug_level >= 2:
-                print(f'Patient number {p.id} dropped out of {self.selected_step3_pathway} treatment')
+                print(f'Patient number {p.id} dropped out of {p.step3_path_route} treatment')
         else:
             self.step3_results_df.at[p.id, 'IsDropOut'] = 0
             if g.debug_level >= 2:
-                print(f'Patient number {p.id} completed {self.selected_step3_pathway} treatment')
+                print(f'Patient number {p.id} completed {p.step3_path_route} treatment')
         # remove from Step 2 Caseload as have either completed treatment or dropped out
         self.step3_results_df.at[p.id, 'Caseload'] = 0
 
