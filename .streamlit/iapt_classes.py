@@ -46,9 +46,7 @@ class g:
     # Step Moves
     step2_step3_ratio = [0.85,0.15]
     step_routes = ['Step2','Step3']
-    step_up_rate = 0.05 # proportion of Step2 that get stepped up
-    step_down_rate = 0.003 # proportion of Step3 that get stepped down
-
+    
     # Step 3
     step3_ratio = 0.15 # proportion of patients that go onto Step3 vs Step2
     step3_routes =['DepC','CBT'] # full pathway options = ['PfCBT','Group','CBT','EMDR','DepC','DIT','IPT','CDEP']
