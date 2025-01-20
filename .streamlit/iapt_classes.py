@@ -46,6 +46,8 @@ class g:
     # Step Moves
     step2_step3_ratio = [0.85,0.15]
     step_routes = ['Step2','Step3']
+    step_up_rate = 0.01 # proportion of Step2 that get stepped up = 0.3% but rounded up to 1%
+    step_down_rate = 0.12 # proportion of Step3 that get stepped down = 11.86%
     
     # Step 3
     step3_ratio = 0.15 # proportion of patients that go onto Step3 vs Step2
@@ -213,7 +215,7 @@ class Model:
         self.step2_results_df['IsDNA'] = [0]
         self.step2_results_df['IsDropout'] = [0]
         self.step2_results_df['Caseload'] = [0]
-        self.step2_results_df['IsStepDown'] = [0] # was the patent stepped down
+        self.step2_results_df['IsStepUp'] = [0] # was the patent stepped down
 
         # Indexing
         self.step2_results_df.set_index("Patient ID", inplace=True)
@@ -1082,7 +1084,21 @@ class Model:
             self.step2_results_df.at[p.id, 'Treatment Route'
                                                 ] = p.step2_path_route
 
-                # decide whether the session was DNA'd
+            
+
+            # decide whether the patient was stepped up 
+            self.step_patient_up = random.uniform(0,1)
+            # is the patient approaching the end of treatment and do they need to be stepped up?
+            if self.pwp_session_counter >= g.step2_pwp_sessions-1 and self.step_patient_up <= g.step_up_rate:
+                
+                self.step2_results_df['IsStepUp'] = 1
+                if g.debug_level >= 2:
+                    print(f'### STEPPED UP ###: Patient {p.id} has been stepped up, running Step3 route selector')
+                yield self.env.process(self.patient_step3_pathway(p))
+            else:
+                self.step2_results_df['IsStepUp'] = 0
+
+            # decide whether the session was DNA'd
             self.dna_pwp_session = random.uniform(0,1)
 
             if self.dna_pwp_session <= g.step2_pwp_dna_rate:
@@ -1105,6 +1121,8 @@ class Model:
                     # otherwise use follow-up session time
                     self.step2_results_df.at[p.id,'Session Time'] = g.step2_pwp_fup_mins
                     self.step2_results_df.at[p.id,'Admin Time'] = g.step2_session_admin
+
+
 
         # record whether patient dropped out before completing pwP
         if self.pwp_dna_counter >= 2:
@@ -1286,28 +1304,41 @@ class Model:
             self.step3_results_df.at[p.id, 'Treatment Route'
                                                 ] = p.step3_path_route
 
-            # decide whether the session was DNA'd
-            self.dna_cbt_session = random.uniform(0,1)
-
-            if self.dna_cbt_session <= g.step3_cbt_dna_rate:
-                self.step3_results_df.at[p.id, 'IsDNA'] = 1
-                self.cbt_dna_counter += 1
-                # if session is DNA just record admin mins as clinical time will be used elsewhere
-                self.step3_results_df.at[p.id,'Admin Time'] = g.step3_session_admin
+            # decide whether the patient was stepped down
+            self.step_patient_down = random.uniform(0,1)
+            # is the patient approaching the end of treatment and do they need to be stepped down?
+            if self.cbt_session_counter >= g.step3_cbt_sessions-1 and self.step_patient_down <= g.step_down_rate:
+                
+                self.step3_results_df['IsStepDown'] = 1
+                
                 if g.debug_level >= 2:
-                    print(f'Patient number {p.id} on {p.step3_path_route}' 
-                          f' Session {self.cbt_session_counter} DNA number ' 
-                          f'{self.cbt_dna_counter}')
+                    print(f'### STEPPED DOWN ###: Patient {p.id} has been stepped down, running Step2 route selector')
+                yield self.env.process(self.patient_step2_pathway(p))
             else:
-                self.step3_results_df.at[p.id, 'IsDNA'] = 0
-                if self.cbt_session_counter == 1:
-                    # if it's the 1st session use 1st session time
-                    self.step3_results_df.at[p.id,'Session Time'] = g.step3_cbt_1st_mins
+                self.step2_results_df['IsStepDown'] = 0
+
+                # decide whether the session was DNA'd
+                self.dna_cbt_session = random.uniform(0,1)
+
+                if self.dna_cbt_session <= g.step3_cbt_dna_rate:
+                    self.step3_results_df.at[p.id, 'IsDNA'] = 1
+                    self.cbt_dna_counter += 1
+                    # if session is DNA just record admin mins as clinical time will be used elsewhere
                     self.step3_results_df.at[p.id,'Admin Time'] = g.step3_session_admin
+                    if g.debug_level >= 2:
+                        print(f'Patient number {p.id} on {p.step3_path_route}' 
+                            f' Session {self.cbt_session_counter} DNA number ' 
+                            f'{self.cbt_dna_counter}')
                 else:
-                    # otherwise use follow-up session time
-                    self.step3_results_df.at[p.id,'Session Time'] = g.step3_cbt_fup_mins
-                    self.step3_results_df.at[p.id,'Admin Time'] = g.step3_session_admin
+                    self.step3_results_df.at[p.id, 'IsDNA'] = 0
+                    if self.cbt_session_counter == 1:
+                        # if it's the 1st session use 1st session time
+                        self.step3_results_df.at[p.id,'Session Time'] = g.step3_cbt_1st_mins
+                        self.step3_results_df.at[p.id,'Admin Time'] = g.step3_session_admin
+                    else:
+                        # otherwise use follow-up session time
+                        self.step3_results_df.at[p.id,'Session Time'] = g.step3_cbt_fup_mins
+                        self.step3_results_df.at[p.id,'Admin Time'] = g.step3_session_admin
 
         # record whether patient dropped out before completing Wellbeing Workshop
         if self.cbt_dna_counter >= 2:
@@ -1395,28 +1426,54 @@ class Model:
             self.step3_results_df.at[p.id, 'Treatment Route'
                                                 ] = p.step3_path_route
 
-            # decide whether the session was DNA'd
-            self.dna_couns_session = random.uniform(0,1)
-
-            if self.dna_couns_session <= g.step3_couns_dna_rate:
-                self.step3_results_df.at[p.id, 'IsDNA'] = 1
-                self.couns_dna_counter += 1
-                # if session is DNA just record admin mins as clinical time will be used elsewhere
-                self.step3_results_df.at[p.id,'Admin Time'] = g.step3_session_admin
+            # decide whether the patient was stepped down
+            self.step_patient_down = random.uniform(0,1)
+            # is the patient approaching the end of treatment and do they need to be stepped down?
+            if self.couns_session_counter >= g.step3_couns_sessions-2 and self.step_patient_down <= g.step_down_rate:
+                
+                self.step3_results_df['IsStepDown'] = 1
+                
                 if g.debug_level >= 2:
-                    print(f'Patient number {p.id} on {p.step3_path_route} Session'
-                           f'{self.couns_session_counter} DNA number' 
-                           f'{self.couns_dna_counter}')
+                    print(f'### STEPPED DOWN ###: Patient {p.id} has been stepped down, running Step2 route selector')
+                self.step3_results_df.at[p.id, 'IsDropOut'] = 0
+                if g.debug_level >= 2:
+                    print(f'Patient number {p.id} completed {p.step3_path_route} treatment')
+                # remove from Step 2 Caseload as have either completed treatment or dropped out
+                self.step3_results_df.at[p.id, 'Caseload'] = 0
+
+                # reset counters for couns sessions
+                self.couns_session_counter = 0
+                self.couns_dna_counter = 0
+
+                # add to caseload
+                g.number_on_couns_cl -=1
+                
+                yield self.env.process(self.patient_step2_pathway(p))
             else:
-                self.step3_results_df.at[p.id, 'IsDNA'] = 0
-                if self.couns_session_counter == 1:
-                    # if it's the 1st session use 1st session time
-                    self.step3_results_df.at[p.id,'Session Time'] = g.step3_couns_1st_mins
+                self.step2_results_df['IsStepDown'] = 0
+
+                # decide whether the session was DNA'd
+                self.dna_couns_session = random.uniform(0,1)
+
+                if self.dna_couns_session <= g.step3_couns_dna_rate:
+                    self.step3_results_df.at[p.id, 'IsDNA'] = 1
+                    self.couns_dna_counter += 1
+                    # if session is DNA just record admin mins as clinical time will be used elsewhere
                     self.step3_results_df.at[p.id,'Admin Time'] = g.step3_session_admin
+                    if g.debug_level >= 2:
+                        print(f'Patient number {p.id} on {p.step3_path_route} Session'
+                            f'{self.couns_session_counter} DNA number' 
+                            f'{self.couns_dna_counter}')
                 else:
-                    # otherwise use follow-up session time
-                    self.step3_results_df.at[p.id,'Session Time'] = g.step3_couns_fup_mins
-                    self.step3_results_df.at[p.id,'Admin Time'] = g.step3_session_admin
+                    self.step3_results_df.at[p.id, 'IsDNA'] = 0
+                    if self.couns_session_counter == 1:
+                        # if it's the 1st session use 1st session time
+                        self.step3_results_df.at[p.id,'Session Time'] = g.step3_couns_1st_mins
+                        self.step3_results_df.at[p.id,'Admin Time'] = g.step3_session_admin
+                    else:
+                        # otherwise use follow-up session time
+                        self.step3_results_df.at[p.id,'Session Time'] = g.step3_couns_fup_mins
+                        self.step3_results_df.at[p.id,'Admin Time'] = g.step3_session_admin
 
         # record whether patient dropped out before completing Wellbeing Workshop
         if self.couns_dna_counter >= 2:
