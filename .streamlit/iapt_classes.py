@@ -72,17 +72,29 @@ class g:
     cpd_time = 225 # half day per month CPD
     
     # Job Plans
-    number_staff_cbt = 9.0
-    number_staff_couns = 10.0
-    number_staff_pwp = 10.0
+    number_staff_cbt = 9
+    number_staff_couns = 10
+    number_staff_pwp = 10
     hours_avail_cbt = 22.0
     hours_avail_couns = 22.0
     hours_avail_pwp = 21.0
     ta_resource = number_staff_pwp * 3 # job plan = 3 TA per week per PwP
-    pwp_resource = number_staff_pwp * 12 # job plan = 3 x 1st + 9 x FUP per week per PwP
-    group_resource = number_staff_pwp * 12 #  job plan = 1 group per week per PwP, assume 12 per group
-    cbt_resource = number_staff_cbt * 22 # job plan = 2 x 1st + 20 X FUP per cbt per week
-    couns_resource = number_staff_couns * 22 # job plan = 2 x 1st + 20 X FUP per cbt per week
+    pwp_resource = number_staff_pwp # starting point for PwP resources
+    pwp_res_dict = {}
+    pwp_caseload = 30
+    pwp_id = 0 # unique ID for PwP resources
+    pwp_avail = number_staff_pwp # used to check whether a PwP is available
+    group_resource = number_staff_pwp #  job plan = 1 group per week per PwP, assume 12 per group
+    cbt_resource = number_staff_cbt # job plan = 2 x 1st + 20 X FUP per cbt per week
+    cbt_res_dict = {}
+    cbt_caseload = 25
+    cbt_id = 0 # unique ID for CBT resources
+    cbt_avail = number_staff_cbt # used to check whether a PwP caseload slot is available
+    couns_resource = number_staff_couns # job plan = 2 x 1st + 20 X FUP per cbt per week
+    couns_res_dict = {}
+    couns_caseload = 25
+    couns_id = 0 # unique ID for Couns resources
+    couns_avail = number_staff_couns # used to check whether a Couns is available
 
     # Simulation
     sim_duration = 52
@@ -131,6 +143,7 @@ class Patient:
         self.initial_step = [] # string, whether they were step 2 or step 3
 
         # Step2
+        self.step2_resource_id = [] # identifier for the staff member allocated to their treatment
         self.step2_path_route = [] # string, which Step2 path they took
         self.step2_place_on_wl = 0 # position they are on Step2 waiting list
         self.step2_session_count = 0 # counter for no. of sessions have had
@@ -138,6 +151,7 @@ class Patient:
         self.step2_week_number = 0 # counter for which week number they are on
 
         # Step3
+        self.step3_resource_id = [] # identifier for the staff member allocated to their treatment
         self.step3_path_route = [] # string, which Step2 path they took
         self.step3_place_on_wl = 0 # position they are on Step2 waiting list
         self.step3_session_count = 0 # counter for no. of sessions have had
@@ -292,31 +306,31 @@ class Model:
             self.env,capacity=g.ta_resource,
             init=g.ta_resource
             )
-
-        self.pwp_res = simpy.Container(
-            self.env,
-            capacity=g.pwp_resource,
-            init=g.pwp_resource
-            )
+        ######### removed as these resources going to be created on the fly ##########
+        # self.pwp_res = simpy.Container(
+        #     self.env,
+        #     capacity=g.pwp_resource,
+        #     init=g.pwp_resource
+        #     )
 
         self.group_res = simpy.Container(
             self.env,
             capacity=g.group_resource,
             init=g.group_resource
             )
-        ########## CBT ##########
-        self.cbt_res = simpy.Container(
-            self.env,
-            capacity=g.cbt_resource,
-            init=g.cbt_resource
-            )
+        # ########## CBT ##########
+        # self.cbt_res = simpy.Container(
+        #     self.env,
+        #     capacity=g.cbt_resource,
+        #     init=g.cbt_resource
+        #     )
 
-        ########## Counsellor ##########
-        self.couns_res = simpy.Container(
-            self.env,
-            capacity=g.couns_resource,
-            init=g.couns_resource
-            )
+        # ########## Counsellor ##########
+        # self.couns_res = simpy.Container(
+        #     self.env,
+        #     capacity=g.couns_resource,
+        #     init=g.couns_resource
+        #     )
 
         while self.week_number <= number_of_weeks:
             if g.debug_level >= 1:
@@ -487,25 +501,25 @@ class Model:
                     }
                     )
 
-            ######### replenish resources ##########
+            ######### replenish TA resources ##########
             if g.debug_level >= 2:
                 print("")
-                print("== Replenishing Resources==")
+                print("== Replenishing TA Resource==")
 
-            ##### PwP #####
+            ##### TA #####
             ta_amount_to_fill = g.ta_resource - self.ta_res.level
-            pwp_amount_to_fill = g.pwp_resource - self.pwp_res.level
+            # pwp_amount_to_fill = g.pwp_resource - self.pwp_res.level
             group_amount_to_fill = g.group_resource - self.group_res.level
-            ##### CBT #####
-            cbt_amount_to_fill = g.cbt_resource - self.cbt_res.level
-            ##### Counsellor #####
-            couns_amount_to_fill = g.couns_resource - self.couns_res.level
+            # ##### CBT #####
+            # cbt_amount_to_fill = g.cbt_resource - self.cbt_res.level
+            # ##### Counsellor #####
+            # couns_amount_to_fill = g.couns_resource - self.couns_res.level
 
-            if g.debug_level >= 2:
-                if all([ta_amount_to_fill == 0, pwp_amount_to_fill == 0, group_amount_to_fill == 0,
-                        cbt_amount_to_fill == 0, couns_amount_to_fill == 0]):
-                    print("All resources already full - no filling required")
-                    print("")
+            # if g.debug_level >= 2:
+            #     if all([ta_amount_to_fill == 0, pwp_amount_to_fill == 0, group_amount_to_fill == 0,
+            #             cbt_amount_to_fill == 0, couns_amount_to_fill == 0]):
+            #         print("All resources already full - no filling required")
+            #         print("")
 
             if ta_amount_to_fill > 0:
                 if g.debug_level >= 2:
@@ -517,15 +531,15 @@ class Model:
                 if g.debug_level >= 2:
                     print(f"New TA Level: {self.ta_res.level}")
 
-            if pwp_amount_to_fill > 0:
-                if g.debug_level >= 2:
-                    print(f"PwP Level: {self.pwp_res.level}")
-                    print(f"Putting in {pwp_amount_to_fill}")
+            # if pwp_amount_to_fill > 0:
+            #     if g.debug_level >= 2:
+            #         print(f"PwP Level: {self.pwp_res.level}")
+            #         print(f"Putting in {pwp_amount_to_fill}")
 
-                self.pwp_res.put(pwp_amount_to_fill)
+            #     self.pwp_res.put(pwp_amount_to_fill)
 
-                if g.debug_level >= 2:
-                    print(f"New PwP Level: {self.pwp_res.level}")
+            #     if g.debug_level >= 2:
+            #         print(f"New PwP Level: {self.pwp_res.level}")
 
             if group_amount_to_fill > 0:
                 if g.debug_level >= 2:
@@ -537,29 +551,29 @@ class Model:
                 if g.debug_level >= 2:
                     print(f"New Group Level: {self.group_res.level}")
 
-            ##### CBT #####
+            # ##### CBT #####
 
-            if cbt_amount_to_fill > 0:
-                if g.debug_level >= 2:
-                    print(f"CBT Level: {self.cbt_res.level}")
-                    print(f"Putting in {cbt_amount_to_fill}")
+            # if cbt_amount_to_fill > 0:
+            #     if g.debug_level >= 2:
+            #         print(f"CBT Level: {self.cbt_res.level}")
+            #         print(f"Putting in {cbt_amount_to_fill}")
 
-                self.cbt_res.put(cbt_amount_to_fill)
+            #     self.cbt_res.put(cbt_amount_to_fill)
 
-                if g.debug_level >= 2:
-                    print(f"New CBT Level: {self.cbt_res.level}")
+            #     if g.debug_level >= 2:
+            #         print(f"New CBT Level: {self.cbt_res.level}")
 
-            ##### Counsellor #####
+            # ##### Counsellor #####
 
-            if couns_amount_to_fill > 0:
-                if g.debug_level >= 2:
-                    print(f"Couns Level: {self.couns_res.level}")
-                    print(f"Putting in {couns_amount_to_fill}")
+            # if couns_amount_to_fill > 0:
+            #     if g.debug_level >= 2:
+            #         print(f"Couns Level: {self.couns_res.level}")
+            #         print(f"Putting in {couns_amount_to_fill}")
 
-                self.couns_res.put(couns_amount_to_fill)
+            #     self.couns_res.put(couns_amount_to_fill)
 
-                if g.debug_level >= 2:
-                    print(f"New Couns Level: {self.couns_res.level}")
+            #     if g.debug_level >= 2:
+            #         print(f"New Couns Level: {self.couns_res.level}")
 
             # Wait one unit of simulation time (1 week)
             yield(self.env.timeout(1))
@@ -625,7 +639,51 @@ class Model:
 
         yield(self.env.timeout(1))
 
-    ###### assessment part of the pathway #####
+    # this function builds staff resources containing the number of slots on the caseload
+    def resource_builder(self):
+
+        ##### PwP #####
+        self.p_type = 'PwP'
+        # dictionary to hold PwP caseload resources
+        self.pwp_resources = {f'{self.p_type}_{p}':simpy.Container(self.env,
+                    capacity=g.step2_pwp_sessions,
+                    init=g.step2_pwp_sessions) for p in range(g.number_staff_pwp)}
+            # caseload counter for each CBT resource
+        
+        # dictionary to hold PwP resource caseload levels
+        self.pwp_caseloads = {f'{self.p_type}_{p}': 0 for p in range(g.number_staff_pwp)}
+            
+        ##### CBT #####
+        self.c_type = 'CBT'
+        # dictionary to hold CBT caseload resources
+        self.cbt_resources = {f'{self.c_type}_{c}':simpy.Container(self.env,
+                    capacity=g.step3_cbt_sessions,
+                    init=g.step3_cbt_sessions) for c in range(g.number_staff_cbt)}
+            
+        # dictionary to hold CBT resource caseload levels
+        self.cbt_caseloads = {f'{self.c_type}_{c}': 0 for c in range(g.number_staff_cbt)}
+        
+        ##### Couns #####
+        self.s_type = 'Couns'
+        # dictionary to hold Couns caseload resources
+        self.couns_resources = {f'{self.s_type}_{s}':simpy.Container(self.env,
+                    capacity=g.step3_couns_sessions,
+                    init=g.step3_couns_sessions) for s in range(g.number_staff_couns)}
+                    
+        # dictionary to hold Couns resource caseload levels
+        self.couns_caseloads = {f'{self.s_type}_{c}': 0 for c in range(g.number_staff_couns)}
+
+        yield(self.env.timeout(0))
+
+    def find_caseload_slot(self,res_dictionary):
+        while True:
+            for resource_id, resource in res_dictionary.items():
+                if resource.level > 0:
+                    return resource_id
+                
+            yield self.env.any_of([resource.get(1) for resource in res_dictionary.level()])
+                    
+    ###### generator for staff to record non-clinical activity #####
     def staff_entity_generator(self, week_number):
 
         yield self.env.process(self.pwp_staff_generator(week_number))
@@ -1040,15 +1098,24 @@ class Model:
         self.step2_results_df.at[p.id, 'PwP WL Posn'] = \
                                             g.number_on_pwp_wl
 
-        # Request a PwP resource from the container
-        with self.pwp_res.get(1) as pwp_req:
+        # Check if there is a caseload slot available and return the name of the resource
+        self.pwp_caseload_id = self.find_caseload_slot(self.pwp_resources)
+
+        if g.debug_level >=2:
+            print(f'Caseload Slot Found, patient allocated to clinician {self.pwp_caseload_id}')
+        
+        # Request a PwP caseload resource from the containers
+        with self.pwp_resources[self.pwp_caseload_id].get(1) as pwp_req:
             yield pwp_req
 
+        self.pwp_caseloads[self.pwp_caseload_id] +=1
+
+        if g.debug_level >=2:
+            print(f'Patient added to caseload {self.pwp_caseload_id},{self.pwp_resources[self.pwp_caseload_id].level} spaces left')
+
         # add to caseload
-        g.number_on_pwp_cl +=1
-
-        # print(f'Patient {p} started PwP')
-
+        g.number_on_pwp_cl += 1
+        
         # as each patient reaches this stage take them off PwP wl
         g.number_on_pwp_wl -= 1
 
@@ -1122,8 +1189,6 @@ class Model:
                     self.step2_results_df.at[p.id,'Session Time'] = g.step2_pwp_fup_mins
                     self.step2_results_df.at[p.id,'Admin Time'] = g.step2_session_admin
 
-
-
         # record whether patient dropped out before completing pwP
         if self.pwp_dna_counter >= 2:
             self.step2_results_df.at[p.id, 'IsDropOut'] = 1
@@ -1141,9 +1206,16 @@ class Model:
         self.pwp_session_counter = 0
         self.pwp_dna_counter = 0
 
-        # remove from caseload
+        # remove from overall caseload
         g.number_on_pwp_cl -=1
 
+        # remove from clinician caseload
+        self.pwp_caseloads[self.pwp_caseload_id] -=1
+
+        # Return PwP caseload resource to the container
+        with self.pwp_resources[self.pwp_caseload_id].put(1) as pwp_rel:
+            yield pwp_rel
+        
         yield self.env.timeout(0)
     
     def step2_group_process(self,patient):
@@ -1236,7 +1308,7 @@ class Model:
         self.group_session_counter = 0
         self.group_dna_counter = 0
 
-        # remove from caseload
+        # remove from overall caseload
         g.number_on_group_cl -=1
 
         yield self.env.timeout(0)
@@ -1261,11 +1333,22 @@ class Model:
         self.step3_results_df.at[p.id, 'CBT WL Posn'] = \
                                             g.number_on_cbt_wl
 
-        # Request a cbt resource from the container
-        with self.cbt_res.get(1) as cbt_req:
+        # Check if there is a caseload slot available and return the name of the resource
+        self.cbt_caseload_id = self.find_caseload_slot(self.cbt_resources)
+
+        if g.debug_level >=2:
+            print(f'Caseload Slot Found, patient allocated to clinician {self.cbt_caseload_id}')
+        
+        # Request a PwP caseload resource from the containers
+        with self.cbt_resources[self.cbt_caseload_id].get(1) as cbt_req:
             yield cbt_req
 
-        # add to caseload
+        self.cbt_caseloads[self.cbt_caseload_id] +=1
+
+        if g.debug_level >=2:
+            print(f'Patient added to caseload {self.cbt_caseload_id},{self.cbt_resources[self.cbt_caseload_id].level} spaces left')
+
+        # add to overall caseload
         g.number_on_cbt_cl +=1
 
         # print(f'Patient {p} started CBT')
@@ -1357,8 +1440,15 @@ class Model:
         self.cbt_session_counter = 0
         self.cbt_dna_counter = 0
 
-        # remove from caseload
+        # remove from overall caseload
         g.number_on_cbt_cl -=1
+
+        # remove from clinician caseload
+        self.cbt_caseloads[self.cbt_caseload_id] -=1
+
+        # Return CBT caseload resource to the container
+        with self.cbt_resources[self.cbt_caseload_id].put(1) as cbt_rel:
+            yield cbt_rel
 
         yield self.env.timeout(0)
 
@@ -1382,11 +1472,22 @@ class Model:
         self.step3_results_df.at[p.id, 'Couns WL Posn'] = \
                                             g.number_on_couns_wl
 
-        # Request a Couns resource from the container
-        with self.couns_res.get(1) as couns_req:
+        # Check if there is a caseload slot available and return the name of the resource
+        self.couns_caseload_id = self.find_caseload_slot(self.couns_resources)
+
+        if g.debug_level >=2:
+            print(f'Caseload Slot Found, patient allocated to clinician {self.couns_caseload_id}')
+        
+        # Request a PwP caseload resource from the containers
+        with self.couns_resources[self.couns_caseload_id].get(1) as couns_req:
             yield couns_req
 
-        # add to caseload
+        self.couns_caseloads[self.couns_caseload_id] +=1
+
+        if g.debug_level >=2:
+            print(f'Patient added to caseload {self.couns_caseload_id},{self.couns_resources[self.couns_caseload_id].level} spaces left')
+
+        # add to overall caseload
         g.number_on_couns_cl +=1
 
         # print(f'Patient {p} started Couns')
@@ -1491,6 +1592,16 @@ class Model:
         self.couns_session_counter = 0
         self.couns_dna_counter = 0
 
+        # remove from overall caseload
+        g.number_on_couns_cl -=1
+
+        # remove from clinician caseload
+        self.couns_caseloads[self.couns_caseload_id] -=1
+
+        # Return Couns caseload resource to the container
+        with self.couns_resources[self.couns_caseload_id].put(1) as couns_rel:
+            yield couns_rel
+
         # add to caseload
         g.number_on_couns_cl -=1
 
@@ -1528,6 +1639,10 @@ class Model:
                                         self.env,
                                         capacity=g.step2_group_size
                                         )
+        #self.pwp_res_list = {}
+
+        # Start up the resource builder to set up all staff resources
+        self.env.process(self.resource_builder())
 
         # Start up the week to start processing patients
         self.env.process(self.week_runner(g.sim_duration))
