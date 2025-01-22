@@ -678,10 +678,21 @@ class Model:
     def find_caseload_slot(self,res_dictionary):
         while True:
             for resource_id, resource in res_dictionary.items():
+                # if a container is found with a level > 0 return the label of that resource
                 if resource.level > 0:
-                    return resource_id
+                    return resource_id, resource
                 
-            yield self.env.any_of([resource.get(1) for resource in res_dictionary.level()])
+            # # map events to ID's
+            # events_to_ids = {resource.get(1): resource_id for resource_id, resource in res_dictionary.keys()}
+            # # wait for a container to change
+            # triggered_event = yield self.env.any_of(events_to_ids.keys())
+            # # determine which containers event was triggered
+            # for event, resource_id in events_to_ids.items():
+            #     if event in triggered_event:
+            #         break
+
+                
+            #yield self.env.any_of([resource.get(1) for resource in res_dictionary.level()])
                     
     ###### generator for staff to record non-clinical activity #####
     def staff_entity_generator(self, week_number):
