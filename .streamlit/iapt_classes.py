@@ -102,8 +102,8 @@ class g:
     std_dev = 3 # used for randomising activity times
 
     # Result storage
-    all_results = []
     weekly_wl_posn = pd.DataFrame() # container to hold w/l position at end of week
+    caseload_weekly_stats = [] # list to hold weekly Caseload statistics
     number_on_ta_wl = 0 # used to keep track of TA WL position
     number_on_pwp_wl = 0 # used to keep track of PwP WL position
     number_on_group_wl = 0 # used to keep track of groups WL position
@@ -299,6 +299,7 @@ class Model:
         self.step3_weekly_stats = []
         # list to hold weekly Staff statistics
         self.staff_weekly_stats = []
+        
 
         ######### Create our resources #########
         ########## PwP ##########
@@ -500,6 +501,41 @@ class Model:
                     'CPD Mins':self.staff_tot_cpd
                     }
                     )
+                
+            ##### Take a snapshot of the weekly caseload levels #####
+            
+            self.weekly_pwp_snapshot = {'Run Number':self.run_number
+                                       ,'Week Number':self.week_number
+                                       ,'Data':[]}
+            
+            for pwp_caseload_id, pwp_level in self.pwp_resources.items():
+                self.weekly_pwp_snapshot['Data'].append({
+                                            'Caseload ID':pwp_caseload_id
+                                            ,'Caseload Level':pwp_level.level})
+            
+            g.caseload_weekly_stats.append(self.weekly_pwp_snapshot)
+                
+            self.weekly_cbt_snapshot = {'Run Number':self.run_number
+                                       ,'Week Number':self.week_number
+                                       ,'Data':[]}
+            
+            for cbt_caseload_id, cbt_level in self.cbt_resources.items():
+                self.weekly_cbt_snapshot['Data'].append({
+                                            'Caseload ID':cbt_caseload_id
+                                            ,'Caseload Level':cbt_level.level})
+            
+            g.caseload_weekly_stats.append(self.weekly_cbt_snapshot)
+            
+            self.weekly_couns_snapshot = {'Run Number':self.run_number
+                                       ,'Week Number':self.week_number
+                                       ,'Data':[]}
+            
+            for couns_caseload_id, couns_level in self.couns_resources.items():
+                self.weekly_couns_snapshot['Data'].append({
+                                            'Caseload ID':couns_caseload_id
+                                            ,'Caseload Level':couns_level.level})
+                
+            g.caseload_weekly_stats.append(self.weekly_couns_snapshot)
 
             ######### replenish TA resources ##########
             if g.debug_level >= 2:
@@ -1122,7 +1158,7 @@ class Model:
             print("No available resource found!")
             
         if g.debug_level >=2:
-            print(f'Resource {self.pwp_caseload_id} with a caseload of {self.pwp_caseload_res} allocated to patient {p.id}')
+            print(f'Resource {self.pwp_caseload_id} with a caseload remaining of {self.pwp_caseload_res.level} allocated to patient {p.id}')
         
         with self.pwp_caseload_res.get(1) as self.pwp_req:
             yield self.pwp_req
@@ -1366,7 +1402,7 @@ class Model:
             print("No available resource found!")
             
         if g.debug_level >=2:
-            print(f'Resource {self.cbt_caseload_id} with a caseload of {self.cbt_caseload_res} allocated to Patient {p.id}')
+            print(f'Resource {self.cbt_caseload_id} with a caseload remaining of {self.cbt_caseload_res.level} allocated to patient {p.id}')
         
         with self.cbt_caseload_res.get(1) as self.cbt_req:
             yield self.cbt_req
@@ -1377,7 +1413,7 @@ class Model:
         # self.pwp_caseload_posn +=1
 
         if g.debug_level >=2:
-            print(f'Patient {p.id} added to caseload {self.cbt_caseload_id},{self.cbt_resources[self.cbt_caseload_id].level} spaces left')
+            print(f'Patient {p.id} added to caseload {self.cbt_caseload_id}, {self.cbt_resources[self.cbt_caseload_id].level} spaces left')
 
         # add to overall caseload
         g.number_on_cbt_cl +=1
@@ -1514,7 +1550,7 @@ class Model:
             print("No available resource found!")
             
         if g.debug_level >=2:
-            print(f'Resource {self.couns_caseload_id} with a caseload of {self.couns_caseload_res} allocated to Patient {p.id}')
+            print(f'Resource {self.couns_caseload_id} with a caseload remaining of {self.couns_caseload_res.level} allocated to patient {p.id}')
         
         with self.couns_caseload_res.get(1) as self.couns_req:
             yield self.couns_req
@@ -1525,7 +1561,7 @@ class Model:
         # self.pwp_caseload_posn +=1
 
         if g.debug_level >=2:
-            print(f'Patient {p.id} added to caseload {self.couns_caseload_id},{self.couns_resources[self.couns_caseload_id].level} spaces left')
+            print(f'Patient {p.id} added to caseload {self.couns_caseload_id}, {self.couns_resources[self.couns_caseload_id].level} spaces left')
 
         # add to overall caseload
         g.number_on_couns_cl +=1
@@ -1752,6 +1788,7 @@ class Trial:
             my_model.step2_weekly_stats = pd.DataFrame(my_model.step2_weekly_stats)
             my_model.step3_weekly_stats = pd.DataFrame(my_model.step3_weekly_stats)
             my_model.staff_weekly_stats = pd.DataFrame(my_model.staff_weekly_stats)
+
             # add the run number to the dataframe
             my_model.asst_weekly_stats['Run'] = run
             my_model.step2_weekly_stats['Run'] = run
@@ -1765,14 +1802,17 @@ class Trial:
             self.step3_weekly_dfs.append(my_model.step3_weekly_stats)
             self.staff_weekly_dfs.append(my_model.staff_weekly_stats)
 
+            self.caseload_weekly_dfs = pd.json_normalize(g.caseload_weekly_stats, 'Data', ['Run Number', 'Week Number'])
+
+
         # Once the trial (i.e. all runs) has completed, print the final results and combine all the weekly dataframes
-        return self.df_trial_results, pd.concat(self.asst_weekly_dfs), pd.concat(self.step2_weekly_dfs), pd.concat(self.step3_weekly_dfs), pd.concat(self.staff_weekly_dfs)
+        return self.df_trial_results, pd.concat(self.asst_weekly_dfs), pd.concat(self.step2_weekly_dfs), pd.concat(self.step3_weekly_dfs), pd.concat(self.staff_weekly_dfs), self.caseload_weekly_dfs
 
 if __name__ == "__main__":
     my_trial = Trial()
     #pd.set_option('display.max_rows', 1000)
     # Call the run_trial method of our Trial class object
 
-    df_trial_results, asst_weekly_dfs, step2_weekly_dfs, step3_weekly_dfs, staff_weekly_dfs = my_trial.run_trial()
+    df_trial_results, asst_weekly_dfs, step2_weekly_dfs, step3_weekly_dfs, staff_weekly_dfs, caseload_weekly_dfs  = my_trial.run_trial()
 
-    df_trial_results, asst_weekly_dfs, step2_weekly_dfs, step3_weekly_dfs, staff_weekly_dfs
+    df_trial_results, asst_weekly_dfs, step2_weekly_dfs, step3_weekly_dfs, staff_weekly_dfs, caseload_weekly_dfs
