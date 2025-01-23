@@ -646,53 +646,55 @@ class Model:
         self.p_type = 'PwP'
         # dictionary to hold PwP caseload resources
         self.pwp_resources = {f'{self.p_type}_{p}':simpy.Container(self.env,
-                    capacity=g.step2_pwp_sessions,
-                    init=g.step2_pwp_sessions) for p in range(g.number_staff_pwp)}
+                    capacity=g.pwp_caseload,
+                    init=g.pwp_caseload) for p in range(g.number_staff_pwp)}
             # caseload counter for each CBT resource
         
         # dictionary to hold PwP resource caseload levels
-        self.pwp_caseloads = {f'{self.p_type}_{p}': 0 for p in range(g.number_staff_pwp)}
+        #self.pwp_caseloads = {f'{self.p_type}_{p}': 0 for p in range(g.number_staff_pwp)}
             
         ##### CBT #####
         self.c_type = 'CBT'
         # dictionary to hold CBT caseload resources
         self.cbt_resources = {f'{self.c_type}_{c}':simpy.Container(self.env,
-                    capacity=g.step3_cbt_sessions,
-                    init=g.step3_cbt_sessions) for c in range(g.number_staff_cbt)}
+                    capacity=g.cbt_caseload,
+                    init=g.cbt_caseload) for c in range(g.number_staff_cbt)}
             
         # dictionary to hold CBT resource caseload levels
-        self.cbt_caseloads = {f'{self.c_type}_{c}': 0 for c in range(g.number_staff_cbt)}
+        #self.cbt_caseloads = {f'{self.c_type}_{c}': 0 for c in range(g.number_staff_cbt)}
         
         ##### Couns #####
         self.s_type = 'Couns'
         # dictionary to hold Couns caseload resources
         self.couns_resources = {f'{self.s_type}_{s}':simpy.Container(self.env,
-                    capacity=g.step3_couns_sessions,
-                    init=g.step3_couns_sessions) for s in range(g.number_staff_couns)}
+                    capacity=g.couns_caseload,
+                    init=g.couns_caseload) for s in range(g.number_staff_couns)}
                     
         # dictionary to hold Couns resource caseload levels
-        self.couns_caseloads = {f'{self.s_type}_{c}': 0 for c in range(g.number_staff_couns)}
+        #self.couns_caseloads = {f'{self.s_type}_{c}': 0 for c in range(g.number_staff_couns)}
 
         yield(self.env.timeout(0))
 
-    def find_caseload_slot(self,res_dictionary):
-        while True:
-            for resource_id, resource in res_dictionary.items():
-                # if a container is found with a level > 0 return the label of that resource
-                if resource.level > 0:
-                    return resource_id, resource
-                
-            # # map events to ID's
-            # events_to_ids = {resource.get(1): resource_id for resource_id, resource in res_dictionary.keys()}
-            # # wait for a container to change
-            # triggered_event = yield self.env.any_of(events_to_ids.keys())
-            # # determine which containers event was triggered
-            # for event, resource_id in events_to_ids.items():
-            #     if event in triggered_event:
-            #         break
+    def find_caseload_slot(self,r_type):
 
-                
-            #yield self.env.any_of([resource.get(1) for resource in res_dictionary.level()])
+        # load in the right resource dictionary
+        if r_type == 'PwP':
+            self.resources = self.pwp_resources
+        elif r_type == 'CBT':
+            self.resources = self.cbt_resources
+        elif r_type == 'Couns':
+            self.resources = self.couns_resources
+
+        while True:
+            # Iterate over the resources to check if any have a level > 0
+            for self.resource_name, self.container in self.resources.items():
+                if self.container.level > 0:
+                    if g.debug_level >=2:
+                        print(f'Resource {self.resource_name} with a caseload of {self.container} selected')
+                    return self.resource_name, self.container  # Return the label and the container if available
+
+            # If no resource is available, wait and check again
+            yield self.env.timeout(0)
                     
     ###### generator for staff to record non-clinical activity #####
     def staff_entity_generator(self, week_number):
@@ -1109,20 +1111,29 @@ class Model:
         self.step2_results_df.at[p.id, 'PwP WL Posn'] = \
                                             g.number_on_pwp_wl
 
-        # Check if there is a caseload slot available and return the name of the resource
-        self.pwp_caseload_id = self.find_caseload_slot(self.pwp_resources)
+        # Check if there is a caseload slot available and return the resource
+        result = yield self.env.process(self.find_caseload_slot('PwP'))
 
+        # Safeguard unpacking: Ensure result is not None and has two elements
+        if result:
+            self.pwp_caseload_id, self.pwp_caseload_res = result
+        else:
+            # Handle the case where no resource was available (shouldn't happen as function keeps checking)
+            print("No available resource found!")
+            
         if g.debug_level >=2:
-            print(f'Caseload Slot Found, patient allocated to clinician {self.pwp_caseload_id}')
+            print(f'Resource {self.pwp_caseload_id} with a caseload of {self.pwp_caseload_res} allocated to patient {p.id}')
         
-        # Request a PwP caseload resource from the containers
-        with self.pwp_resources[self.pwp_caseload_id].get(1) as pwp_req:
-            yield pwp_req
+        with self.pwp_caseload_res.get(1) as self.pwp_req:
+            yield self.pwp_req
 
-        self.pwp_caseloads[self.pwp_caseload_id] +=1
+        # # create a variable to store the current level of the caseload for this resource
+        # self.pwp_caseload_posn = self.caseload_[f'{self.caseload_id}']
+        # # add to this specific caseload
+        # self.pwp_caseload_posn +=1
 
         if g.debug_level >=2:
-            print(f'Patient added to caseload {self.pwp_caseload_id},{self.pwp_resources[self.pwp_caseload_id].level} spaces left')
+            print(f'Patient {p.id} added to caseload {self.pwp_caseload_id},{self.pwp_resources[self.pwp_caseload_id].level} spaces left')
 
         # add to caseload
         g.number_on_pwp_cl += 1
@@ -1220,11 +1231,11 @@ class Model:
         # remove from overall caseload
         g.number_on_pwp_cl -=1
 
-        # remove from clinician caseload
-        self.pwp_caseloads[self.pwp_caseload_id] -=1
+        # # remove from this specific caseload
+        # self.pwp_caseload_posn -=1
 
         # Return PwP caseload resource to the container
-        with self.pwp_resources[self.pwp_caseload_id].put(1) as pwp_rel:
+        with self.pwp_caseload_res.put(1) as pwp_rel:
             yield pwp_rel
         
         yield self.env.timeout(0)
@@ -1344,20 +1355,29 @@ class Model:
         self.step3_results_df.at[p.id, 'CBT WL Posn'] = \
                                             g.number_on_cbt_wl
 
-        # Check if there is a caseload slot available and return the name of the resource
-        self.cbt_caseload_id = self.find_caseload_slot(self.cbt_resources)
+        # Check if there is a caseload slot available and return the resource
+        result = yield self.env.process(self.find_caseload_slot('CBT'))
 
+        # Safeguard unpacking: Ensure result is not None and has two elements
+        if result:
+            self.cbt_caseload_id, self.cbt_caseload_res = result
+        else:
+            # Handle the case where no resource was available (shouldn't happen as function keeps checking)
+            print("No available resource found!")
+            
         if g.debug_level >=2:
-            print(f'Caseload Slot Found, patient allocated to clinician {self.cbt_caseload_id}')
+            print(f'Resource {self.cbt_caseload_id} with a caseload of {self.cbt_caseload_res} allocated to Patient {p.id}')
         
-        # Request a PwP caseload resource from the containers
-        with self.cbt_resources[self.cbt_caseload_id].get(1) as cbt_req:
-            yield cbt_req
+        with self.cbt_caseload_res.get(1) as self.cbt_req:
+            yield self.cbt_req
 
-        self.cbt_caseloads[self.cbt_caseload_id] +=1
+        # # create a variable to store the current level of the caseload for this resource
+        # self.pwp_caseload_posn = self.caseload_[f'{self.caseload_id}']
+        # # add to this specific caseload
+        # self.pwp_caseload_posn +=1
 
         if g.debug_level >=2:
-            print(f'Patient added to caseload {self.cbt_caseload_id},{self.cbt_resources[self.cbt_caseload_id].level} spaces left')
+            print(f'Patient {p.id} added to caseload {self.cbt_caseload_id},{self.cbt_resources[self.cbt_caseload_id].level} spaces left')
 
         # add to overall caseload
         g.number_on_cbt_cl +=1
@@ -1454,11 +1474,11 @@ class Model:
         # remove from overall caseload
         g.number_on_cbt_cl -=1
 
-        # remove from clinician caseload
-        self.cbt_caseloads[self.cbt_caseload_id] -=1
+        # # remove from clinician caseload
+        # self.cbt_caseloads[self.cbt_caseload_id] -=1
 
         # Return CBT caseload resource to the container
-        with self.cbt_resources[self.cbt_caseload_id].put(1) as cbt_rel:
+        with self.cbt_caseload_res.put(1) as cbt_rel:
             yield cbt_rel
 
         yield self.env.timeout(0)
@@ -1483,20 +1503,29 @@ class Model:
         self.step3_results_df.at[p.id, 'Couns WL Posn'] = \
                                             g.number_on_couns_wl
 
-        # Check if there is a caseload slot available and return the name of the resource
-        self.couns_caseload_id = self.find_caseload_slot(self.couns_resources)
+        # Check if there is a caseload slot available and return the resource
+        result = yield self.env.process(self.find_caseload_slot('Couns'))
 
+        # Safeguard unpacking: Ensure result is not None and has two elements
+        if result:
+            self.couns_caseload_id, self.couns_caseload_res = result
+        else:
+            # Handle the case where no resource was available (shouldn't happen as function keeps checking)
+            print("No available resource found!")
+            
         if g.debug_level >=2:
-            print(f'Caseload Slot Found, patient allocated to clinician {self.couns_caseload_id}')
+            print(f'Resource {self.couns_caseload_id} with a caseload of {self.couns_caseload_res} allocated to Patient {p.id}')
         
-        # Request a PwP caseload resource from the containers
-        with self.couns_resources[self.couns_caseload_id].get(1) as couns_req:
-            yield couns_req
+        with self.couns_caseload_res.get(1) as self.couns_req:
+            yield self.couns_req
 
-        self.couns_caseloads[self.couns_caseload_id] +=1
+        # # create a variable to store the current level of the caseload for this resource
+        # self.pwp_caseload_posn = self.caseload_[f'{self.caseload_id}']
+        # # add to this specific caseload
+        # self.pwp_caseload_posn +=1
 
         if g.debug_level >=2:
-            print(f'Patient added to caseload {self.couns_caseload_id},{self.couns_resources[self.couns_caseload_id].level} spaces left')
+            print(f'Patient {p.id} added to caseload {self.couns_caseload_id},{self.couns_resources[self.couns_caseload_id].level} spaces left')
 
         # add to overall caseload
         g.number_on_couns_cl +=1
@@ -1606,11 +1635,11 @@ class Model:
         # remove from overall caseload
         g.number_on_couns_cl -=1
 
-        # remove from clinician caseload
-        self.couns_caseloads[self.couns_caseload_id] -=1
+        # # remove from clinician caseload
+        # self.couns_caseloads[self.couns_caseload_id] -=1
 
         # Return Couns caseload resource to the container
-        with self.couns_resources[self.couns_caseload_id].put(1) as couns_rel:
+        with self.couns_caseload_res.put(1) as couns_rel:
             yield couns_rel
 
         # add to caseload
