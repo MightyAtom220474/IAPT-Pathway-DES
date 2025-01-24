@@ -63,6 +63,7 @@ class g:
     step3_couns_1st_mins = 45 # minutes allocated for 1st couns session
     step3_couns_fup_mins = 30 # minutes allocated for couns follow-up session
     step3_couns_dna_rate = 0.216 # Wellbeing Workshop attendance 78.6%
+    step3_couns_period = 16 # max number of weeks couns delivered over
 
     # Staff
     supervision_time = 120 # 2 hours per month per modality ##### could use modulus for every 4th week
@@ -98,7 +99,7 @@ class g:
 
     # Simulation
     sim_duration = 52
-    number_of_runs = 10
+    number_of_runs = 1
     std_dev = 3 # used for randomising activity times
 
     # Result storage
@@ -146,17 +147,21 @@ class Patient:
         self.step2_resource_id = [] # identifier for the staff member allocated to their treatment
         self.step2_path_route = [] # string, which Step2 path they took
         self.step2_place_on_wl = 0 # position they are on Step2 waiting list
+        self.step2_start_week = 0 # the week number they started treatment
         self.step2_session_count = 0 # counter for no. of sessions have had
         self.step2_drop_out = 0 # did they drop out during Step2
         self.step2_week_number = 0 # counter for which week number they are on
+        self.step2_end_week = 0 # the week number when they completed treatment
 
         # Step3
         self.step3_resource_id = [] # identifier for the staff member allocated to their treatment
         self.step3_path_route = [] # string, which Step2 path they took
         self.step3_place_on_wl = 0 # position they are on Step2 waiting list
+        self.step3_start_week = 0
         self.step3_session_count = 0 # counter for no. of sessions have had
         self.step3_drop_out = 0 # did they drop out during Step2
         self.step3_week_number = 0 # counter for which week number they are on
+        self.step3_end_week = 0
 
 # Staff class to be run weekly by week runner to record staff non-clinical time
 class Staff:
@@ -726,7 +731,7 @@ class Model:
             for self.resource_name, self.container in self.resources.items():
                 if self.container.level > 0:
                     if g.debug_level >=2:
-                        print(f'Resource {self.resource_name} with a caseload of {self.container} selected')
+                        print(f'Resource {self.resource_name} with a caseload of {self.container.level} selected')
                     return self.resource_name, self.container  # Return the label and the container if available
 
             # If no resource is available, wait and check again
@@ -1181,19 +1186,32 @@ class Model:
             print(f'{p.step2_path_route} RUNNER: Patient {p.id} removed from {p.step2_path_route} waiting list')
 
         if g.debug_level >= 2:
-            print(f'FUNC PROCESS step2_pwp_process: Week {self.env.now}: Patient number {p.id} (added week {p.week_added}) put through {p.step2_path_route}')
+            print(f'FUNC PROCESS step2_pwp_process: Week {self.env.now}: Patient {p.id} (added week {p.week_added}) put through {p.step2_path_route}')
 
         end_q_pwp = self.env.now
+
+        p.step2_start_week = self.week_number
 
         # Calculate how long patient queued for TA
         self.q_time_pwp = end_q_pwp - start_q_pwp
         # Record how long patient queued for TA
         self.asst_results_df.at[p.id, 'PwP Q Time'] = self.q_time_pwp
 
+        # Generate a list of week numbers the patient is going to attend
+        self.pwp_random_weeks = random.sample(range(self.week_number+1, self.week_number+g.step2_pwp_period), g.step2_pwp_sessions)
+
+        # Add 1 at the start of the list
+        self.pwp_random_weeks.insert(0, 0)
+
+        # Optionally, sort the list to maintain sequential order
+        self.pwp_random_weeks.sort()
+
+        # print(self.random_weeks)
+
         while self.pwp_session_counter < g.step2_pwp_sessions and self.pwp_dna_counter < 2:
 
             if g.debug_level >= 2:
-                print(f'FUNC PROCESS step2_pwp_process: Week {self.env.now}: Patient number {p.id} (added week {p.week_added}) on {p.step2_path_route} Session {self.pwp_session_counter}')
+                print(f'FUNC PROCESS step2_pwp_process: Week {self.env.now}: Patient {p.id} (added week {p.week_added}) on {p.step2_path_route} Session {self.pwp_session_counter} on Week {self.week_number + self.pwp_random_weeks[self.pwp_session_counter]}')
 
             # increment the pwp session counter by 1
             self.pwp_session_counter += 1
@@ -1204,12 +1222,10 @@ class Model:
             
             # record stats for the patient against this session number
             self.step2_results_df.at[p.id,'Patient ID'] = p
-            self.step2_results_df.at[p.id,'Week Number'] = self.week_number + self.pwp_session_counter
+            self.step2_results_df.at[p.id,'Week Number'] = self.week_number + self.pwp_random_weeks[self.pwp_session_counter]
             self.step2_results_df.at[p.id,'Run Number'] = self.run_number
             self.step2_results_df.at[p.id, 'Treatment Route'
                                                 ] = p.step2_path_route
-
-            
 
             # decide whether the patient was stepped up 
             self.step_patient_up = random.uniform(0,1)
@@ -1232,7 +1248,7 @@ class Model:
                 # if session is DNA just record admin mins as clinical time will be used elsewhere
                 self.step2_results_df.at[p.id,'Admin Time'] = g.step2_session_admin
                 if g.debug_level >= 2:
-                    print(f'Patient number {p.id} on {p.step2_path_route} Session '
+                    print(f'Patient {p.id} on {p.step2_path_route} Session '
                            f'{self.pwp_session_counter} DNA number ' 
                            f'{self.pwp_dna_counter}')
                 
@@ -1251,11 +1267,13 @@ class Model:
         if self.pwp_dna_counter >= 2:
             self.step2_results_df.at[p.id, 'IsDropOut'] = 1
             if g.debug_level >= 2:
-                print(f'Patient number {p.id} dropped out of {p.step2_path_route} treatment')
+                print(f'Patient {p.id} dropped out of {p.step2_path_route} treatment')
+            p.step2_end_week = p.step2_start_week+self.pwp_random_weeks[self.pwp_session_counter]
         else:
             self.step2_results_df.at[p.id, 'IsDropOut'] = 0
             if g.debug_level >= 2:
-                print(f'Patient number {p.id} completed {p.step2_path_route} treatment')
+                print(f'Patient {p.id} completed {p.step2_path_route} treatment')
+            p.step2_end_week = p.step2_start_week+max(self.pwp_random_weeks)
 
         # remove from Step 2 Caseload as have either completed treatment or dropped out
         self.step2_results_df.at[p.id, 'Caseload'] = 0
@@ -1273,8 +1291,17 @@ class Model:
         # Return PwP caseload resource to the container
         with self.pwp_caseload_res.put(1) as pwp_rel:
             yield pwp_rel
-        
-        yield self.env.timeout(0)
+
+        if self.pwp_dna_counter >= 2:
+            # if patient dropped out hold onto the resource latest attended session
+            yield self.env.timeout(self.pwp_random_weeks[self.pwp_session_counter])
+            if g.debug_level >= 2:
+                print(f'Patient {p.id} starting at week {p.step2_start_week} discharged from {p.step2_path_route} at week {p.step2_end_week}')
+        else:
+            # otherwise hold onto the resource until the last session
+            yield self.env.timeout(max(self.pwp_random_weeks))
+            if g.debug_level >= 2:
+                print(f'Patient {p.id} starting at week {p.step2_start_week} discharged from {p.step2_path_route} at week {p.step2_end_week}')
     
     def step2_group_process(self,patient):
 
@@ -1304,7 +1331,7 @@ class Model:
         g.number_on_group_wl -= 1
 
         if g.debug_level >= 2:
-            print(f'FUNC PROCESS step2_group_process: Week {self.env.now}: Patient number {p.id} (added week {p.week_added}) put through {p.step2_path_route}')
+            print(f'FUNC PROCESS step2_group_process: Week {self.env.now}: Patient {p.id} (added week {p.week_added}) put through {p.step2_path_route}')
 
         self.end_q_group = self.env.now
 
@@ -1315,7 +1342,7 @@ class Model:
 
         while self.group_session_counter < g.step2_group_sessions and self.group_dna_counter < 2:
             if g.debug_level >= 2:
-                print(f'Week {self.env.now+self.group_session_counter}: Patient number {p.id} (added week {p.week_added}) on {p.step2_path_route} Session {self.group_session_counter}')
+                print(f'Week {self.env.now+self.group_session_counter}: Patient {p.id} (added week {p.week_added}) on {p.step2_path_route} Session {self.group_session_counter}')
 
             # increment the group session counter by 1
             self.group_session_counter += 1
@@ -1341,7 +1368,7 @@ class Model:
                 self.group_dna_counter += 1
                 self.step2_results_df.at[p.id,'Admin Time'] = g.step2_session_admin
                 if g.debug_level >= 2:
-                    print(f'Patient number {p.id} on {p.step2_path_route} ' 
+                    print(f'Patient {p.id} on {p.step2_path_route} ' 
                           f'Session {self.group_session_counter} DNA number ' 
                           f'{self.group_dna_counter}')
             
@@ -1354,11 +1381,11 @@ class Model:
         if self.group_dna_counter >= 2:
             self.step2_results_df.at[p.id, 'IsDropOut'] = 1
             if g.debug_level >= 2:
-                print(f'Patient number {p.id} dropped out of {p.step2_path_route} treatment')
+                print(f'Patient {p.id} dropped out of {p.step2_path_route} treatment')
         else:
             self.step2_results_df.at[p.id, 'IsDropOut'] = 0
             if g.debug_level >= 2:
-                print(f'Patient number {p.id} completed {p.step2_path_route} treatment')
+                print(f'Patient {p.id} completed {p.step2_path_route} treatment')
         # remove from Step 2 Caseload as have either completed treatment or dropped out
         self.step2_results_df.at[p.id, 'Caseload'] = 0
 
@@ -1369,7 +1396,7 @@ class Model:
         # remove from overall caseload
         g.number_on_group_cl -=1
 
-        yield self.env.timeout(0)
+        yield self.env.timeout(self.group_session_counter)
 
     def step3_cbt_process(self,patient):
 
@@ -1427,29 +1454,43 @@ class Model:
             print(f'{p.step3_path_route} RUNNER: Patient {p.id} removed from {p.step3_path_route} waiting list')
 
         if g.debug_level >= 2:
-            print(f'FUNC PROCESS step3_cbt_process: Week {self.env.now}: Patient number {p.id} (added week {p.week_added}) put through {p.step3_path_route}')
+            print(f'FUNC PROCESS step3_cbt_process: Week {self.env.now}: Patient {p.id} (added week {p.week_added}) put through {p.step3_path_route}')
 
         end_q_cbt = self.env.now
+
+        p.step3_start_week = self.week_number
 
         # Calculate how long patient queued for CBT
         self.q_time_cbt = end_q_cbt - start_q_cbt
         # Record how long patient queued for CBT
         self.asst_results_df.at[p.id, 'CBT Q Time'] = self.q_time_cbt
 
+        # Generate a list of week numbers the patient is going to attend
+        self.cbt_random_weeks = random.sample(range(self.week_number+1, self.week_number+g.step3_cbt_period), g.step3_cbt_sessions)
+
+        # Add 1 at the start of the list
+        self.cbt_random_weeks.insert(0, 0)
+
+        # Optionally, sort the list to maintain sequential order
+        self.cbt_random_weeks.sort()
+
+        # print(self.random_weeks)
+
         while self.cbt_session_counter < g.step3_cbt_sessions and self.cbt_dna_counter < 2:
 
             if g.debug_level >= 2:
-                print(f'FUNC PROCESS step3_cbt_process: Week {self.env.now}: Patient number {p.id} (added week {p.week_added}) on {p.step3_path_route} Session {self.cbt_session_counter}')
+                print(f'FUNC PROCESS step3_cbt_process: Week {self.env.now}: Patient {p.id} (added week {p.week_added}) on {p.step3_path_route} Session {self.cbt_session_counter} on Week {self.week_number + self.cbt_random_weeks[self.cbt_session_counter]}')
 
-            # increment the cbt session counter by 1
+            # increment the pwp session counter by 1
             self.cbt_session_counter += 1
 
-            # record the cbt session number for the patient
+            # record the pwp session number for the patient
             self.step3_results_df.at[p.id, 'Session Number'] = self.cbt_session_counter
 
+            
             # record stats for the patient against this session number
             self.step3_results_df.at[p.id,'Patient ID'] = p
-            self.step3_results_df.at[p.id,'Week Number'] = self.week_number
+            self.step3_results_df.at[p.id,'Week Number'] = self.week_number + self.cbt_random_weeks[self.cbt_session_counter]
             self.step3_results_df.at[p.id,'Run Number'] = self.run_number
             self.step3_results_df.at[p.id, 'Treatment Route'
                                                 ] = p.step3_path_route
@@ -1494,11 +1535,13 @@ class Model:
         if self.cbt_dna_counter >= 2:
             self.step3_results_df.at[p.id, 'IsDropOut'] = 1
             if g.debug_level >= 2:
-                print(f'Patient number {p.id} dropped out of {p.step3_path_route} treatment')
+                print(f'Patient {p.id} dropped out of {p.step3_path_route} treatment')
+            p.step3_end_week = p.step3_start_week+self.cbt_random_weeks[self.cbt_session_counter]
         else:
             self.step3_results_df.at[p.id, 'IsDropOut'] = 0
             if g.debug_level >= 2:
-                print(f'Patient number {p.id} completed {p.step3_path_route} treatment')
+                print(f'Patient {p.id} completed {p.step3_path_route} treatment')
+            p.step3_end_week = p.step3_start_week+max(self.cbt_random_weeks)
 
         # remove from Step 3 Caseload as have either completed treatment or dropped out
         self.step3_results_df.at[p.id, 'Caseload'] = 0
@@ -1517,7 +1560,16 @@ class Model:
         with self.cbt_caseload_res.put(1) as cbt_rel:
             yield cbt_rel
 
-        yield self.env.timeout(0)
+        if self.cbt_dna_counter >= 2:
+            # if patient dropped out hold onto the resource latest attended session
+            yield self.env.timeout(self.cbt_random_weeks[self.cbt_session_counter])
+            if g.debug_level >= 2:
+                print(f'Patient {p.id} starting at week {p.step3_start_week} discharged from {p.step3_path_route} at week {p.step3_end_week}')
+        else:
+            # otherwise hold onto the resource until the last session
+            yield self.env.timeout(max(self.cbt_random_weeks))
+            if g.debug_level >= 2:
+                print(f'Patient {p.id} starting at week {p.step3_start_week} discharged from {p.step3_path_route} at week {p.step3_end_week}')
 
     def step3_couns_process(self,patient):
 
@@ -1579,26 +1631,39 @@ class Model:
 
         end_q_couns = self.env.now
 
+        p.step3_start_week = self.week_number
+
         # Calculate how long patient queued for TA
         self.q_time_couns = end_q_couns - start_q_couns
         # Record how long patient queued for TA
         self.asst_results_df.at[p.id, 'Couns Q Time'] = self.q_time_couns
 
+        # Generate a list of week numbers the patient is going to attend
+        self.couns_random_weeks = random.sample(range(self.week_number+1, self.week_number+g.step3_couns_period), g.step3_couns_sessions)
+
+        # always start at week 0
+        self.couns_random_weeks.insert(0, 0)
+
+        # sort the list to maintain sequential order
+        self.couns_random_weeks.sort()
+
+        # print(self.counsrandom_weeks)
+
         while self.couns_session_counter < g.step3_couns_sessions and self.couns_dna_counter < 2:
 
             if g.debug_level >= 2:
-                print(f'FUNC PROCESS step3_couns_process: Week {self.env.now}: Patient number {p.id} (added week {p.week_added}) on {p.step3_path_route} Session {self.couns_session_counter}')
-            # increment the group session counter by 1
+                print(f'FUNC PROCESS step3_cbt_process: Week {self.env.now}: Patient {p.id} (added week {p.week_added}) on {p.step3_path_route} Session {self.couns_session_counter} on Week {self.week_number + self.couns_random_weeks[self.couns_session_counter]}')
+
+            # increment the pwp session counter by 1
             self.couns_session_counter += 1
 
-            # record the session number for the patient
+            # record the pwp session number for the patient
             self.step3_results_df.at[p.id, 'Session Number'] = self.couns_session_counter
-            # mark patient as still on Step2 Caseload
-            self.step3_results_df.at[p.id, 'Caseload'] = 1
 
+            
             # record stats for the patient against this session number
             self.step3_results_df.at[p.id,'Patient ID'] = p
-            self.step3_results_df.at[p.id,'Week Number'] = self.week_number
+            self.step3_results_df.at[p.id,'Week Number'] = self.week_number + self.couns_random_weeks[self.couns_session_counter]
             self.step3_results_df.at[p.id,'Run Number'] = self.run_number
             self.step3_results_df.at[p.id, 'Treatment Route'
                                                 ] = p.step3_path_route
@@ -1614,7 +1679,7 @@ class Model:
                     print(f'### STEPPED DOWN ###: Patient {p.id} has been stepped down, running Step2 route selector')
                 self.step3_results_df.at[p.id, 'IsDropOut'] = 0
                 if g.debug_level >= 2:
-                    print(f'Patient number {p.id} completed {p.step3_path_route} treatment')
+                    print(f'Patient {p.id} completed {p.step3_path_route} treatment')
                 # remove from Step 2 Caseload as have either completed treatment or dropped out
                 self.step3_results_df.at[p.id, 'Caseload'] = 0
 
@@ -1638,7 +1703,7 @@ class Model:
                     # if session is DNA just record admin mins as clinical time will be used elsewhere
                     self.step3_results_df.at[p.id,'Admin Time'] = g.step3_session_admin
                     if g.debug_level >= 2:
-                        print(f'Patient number {p.id} on {p.step3_path_route} Session'
+                        print(f'Patient {p.id} on {p.step3_path_route} Session'
                             f'{self.couns_session_counter} DNA number' 
                             f'{self.couns_dna_counter}')
                 else:
@@ -1656,12 +1721,14 @@ class Model:
         if self.couns_dna_counter >= 2:
             self.step3_results_df.at[p.id, 'IsDropOut'] = 1
             if g.debug_level >= 2:
-                print(f'Patient number {p.id} dropped out of {p.step3_path_route} treatment')
+                print(f'Patient {p.id} dropped out of {p.step3_path_route} treatment')
+            p.step3_end_week = p.step3_start_week+self.couns_random_weeks[self.couns_session_counter]
         else:
             self.step3_results_df.at[p.id, 'IsDropOut'] = 0
             if g.debug_level >= 2:
-                print(f'Patient number {p.id} completed {p.step3_path_route} treatment')
-        # remove from Step 2 Caseload as have either completed treatment or dropped out
+                print(f'Patient {p.id} completed {p.step3_path_route} treatment')
+            p.step3_end_week = p.step3_start_week+max(self.couns_random_weeks)
+        # remove from Step 3 Caseload as have either completed treatment or dropped out
         self.step3_results_df.at[p.id, 'Caseload'] = 0
 
         # reset counters for couns sessions
@@ -1678,10 +1745,21 @@ class Model:
         with self.couns_caseload_res.put(1) as couns_rel:
             yield couns_rel
 
+        if self.couns_dna_counter >= 2:
+            # if patient dropped out hold onto the resource latest attended session
+            yield self.env.timeout(self.couns_random_weeks[self.couns_session_counter])
+            if g.debug_level >= 2:
+                print(f'Patient {p.id} starting at week {p.step3_start_week} discharged from {p.step3_path_route} at week {p.step3_end_week}')
+        else:
+            # otherwise hold onto the resource until the last session
+            yield self.env.timeout(max(self.couns_random_weeks))
+            if g.debug_level >= 2:
+                print(f'Patient {p.id} starting at week {p.step3_start_week} discharged from {p.step3_path_route} at week {p.step3_end_week}')
+        
         # add to caseload
         g.number_on_couns_cl -=1
 
-        yield self.env.timeout(0)
+        #yield self.env.timeout(0)
 
     # This method calculates results over each single run
     def calculate_run_results(self):
