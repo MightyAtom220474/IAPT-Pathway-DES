@@ -99,7 +99,7 @@ class g:
 
     # Simulation
     sim_duration = 52
-    number_of_runs = 1
+    number_of_runs = 10
     std_dev = 3 # used for randomising activity times
 
     # Result storage
