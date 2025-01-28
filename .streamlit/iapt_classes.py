@@ -73,8 +73,8 @@ class g:
     cpd_time = 225 # half day per month CPD
     
     # Job Plans
-    number_staff_cbt = 9
-    number_staff_couns = 10
+    number_staff_cbt = 8
+    number_staff_couns = 8
     number_staff_pwp = 10
     hours_avail_cbt = 22.0
     hours_avail_couns = 22.0
@@ -99,7 +99,7 @@ class g:
 
     # Simulation
     sim_duration = 52
-    number_of_runs = 10
+    number_of_runs = 1
     std_dev = 3 # used for randomising activity times
 
     # Result storage
@@ -1042,9 +1042,11 @@ class Model:
 
                             if g.debug_level >=2:
                                 print(f"-- Pathway Runner Initiated --")
-                            yield self.env.process(self.pathway_runner(p))
+                            # proceed to next patient and run pathway runner
+                            yield self.env.timeout(0)
+                            self.env.process(self.pathway_runner(p))
 
-                            return self.asst_results_df
+                            #return self.asst_results_df
 
                         else:
                             # otherwise proceed to next patient
@@ -1057,9 +1059,11 @@ class Model:
 
         if p.initial_step == 'Step2':
             print(f'PATHWAY RUNNER: Patient {p.id} sent down **{p.initial_step}** pathway')
+            #yield self.env.timeout(0)
             yield self.env.process(self.patient_step2_pathway(p))
         else:
             print(f'PATHWAY RUNNER: Patient {p.id} sent down {p.initial_step} pathway')
+            #yield self.env.timeout(0)
             yield self.env.process(self.patient_step3_pathway(p))
 
     ###### step2 pathway #####
@@ -1080,12 +1084,18 @@ class Model:
 
         # push the patient down the chosen step2 route
         if self.selected_step2_pathway == 'PwP':
+            # add to PwP WL
+            g.number_on_pwp_wl += 1
+            # yield self.env.timeout(0)
             yield self.env.process(self.step2_pwp_process(p))
         else:
             if g.debug_level >=2:
                 print(f"Patient {p.id} sent to Group store")
             
                 self.group_store.put(p)
+
+                # add to group WL
+                g.number_on_group_wl += 1
 
                 if g.debug_level >=2:
                     print(f'Group store contains {len(self.group_store.items)} of possible {g.step2_group_size}')
@@ -1104,8 +1114,10 @@ class Model:
                             print(f'Putting Patient {p.id} through Group Therapy, {len(self.group_store.items)} remaining')
                         if g.debug_level >=2:
                                 print(f"FUNC PROCESS patient_step2_pathway: Patient {p.id} Initiating {p.step2_path_route} Step 2 Route")
-
+                        #yield self.env.timeout(0)
                         yield self.env.process(self.step2_group_process(p))
+
+        #yield self.env.timeout(0)
             
     ###### step3 pathway #####
     def patient_step3_pathway(self, patient):
@@ -1125,12 +1137,20 @@ class Model:
 
         # push the patient down the chosen step2 route
         if self.selected_step3_pathway == 'CBT':
+            # add to CBT WL
+            g.number_on_cbt_wl += 1
+            # yield self.env.timeout(0)
             yield self.env.process(self.step3_cbt_process(p))
         else:
+            # add to Couns WL
+            g.number_on_couns_wl += 1
+            # yield self.env.timeout(0)
             yield self.env.process(self.step3_couns_process(p))
-
+            
         if g.debug_level >=2:
                 print(f"FUNC PROCESS patient_step3_pathway: Patient {p.id} Initiating {p.step3_path_route} Step 3 Route")
+
+        #yield self.env.timeout(0)
 
     def step2_pwp_process(self,patient):
 
@@ -1140,8 +1160,6 @@ class Model:
         self.pwp_session_counter = 0
         # counter for applying DNA policy
         self.pwp_dna_counter = 0
-
-        g.number_on_pwp_wl += 1
 
         if g.debug_level >=2:
             print(f'{p.step2_path_route} RUNNER: Patient {p.id} added to {p.step2_path_route} waiting list')
@@ -1312,8 +1330,6 @@ class Model:
         # counter for applying DNA policy
         self.group_dna_counter = 0
 
-        g.number_on_group_wl += 1
-
         # Record where the patient is on the TA WL
         self.step2_results_df.at[p.id, 'Group WL Posn'] = \
                                             g.number_on_group_wl
@@ -1407,8 +1423,6 @@ class Model:
         # counter for applying DNA policy
         self.cbt_dna_counter = 0
 
-        g.number_on_cbt_wl += 1
-
         if g.debug_level >=2:
             print(f'{p.step3_path_route} RUNNER: Patient {p.id} added to {p.step3_path_route} waiting list')
 
@@ -1447,7 +1461,7 @@ class Model:
 
         # print(f'Patient {p} started CBT')
 
-        # as each patient reaches this stage take them off CBT wl
+        # as each patient reaches this stage take them off CBT WL
         g.number_on_cbt_wl -= 1
 
         if g.debug_level >=2:
@@ -1580,8 +1594,6 @@ class Model:
         # counter for applying DNA policy
         self.couns_dna_counter = 0
 
-        g.number_on_couns_wl += 1
-
         if g.debug_level >=2:
             print(f'{p.step3_path_route} RUNNER: Patient {p.id} added to {p.step3_path_route} waiting list')
 
@@ -1620,7 +1632,7 @@ class Model:
 
         # print(f'Patient {p} started Couns')
 
-        # as each patient reaches this stage take them off PwP wl
+        # as each patient reaches this stage take them off Couns WL
         g.number_on_couns_wl -= 1
 
         if g.debug_level >=2:
@@ -1893,4 +1905,13 @@ if __name__ == "__main__":
 
     df_trial_results, asst_weekly_dfs, step2_weekly_dfs, step3_weekly_dfs, staff_weekly_dfs, caseload_weekly_dfs  = my_trial.run_trial()
 
-    df_trial_results, asst_weekly_dfs, step2_weekly_dfs, step3_weekly_dfs, staff_weekly_dfs, caseload_weekly_dfs
+#df_trial_results, print(asst_weekly_dfs.to_string()), print(step2_weekly_dfs.to_string()), print(step3_weekly_dfs.to_string()), staff_weekly_dfs, print(caseload_weekly_dfs.to_string())
+
+# asst_weekly_dfs.to_csv('S:\Departmental Shares\IM&T\Information\Business Intelligence\Heath McDonald\HSMA\Discrete Event Simulations\IAPT DES\asst_weekly_summary.csv')
+# step2_weekly_dfs.to_csv('step2_weekly_summary.csv')
+# step3_weekly_dfs.to_csv('step3_weekly_summary.csv')
+# caseload_weekly_dfs.to_csv('caseload_weekly_summary.csv')
+
+#S:\Departmental Shares\IM&T\Information\Business Intelligence\Heath McDonald\HSMA\Discrete Event Simulations\IAPT DES
+
+
