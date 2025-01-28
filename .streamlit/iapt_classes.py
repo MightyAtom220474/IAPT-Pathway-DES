@@ -101,6 +101,7 @@ class g:
     sim_duration = 52
     number_of_runs = 1
     std_dev = 3 # used for randomising activity times
+    event_week_tracker = {} # used to track the latest events week for each patient
 
     # Result storage
     weekly_wl_posn = pd.DataFrame() # container to hold w/l position at end of week
