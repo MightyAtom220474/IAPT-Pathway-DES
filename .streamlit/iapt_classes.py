@@ -101,8 +101,7 @@ class g:
     sim_duration = 52
     number_of_runs = 1
     std_dev = 3 # used for randomising activity times
-    event_week_tracker = {} # used to track the latest events week for each patient
-
+    
     # Result storage
     weekly_wl_posn = pd.DataFrame() # container to hold w/l position at end of week
     caseload_weekly_stats = [] # list to hold weekly Caseload statistics
@@ -297,6 +296,8 @@ class Model:
         # week counter
         self.week_number = 0
 
+        # list to hold each weekly amount of referrals
+        self.referrals_generated = []
         # list to hold weekly asst statistics
         self.asst_weekly_stats = []
         # list to hold weekly Step2 statistics
@@ -307,38 +308,21 @@ class Model:
         self.staff_weekly_stats = []
         
 
-        ######### Create our resources #########
-        ########## PwP ##########
+        ######### Create our weekly resources #########
         self.ta_res = simpy.Container(
             self.env,capacity=g.ta_resource,
             init=g.ta_resource
             )
-        ######### removed as these resources going to be created on the fly ##########
-        # self.pwp_res = simpy.Container(
-        #     self.env,
-        #     capacity=g.pwp_resource,
-        #     init=g.pwp_resource
-        #     )
-
+        
         self.group_res = simpy.Container(
             self.env,
             capacity=g.group_resource,
             init=g.group_resource
             )
-        # ########## CBT ##########
-        # self.cbt_res = simpy.Container(
-        #     self.env,
-        #     capacity=g.cbt_resource,
-        #     init=g.cbt_resource
-        #     )
-
-        # ########## Counsellor ##########
-        # self.couns_res = simpy.Container(
-        #     self.env,
-        #     capacity=g.couns_resource,
-        #     init=g.couns_resource
-        #     )
-
+        
+        # Start up the referral generator function
+        self.env.process(self.generator_patient_referrals())
+        
         while self.week_number <= number_of_weeks:
             if g.debug_level >= 1:
                 print(
@@ -348,9 +332,6 @@ class Model:
 ##################################
                     """
                     )
-
-            # Start up the referral generator function
-            self.env.process(self.generator_patient_referrals())
 
             # start up the staff entity generator
             self.env.process(self.staff_entity_generator(self.week_number))
@@ -543,26 +524,16 @@ class Model:
                 
             g.caseload_weekly_stats.append(self.weekly_couns_snapshot)
 
-            ######### replenish TA resources ##########
+            ######### replenish resources ##########
             if g.debug_level >= 2:
                 print("")
-                print("== Replenishing TA Resource==")
+                print("== Replenishing Resources==")
 
             ##### TA #####
             ta_amount_to_fill = g.ta_resource - self.ta_res.level
             # pwp_amount_to_fill = g.pwp_resource - self.pwp_res.level
             group_amount_to_fill = g.group_resource - self.group_res.level
-            # ##### CBT #####
-            # cbt_amount_to_fill = g.cbt_resource - self.cbt_res.level
-            # ##### Counsellor #####
-            # couns_amount_to_fill = g.couns_resource - self.couns_res.level
-
-            # if g.debug_level >= 2:
-            #     if all([ta_amount_to_fill == 0, pwp_amount_to_fill == 0, group_amount_to_fill == 0,
-            #             cbt_amount_to_fill == 0, couns_amount_to_fill == 0]):
-            #         print("All resources already full - no filling required")
-            #         print("")
-
+            
             if ta_amount_to_fill > 0:
                 if g.debug_level >= 2:
                     print(f"TA Level: {self.ta_res.level}")
@@ -573,16 +544,6 @@ class Model:
                 if g.debug_level >= 2:
                     print(f"New TA Level: {self.ta_res.level}")
 
-            # if pwp_amount_to_fill > 0:
-            #     if g.debug_level >= 2:
-            #         print(f"PwP Level: {self.pwp_res.level}")
-            #         print(f"Putting in {pwp_amount_to_fill}")
-
-            #     self.pwp_res.put(pwp_amount_to_fill)
-
-            #     if g.debug_level >= 2:
-            #         print(f"New PwP Level: {self.pwp_res.level}")
-
             if group_amount_to_fill > 0:
                 if g.debug_level >= 2:
                     print(f"Group Level: {self.group_res.level}")
@@ -592,30 +553,6 @@ class Model:
 
                 if g.debug_level >= 2:
                     print(f"New Group Level: {self.group_res.level}")
-
-            # ##### CBT #####
-
-            # if cbt_amount_to_fill > 0:
-            #     if g.debug_level >= 2:
-            #         print(f"CBT Level: {self.cbt_res.level}")
-            #         print(f"Putting in {cbt_amount_to_fill}")
-
-            #     self.cbt_res.put(cbt_amount_to_fill)
-
-            #     if g.debug_level >= 2:
-            #         print(f"New CBT Level: {self.cbt_res.level}")
-
-            # ##### Counsellor #####
-
-            # if couns_amount_to_fill > 0:
-            #     if g.debug_level >= 2:
-            #         print(f"Couns Level: {self.couns_res.level}")
-            #         print(f"Putting in {couns_amount_to_fill}")
-
-            #     self.couns_res.put(couns_amount_to_fill)
-
-            #     if g.debug_level >= 2:
-            #         print(f"New Couns Level: {self.couns_res.level}")
 
             # Wait one unit of simulation time (1 week)
             yield(self.env.timeout(1))
@@ -634,52 +571,66 @@ class Model:
             # increment week number by 1 week
             self.week_number += 1
 
+        self.referral_gen_complete = True # determines whether the referral generator has finished running
+
     ##### generator function that represents the DES generator for referrals
     def generator_patient_referrals(self):
 
-        # get the number of referrals that week based on the mean + seasonal variance
-        self.referrals_this_week = round(g.mean_referrals_pw +
-                                    (g.mean_referrals_pw *
-                                    g.referral_rate_lookup.at[
-                                    self.week_number+1,'PCVar'])) # weeks start at 1
+        # tracks whcih week number we are on
+        self.referral_week_number = 0
 
-        # print(f"Referrals generated this week: {self.referrals_this_week}")
+        while self.referral_week_number <= g.sim_duration:
+            # get the number of referrals that week based on the mean + seasonal variance
+            self.referrals_this_week = round(g.mean_referrals_pw +
+                                        (g.mean_referrals_pw *
+                                        g.referral_rate_lookup.at[
+                                        self.week_number+1,'PCVar'])) # weeks start at 1
 
-        # print(self.referrals_this_week)
+            # print(f"Referrals generated this week: {self.referrals_this_week}")
 
-        if g.debug_level >= 1:
-            print(f'Week {self.week_number}: {self.referrals_this_week}'
-                                                    ' referrals generated')
-            print('')
-            # print(f'Still remaining on TA WL from last week: {g.number_on_ta_wl}')
+            # print(self.referrals_this_week)
 
-            # print('')
-            # print(f'Still remaining on PwP WL from last week: {g.number_on_pwp_wl}')
+            if g.debug_level >= 1:
+                print(f'Week {self.week_number}: {self.referrals_this_week}'
+                                                        ' referrals generated')
+                print('')
+                
+            # append referrals to the list ready for processing
+            self.referrals_generated.append(self.referrals_this_week)
+            # add them to the tracker so we know how many referrals/patients need processing in total for the whole sim run
+            self.referral_tracker += self.referrals_this_week
+            # increment the referral week number by 1
+            self.referral_week_number = 0
+            
+        ##### Now that the referrals for the sim duration have been generated, process them in weekly batches
+        
+        # keep running until all patients have been processed
+        while self.referral_tracker > 0:
 
-            # print('')
-            # print(f'Still remaining on Group WL from last week: {g.number_on_group_wl}')
+            self.patient_week_number = 0
+            # do this for however many weeks there are in the sim_duration
+            for w, self.patient_week_number in g.sim_duration:
 
-            # print('')
-            # print(f'Still remaining on CBT WL from last week: {g.number_on_cbt_wl}')
+                # get the number of referrals at this week number position in the list
+                self.referrals_this_week = self.referrals_generated[w]
+                # start the referral counter
+                self.referral_counter = 0
 
-            # print('')
-            # print(f'Still remaining on Couns WL from last week: {g.number_on_couns_wl}')
-            # print("----------------")
+                # run this for as many times as there are referrals for that week
+                while self.referral_counter <= self.referrals_this_week:
+                
+                    # increment the referral counter by 1
+                    self.referral_counter += 1
 
-        self.referral_counter = 0
+                    # run the asst pathway generator for this referral and pass it the 
+                    self.env.process(self.patient_asst_pathway(self.referral_week_number))
 
-        while self.referral_counter <= self.referrals_this_week:
-
-            # increment the referral counter by 1
-            self.referral_counter += 1
-
-            # start up the patient pathway generator
-            self.env.process(self.patient_asst_pathway(self.week_number))
-
-        # reset the referral counter
-        self.referral_counter = 0
-
-        yield(self.env.timeout(1))
+                # reset the referral counter ready for the next batch
+                self.referral_counter = 0
+                # increment the referral week number by 1
+                self.patient_week_number += 1
+                # wait 1 unit of time i.e. 1 week
+                yield(self.env.timeout(1))
 
     # this function builds staff resources containing the number of slots on the caseload
     def resource_builder(self):
@@ -879,6 +830,10 @@ class Model:
         # Create a new patient from Patient Class
         p = Patient(self.patient_counter)
         p.week_added = week_number
+        
+        # add the patient to the event tracker
+        self.event_week_tracker = {'PatientID':p.id,'WeekNumber':self.week_number}
+
         if g.debug_level >=2:
                 print('')
                 print(f"==== Patient {p.id} Generated ====")
@@ -904,6 +859,9 @@ class Model:
             if g.debug_level >=2:
                 print(f"Patient {p.id} Rejected")
 
+            # remove this patient from the sim
+            self.referral_tracker -= 1
+
         else:
 
             self.asst_results_df.at[p.id, 'Run Number'] = self.run_number
@@ -927,6 +885,8 @@ class Model:
                 # record how long they waited for MDT review between 0 and 2 weeks
                 self.asst_results_df.at[p.id, 'Review Wait'] = random.uniform(0,
                                                                 g.mdt_freq)
+                # remove this patient from the sim
+                self.referral_tracker -= 1
             
             # patient doesn't need a review or does and was accepted                                                  g.mdt_freq)
             else :
@@ -962,6 +922,8 @@ class Model:
                     self.asst_results_df.at[p.id, 'Opt-in Wait'] = 0
                     # and didn't queue for TA appt
                     self.asst_results_df.at[p.id, 'Opt-in Q Time'] = 0
+                    # remove this patient from the sim
+                    self.referral_tracker -= 1
                 else:
                     # otherwise set flag to show they opted-in
                     self.asst_results_df.at[p.id, 'Opted In'] = 1
@@ -978,6 +940,9 @@ class Model:
 
                     g.number_on_ta_wl += 1
 
+                    # track the patient's week number
+                    self.event_week_tracker.update({p.id:self.week_number})
+
                     # Record where the patient is on the TA WL
                     self.asst_results_df.at[p.id, "TA WL Posn"] = \
                                                         g.number_on_ta_wl
@@ -990,6 +955,9 @@ class Model:
 
                     # as each patient reaches this stage take them off TA wl
                     g.number_on_ta_wl -= 1
+
+                    # track the patient's week number
+                    self.event_week_tracker.update({p.id:self.week_number})
 
                     if g.debug_level >= 2:
                         print(f'Week {self.env.now}: Patient number {p.id} (added week {p.week_added}) put through TA')
@@ -1167,6 +1135,9 @@ class Model:
 
         start_q_pwp = self.env.now
 
+        # track the patient's week number
+        self.event_week_tracker.update({p.id:self.week_number})
+
         # Record where the patient is on the TA WL
         self.step2_results_df.at[p.id, 'PwP WL Posn'] = \
                                             g.number_on_pwp_wl
@@ -1200,6 +1171,8 @@ class Model:
         
         # as each patient reaches this stage take them off PwP wl
         g.number_on_pwp_wl -= 1
+
+        self.event_week_tracker.update({p.id:self.week_number})
 
         if g.debug_level >=2:
             print(f'{p.step2_path_route} RUNNER: Patient {p.id} removed from {p.step2_path_route} waiting list')
@@ -1245,6 +1218,8 @@ class Model:
             self.step2_results_df.at[p.id,'Run Number'] = self.run_number
             self.step2_results_df.at[p.id, 'Treatment Route'
                                                 ] = p.step2_path_route
+            # track the patient's week number
+            self.event_week_tracker.update({p.id:self.week_number + self.pwp_random_weeks[self.pwp_session_counter]})
 
             # decide whether the patient was stepped up 
             self.step_patient_up = random.uniform(0,1)
@@ -1311,6 +1286,9 @@ class Model:
         with self.pwp_caseload_res.put(1) as pwp_rel:
             yield pwp_rel
 
+        # track the patient's week number
+        self.event_week_tracker.update({p.id:g.sim_duration+99})
+
         if self.pwp_dna_counter >= 2:
             # if patient dropped out hold onto the resource latest attended session
             yield self.env.timeout(self.pwp_random_weeks[self.pwp_session_counter])
@@ -1347,6 +1325,9 @@ class Model:
         # as each patient reaches this stage take them off Group wl
         g.number_on_group_wl -= 1
 
+        # track the patient's week number
+        self.event_week_tracker.update({p.id:self.week_number})
+
         if g.debug_level >= 2:
             print(f'FUNC PROCESS step2_group_process: Week {self.env.now}: Patient {p.id} (added week {p.week_added}) put through {p.step2_path_route}')
 
@@ -1377,6 +1358,9 @@ class Model:
             self.step2_results_df.at[p.id,'Treatment Route'
                                                 ] = p.step2_path_route
 
+            # track the patient's week number
+            self.event_week_tracker.update({p.id:self.env.now+self.group_session_counter})
+            
             # decide whether the session was DNA'd
             self.dna_group_session = random.uniform(0,1)
 
@@ -1465,6 +1449,9 @@ class Model:
         # as each patient reaches this stage take them off CBT WL
         g.number_on_cbt_wl -= 1
 
+        # track the patient's week number
+        self.event_week_tracker.update({p.id:self.week_number})
+
         if g.debug_level >=2:
             print(f'{p.step3_path_route} RUNNER: Patient {p.id} removed from {p.step3_path_route} waiting list')
 
@@ -1509,6 +1496,9 @@ class Model:
             self.step3_results_df.at[p.id,'Run Number'] = self.run_number
             self.step3_results_df.at[p.id, 'Treatment Route'
                                                 ] = p.step3_path_route
+            
+            # track the patient's week number
+            self.event_week_tracker.update({p.id:self.week_number + self.cbt_random_weeks[self.cbt_session_counter]})
 
             # decide whether the patient was stepped down
             self.step_patient_down = random.uniform(0,1)
@@ -1575,6 +1565,9 @@ class Model:
         with self.cbt_caseload_res.put(1) as cbt_rel:
             yield cbt_rel
 
+        # track the patient's week number
+        self.event_week_tracker.update({p.id:g.sim_duration+99})
+
         if self.cbt_dna_counter >= 2:
             # if patient dropped out hold onto the resource latest attended session
             yield self.env.timeout(self.cbt_random_weeks[self.cbt_session_counter])
@@ -1636,6 +1629,9 @@ class Model:
         # as each patient reaches this stage take them off Couns WL
         g.number_on_couns_wl -= 1
 
+        # track the patient's week number
+        self.event_week_tracker.update({p.id:self.week_number})
+
         if g.debug_level >=2:
             print(f'{p.step3_path_route} RUNNER: Patient {p.id} removed from {p.step3_path_route} waiting list')
 
@@ -1680,6 +1676,10 @@ class Model:
             self.step3_results_df.at[p.id,'Run Number'] = self.run_number
             self.step3_results_df.at[p.id, 'Treatment Route'
                                                 ] = p.step3_path_route
+            
+            # track the patient's week number
+            self.event_week_tracker.update({p.id:self.week_number + self.couns_random_weeks[self.couns_session_counter]})
+            
 
             # decide whether the patient was stepped down
             self.step_patient_down = random.uniform(0,1)
@@ -1758,6 +1758,9 @@ class Model:
         with self.couns_caseload_res.put(1) as couns_rel:
             yield couns_rel
 
+        # track the patient's week number
+        self.event_week_tracker.update({p.id:g.sim_duration+99})
+        
         if self.couns_dna_counter >= 2:
             # if patient dropped out hold onto the resource latest attended session
             yield self.env.timeout(self.couns_random_weeks[self.couns_session_counter])
@@ -1798,6 +1801,9 @@ class Model:
     # and in turns calls anything we need to generate results for the run
     def run(self, print_run_results=True):
 
+        self.referras_generated = [] # list to hold the weekly referrals generated
+        self.referral_tracker = 0 # counter for referrals received and processed
+
         # create a simpy store for this run to hold the patients until the group 
         # has enough members. This will persist for an entire run has finished 
         # and patients will be added to it and taken out of it as groups fill up 
@@ -1806,16 +1812,15 @@ class Model:
                                         self.env,
                                         capacity=g.step2_group_size
                                         )
-        #self.pwp_res_list = {}
 
         # Start up the resource builder to set up all staff resources
         self.env.process(self.resource_builder())
 
-        # Start up the week to start processing patients
+        # Start up the week runner to process patients
         self.env.process(self.week_runner(g.sim_duration))
 
-        # Run the model for the duration specified in g class
-        self.env.run(until=g.sim_duration)
+        # Run the model
+        self.env.run()
 
         # Now the simulation run has finished, call the method that calculates
         # run results
