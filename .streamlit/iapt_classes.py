@@ -10,7 +10,7 @@ class g:
     debug_level = 2
 
     # Referrals
-    mean_referrals_pw = 60
+    mean_referrals_pw = 500
 
     # Screening
     referral_rej_rate = 0.3 # % of referrals rejected, advised 30%
@@ -73,9 +73,9 @@ class g:
     cpd_time = 225 # half day per month CPD
     
     # Job Plans
-    number_staff_cbt = 8
-    number_staff_couns = 8
-    number_staff_pwp = 10
+    number_staff_cbt = 2
+    number_staff_couns = 2
+    number_staff_pwp = 3
     hours_avail_cbt = 22.0
     hours_avail_couns = 22.0
     hours_avail_pwp = 21.0
@@ -579,19 +579,19 @@ class Model:
         # tracks whcih week number we are on
         self.referral_week_number = 0
 
-        while self.referral_week_number <= g.sim_duration:
+        while self.referral_week_number < g.sim_duration:
             # get the number of referrals that week based on the mean + seasonal variance
             self.referrals_this_week = round(g.mean_referrals_pw +
                                         (g.mean_referrals_pw *
                                         g.referral_rate_lookup.at[
-                                        self.week_number+1,'PCVar'])) # weeks start at 1
+                                        self.referral_week_number+1,'PCVar'])) # weeks start at 1
 
             # print(f"Referrals generated this week: {self.referrals_this_week}")
 
             # print(self.referrals_this_week)
 
             if g.debug_level >= 1:
-                print(f'Week {self.week_number}: {self.referrals_this_week}'
+                print(f'Week {self.referral_week_number}: {self.referrals_this_week}'
                                                         ' referrals generated')
                 print('')
                 
@@ -600,7 +600,7 @@ class Model:
             # add them to the tracker so we know how many referrals/patients need processing in total for the whole sim run
             self.referral_tracker += self.referrals_this_week
             # increment the referral week number by 1
-            self.referral_week_number = 0
+            self.referral_week_number += 1
             
         ##### Now that the referrals for the sim duration have been generated, process them in weekly batches
         
@@ -609,10 +609,10 @@ class Model:
 
             self.patient_week_number = 0
             # do this for however many weeks there are in the sim_duration
-            for w, self.patient_week_number in g.sim_duration:
+            while self.patient_week_number < g.sim_duration:
 
                 # get the number of referrals at this week number position in the list
-                self.referrals_this_week = self.referrals_generated[w]
+                self.referrals_this_week = self.referrals_generated[self.patient_week_number]
                 # start the referral counter
                 self.referral_counter = 0
 
@@ -631,6 +631,8 @@ class Model:
                 self.patient_week_number += 1
                 # wait 1 unit of time i.e. 1 week
                 yield(self.env.timeout(1))
+
+            self.patient_week_number = 0
 
     # this function builds staff resources containing the number of slots on the caseload
     def resource_builder(self):
@@ -831,9 +833,6 @@ class Model:
         p = Patient(self.patient_counter)
         p.week_added = week_number
         
-        # add the patient to the event tracker
-        self.event_week_tracker = {'PatientID':p.id,'WeekNumber':self.week_number}
-
         if g.debug_level >=2:
                 print('')
                 print(f"==== Patient {p.id} Generated ====")
@@ -940,9 +939,6 @@ class Model:
 
                     g.number_on_ta_wl += 1
 
-                    # track the patient's week number
-                    self.event_week_tracker.update({p.id:self.week_number})
-
                     # Record where the patient is on the TA WL
                     self.asst_results_df.at[p.id, "TA WL Posn"] = \
                                                         g.number_on_ta_wl
@@ -955,9 +951,6 @@ class Model:
 
                     # as each patient reaches this stage take them off TA wl
                     g.number_on_ta_wl -= 1
-
-                    # track the patient's week number
-                    self.event_week_tracker.update({p.id:self.week_number})
 
                     if g.debug_level >= 2:
                         print(f'Week {self.env.now}: Patient number {p.id} (added week {p.week_added}) put through TA')
@@ -980,6 +973,9 @@ class Model:
                         self.asst_results_df.at[p.id, 'TA Outcome'] = 0
                         if g.debug_level >=2:
                             print(f"Patient {p.id} Rejected at TA Stage")
+
+                        # remove this patient from the sim
+                        self.referral_tracker -= 1
 
                         # used to decide whether further parts of the pathway are run or not
                         self.ta_accepted = 0
@@ -1055,8 +1051,8 @@ class Model:
         if self.selected_step2_pathway == 'PwP':
             # add to PwP WL
             g.number_on_pwp_wl += 1
-            # yield self.env.timeout(0)
-            yield self.env.process(self.step2_pwp_process(p))
+            yield self.env.timeout(0)
+            self.env.process(self.step2_pwp_process(p))
         else:
             if g.debug_level >=2:
                 print(f"Patient {p.id} sent to Group store")
@@ -1083,8 +1079,8 @@ class Model:
                             print(f'Putting Patient {p.id} through Group Therapy, {len(self.group_store.items)} remaining')
                         if g.debug_level >=2:
                                 print(f"FUNC PROCESS patient_step2_pathway: Patient {p.id} Initiating {p.step2_path_route} Step 2 Route")
-                        #yield self.env.timeout(0)
-                        yield self.env.process(self.step2_group_process(p))
+                        yield self.env.timeout(0)
+                        self.env.process(self.step2_group_process(p))
 
         #yield self.env.timeout(0)
             
@@ -1108,13 +1104,13 @@ class Model:
         if self.selected_step3_pathway == 'CBT':
             # add to CBT WL
             g.number_on_cbt_wl += 1
-            # yield self.env.timeout(0)
-            yield self.env.process(self.step3_cbt_process(p))
+            yield self.env.timeout(0)
+            self.env.process(self.step3_cbt_process(p))
         else:
             # add to Couns WL
             g.number_on_couns_wl += 1
-            # yield self.env.timeout(0)
-            yield self.env.process(self.step3_couns_process(p))
+            yield self.env.timeout(0)
+            self.env.process(self.step3_couns_process(p))
             
         if g.debug_level >=2:
                 print(f"FUNC PROCESS patient_step3_pathway: Patient {p.id} Initiating {p.step3_path_route} Step 3 Route")
@@ -1134,9 +1130,6 @@ class Model:
             print(f'{p.step2_path_route} RUNNER: Patient {p.id} added to {p.step2_path_route} waiting list')
 
         start_q_pwp = self.env.now
-
-        # track the patient's week number
-        self.event_week_tracker.update({p.id:self.week_number})
 
         # Record where the patient is on the TA WL
         self.step2_results_df.at[p.id, 'PwP WL Posn'] = \
@@ -1171,8 +1164,6 @@ class Model:
         
         # as each patient reaches this stage take them off PwP wl
         g.number_on_pwp_wl -= 1
-
-        self.event_week_tracker.update({p.id:self.week_number})
 
         if g.debug_level >=2:
             print(f'{p.step2_path_route} RUNNER: Patient {p.id} removed from {p.step2_path_route} waiting list')
@@ -1218,9 +1209,7 @@ class Model:
             self.step2_results_df.at[p.id,'Run Number'] = self.run_number
             self.step2_results_df.at[p.id, 'Treatment Route'
                                                 ] = p.step2_path_route
-            # track the patient's week number
-            self.event_week_tracker.update({p.id:self.week_number + self.pwp_random_weeks[self.pwp_session_counter]})
-
+            
             # decide whether the patient was stepped up 
             self.step_patient_up = random.uniform(0,1)
             # is the patient approaching the end of treatment and do they need to be stepped up?
@@ -1229,7 +1218,8 @@ class Model:
                 self.step2_results_df['IsStepUp'] = 1
                 if g.debug_level >= 2:
                     print(f'### STEPPED UP ###: Patient {p.id} has been stepped up, running Step3 route selector')
-                yield self.env.process(self.patient_step3_pathway(p))
+                yield(self.env.timeout(0))
+                self.env.process(self.patient_step3_pathway(p))
             else:
                 self.step2_results_df['IsStepUp'] = 0
 
@@ -1286,9 +1276,6 @@ class Model:
         with self.pwp_caseload_res.put(1) as pwp_rel:
             yield pwp_rel
 
-        # track the patient's week number
-        self.event_week_tracker.update({p.id:g.sim_duration+99})
-
         if self.pwp_dna_counter >= 2:
             # if patient dropped out hold onto the resource latest attended session
             yield self.env.timeout(self.pwp_random_weeks[self.pwp_session_counter])
@@ -1299,6 +1286,9 @@ class Model:
             yield self.env.timeout(max(self.pwp_random_weeks))
             if g.debug_level >= 2:
                 print(f'Patient {p.id} starting at week {p.step2_start_week} discharged from {p.step2_path_route} at week {p.step2_end_week}')
+
+        # remove this patient from the sim
+        self.referral_tracker -= 1
     
     def step2_group_process(self,patient):
 
@@ -1324,9 +1314,6 @@ class Model:
 
         # as each patient reaches this stage take them off Group wl
         g.number_on_group_wl -= 1
-
-        # track the patient's week number
-        self.event_week_tracker.update({p.id:self.week_number})
 
         if g.debug_level >= 2:
             print(f'FUNC PROCESS step2_group_process: Week {self.env.now}: Patient {p.id} (added week {p.week_added}) put through {p.step2_path_route}')
@@ -1357,9 +1344,6 @@ class Model:
             self.step2_results_df.at[p.id,'Run Number'] = self.run_number
             self.step2_results_df.at[p.id,'Treatment Route'
                                                 ] = p.step2_path_route
-
-            # track the patient's week number
-            self.event_week_tracker.update({p.id:self.env.now+self.group_session_counter})
             
             # decide whether the session was DNA'd
             self.dna_group_session = random.uniform(0,1)
@@ -1397,8 +1381,11 @@ class Model:
         # remove from overall caseload
         g.number_on_group_cl -=1
 
-        yield self.env.timeout(self.group_session_counter)
+        # remove this patient from the sim
+        self.referral_tracker -= 1
 
+        yield self.env.timeout(self.group_session_counter)
+        
     def step3_cbt_process(self,patient):
 
         p = patient
@@ -1449,9 +1436,6 @@ class Model:
         # as each patient reaches this stage take them off CBT WL
         g.number_on_cbt_wl -= 1
 
-        # track the patient's week number
-        self.event_week_tracker.update({p.id:self.week_number})
-
         if g.debug_level >=2:
             print(f'{p.step3_path_route} RUNNER: Patient {p.id} removed from {p.step3_path_route} waiting list')
 
@@ -1496,10 +1480,7 @@ class Model:
             self.step3_results_df.at[p.id,'Run Number'] = self.run_number
             self.step3_results_df.at[p.id, 'Treatment Route'
                                                 ] = p.step3_path_route
-            
-            # track the patient's week number
-            self.event_week_tracker.update({p.id:self.week_number + self.cbt_random_weeks[self.cbt_session_counter]})
-
+     
             # decide whether the patient was stepped down
             self.step_patient_down = random.uniform(0,1)
             # is the patient approaching the end of treatment and do they need to be stepped down?
@@ -1565,9 +1546,6 @@ class Model:
         with self.cbt_caseload_res.put(1) as cbt_rel:
             yield cbt_rel
 
-        # track the patient's week number
-        self.event_week_tracker.update({p.id:g.sim_duration+99})
-
         if self.cbt_dna_counter >= 2:
             # if patient dropped out hold onto the resource latest attended session
             yield self.env.timeout(self.cbt_random_weeks[self.cbt_session_counter])
@@ -1578,6 +1556,9 @@ class Model:
             yield self.env.timeout(max(self.cbt_random_weeks))
             if g.debug_level >= 2:
                 print(f'Patient {p.id} starting at week {p.step3_start_week} discharged from {p.step3_path_route} at week {p.step3_end_week}')
+
+        # remove this patient from the sim
+        self.referral_tracker -= 1
 
     def step3_couns_process(self,patient):
 
@@ -1629,9 +1610,6 @@ class Model:
         # as each patient reaches this stage take them off Couns WL
         g.number_on_couns_wl -= 1
 
-        # track the patient's week number
-        self.event_week_tracker.update({p.id:self.week_number})
-
         if g.debug_level >=2:
             print(f'{p.step3_path_route} RUNNER: Patient {p.id} removed from {p.step3_path_route} waiting list')
 
@@ -1676,11 +1654,7 @@ class Model:
             self.step3_results_df.at[p.id,'Run Number'] = self.run_number
             self.step3_results_df.at[p.id, 'Treatment Route'
                                                 ] = p.step3_path_route
-            
-            # track the patient's week number
-            self.event_week_tracker.update({p.id:self.week_number + self.couns_random_weeks[self.couns_session_counter]})
-            
-
+ 
             # decide whether the patient was stepped down
             self.step_patient_down = random.uniform(0,1)
             # is the patient approaching the end of treatment and do they need to be stepped down?
@@ -1754,12 +1728,12 @@ class Model:
         # # remove from clinician caseload
         # self.couns_caseloads[self.couns_caseload_id] -=1
 
+        # remove from caseload
+        g.number_on_couns_cl -=1
+
         # Return Couns caseload resource to the container
         with self.couns_caseload_res.put(1) as couns_rel:
             yield couns_rel
-
-        # track the patient's week number
-        self.event_week_tracker.update({p.id:g.sim_duration+99})
         
         if self.couns_dna_counter >= 2:
             # if patient dropped out hold onto the resource latest attended session
@@ -1771,11 +1745,9 @@ class Model:
             yield self.env.timeout(max(self.couns_random_weeks))
             if g.debug_level >= 2:
                 print(f'Patient {p.id} starting at week {p.step3_start_week} discharged from {p.step3_path_route} at week {p.step3_end_week}')
-        
-        # add to caseload
-        g.number_on_couns_cl -=1
 
-        #yield self.env.timeout(0)
+        # remove this patient from the sim
+        self.referral_tracker -= 1
 
     # This method calculates results over each single run
     def calculate_run_results(self):
