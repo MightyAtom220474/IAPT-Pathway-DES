@@ -291,69 +291,38 @@ class Model:
             activity_time = random.gauss(mean, std_dev)
             if activity_time > 0:
                 return activity_time
+            
+    # master process to control the running of all the other processes
+    def the_governor(self):
 
-    def week_runner(self,number_of_weeks):
-
-        # week counter
+        # start off the governor at week 0
         self.week_number = 0
 
-        # list to hold weekly asst statistics
-        self.asst_weekly_stats = []
-        # list to hold weekly Step2 statistics
-        self.step2_weekly_stats = []
-        # list to hold weekly Step3 statistics
-        self.step3_weekly_stats = []
-        # list to hold weekly Staff statistics
-        self.staff_weekly_stats = []
-
-        ######### Create our resources #########
-        ########## PwP ##########
-        self.ta_res = simpy.Container(
-            self.env,capacity=g.ta_resource,
-            init=g.ta_resource
-            )
-        ######### removed as these resources going to be created on the fly ##########
-        # self.pwp_res = simpy.Container(
-        #     self.env,
-        #     capacity=g.pwp_resource,
-        #     init=g.pwp_resource
-        #     )
-
-        self.group_res = simpy.Container(
-            self.env,
-            capacity=g.group_resource,
-            init=g.group_resource
-            )
-        # ########## CBT ##########
-        # self.cbt_res = simpy.Container(
-        #     self.env,
-        #     capacity=g.cbt_resource,
-        #     init=g.cbt_resource
-        #     )
-
-        # ########## Counsellor ##########
-        # self.couns_res = simpy.Container(
-        #     self.env,
-        #     capacity=g.couns_resource,
-        #     init=g.couns_resource
-        #     )
-
-        while self.week_number <= number_of_weeks:
-            if g.debug_level >= 1:
-                print(
-                    f"""
-##################################
-# Week {self.week_number}
-##################################
-                    """
-                    )
-
-            # Start up the referral generator function
-            self.env.process(self.generator_patient_referrals())
+        # run for however many times there are weeks in the sim
+        while self.week_number < g.sim_duration:
+            
+            # start up the referral generator
+            yield self.env.process(self.generator_patient_referrals(self.week_number))
 
             # start up the staff entity generator
-            self.env.process(self.staff_entity_generator(self.week_number))
-            
+            yield self.env.process(self.staff_entity_generator(self.week_number))
+
+            # collect the weekly stats ready for the next week to run
+            yield self.env.process(self.weekly_stats(self.week_number))
+
+
+            # increment the week number by one now everything has been run for this week
+            self.week_number += 1
+
+    def weekly_resources(self,res_week_number)
+        
+        self.res_week_number = res_week_number
+
+    # process to capture all the results we need at the end of each week
+    def weekly_stats(self,stats_week_number):
+          
+            self.stats_week_number = stats_week_number
+
             ##### record all weekly results #####
             ## Screening & TA
             self.asst_tot_screen = self.asst_results_df[
@@ -367,7 +336,7 @@ class Model:
 
             self.asst_weekly_stats.append(
                 {
-                 'Week Number':self.week_number,
+                 'Week Number':self.stats_week_number,
                  'Referral Screen Mins':self.asst_tot_screen,
                  'Referrals Rejected':self.asst_tot_reject,
                  'Referrals Delay Opt-in':self.asst_optin_delay,
@@ -414,7 +383,7 @@ class Model:
                 self.step2_weekly_stats.append(
                     {
                     'Route Name':self.step2_route,
-                    'Week Number':self.week_number,
+                    'Week Number':self.stats_week_number,
                     'Step2 WL':self.step2_max_wl,
                     'Step2 Q Time':self.step2_avg_wait,
                     'Step2 Clin Mins':self.step2_tot_clin,
@@ -465,7 +434,7 @@ class Model:
                 self.step3_weekly_stats.append(
                     {
                     'Route Name':self.step3_route,
-                    'Week Number':self.week_number,
+                    'Week Number':self.stats_week_number,
                     'Step3 WL':self.step3_max_wl,
                     'Step3 Q Time':self.step3_avg_wait,
                     'Step3 Clin Mins':self.step3_tot_clin,
@@ -498,7 +467,7 @@ class Model:
                 self.staff_weekly_stats.append(
                     {
                     'Job Role':self.job_role_name,
-                    'Week Number':self.week_number,
+                    'Week Number':self.stats_week_number,
                     'Supervision Mins':self.staff_tot_superv,
                     'Break Mins':self.staff_tot_break,
                     'Wellbeing Mins':self.staff_tot_wellb,
@@ -510,7 +479,7 @@ class Model:
             ##### Take a snapshot of the weekly caseload levels #####
             
             self.weekly_pwp_snapshot = {'Run Number':self.run_number
-                                       ,'Week Number':self.week_number
+                                       ,'Week Number':self.stats_week_number
                                        ,'Data':[]}
             
             for pwp_caseload_id, pwp_level in self.pwp_resources.items():
@@ -521,7 +490,7 @@ class Model:
             g.caseload_weekly_stats.append(self.weekly_pwp_snapshot)
                 
             self.weekly_cbt_snapshot = {'Run Number':self.run_number
-                                       ,'Week Number':self.week_number
+                                       ,'Week Number':self.stats_week_number
                                        ,'Data':[]}
             
             for cbt_caseload_id, cbt_level in self.cbt_resources.items():
@@ -532,7 +501,7 @@ class Model:
             g.caseload_weekly_stats.append(self.weekly_cbt_snapshot)
             
             self.weekly_couns_snapshot = {'Run Number':self.run_number
-                                       ,'Week Number':self.week_number
+                                       ,'Week Number':self.stats_week_number
                                        ,'Data':[]}
             
             for couns_caseload_id, couns_level in self.couns_resources.items():
@@ -542,144 +511,26 @@ class Model:
                 
             g.caseload_weekly_stats.append(self.weekly_couns_snapshot)
 
-            ######### replenish TA resources ##########
-            if g.debug_level >= 2:
-                print("")
-                print("== Replenishing TA Resource==")
-
-            ##### TA #####
-            ta_amount_to_fill = g.ta_resource - self.ta_res.level
-            # pwp_amount_to_fill = g.pwp_resource - self.pwp_res.level
-            group_amount_to_fill = g.group_resource - self.group_res.level
-            # ##### CBT #####
-            # cbt_amount_to_fill = g.cbt_resource - self.cbt_res.level
-            # ##### Counsellor #####
-            # couns_amount_to_fill = g.couns_resource - self.couns_res.level
-
-            # if g.debug_level >= 2:
-            #     if all([ta_amount_to_fill == 0, pwp_amount_to_fill == 0, group_amount_to_fill == 0,
-            #             cbt_amount_to_fill == 0, couns_amount_to_fill == 0]):
-            #         print("All resources already full - no filling required")
-            #         print("")
-
-            if ta_amount_to_fill > 0:
-                if g.debug_level >= 2:
-                    print(f"TA Level: {self.ta_res.level}")
-                    print(f"Putting in {ta_amount_to_fill}")
-
-                self.ta_res.put(ta_amount_to_fill)
-
-                if g.debug_level >= 2:
-                    print(f"New TA Level: {self.ta_res.level}")
-
-            # if pwp_amount_to_fill > 0:
-            #     if g.debug_level >= 2:
-            #         print(f"PwP Level: {self.pwp_res.level}")
-            #         print(f"Putting in {pwp_amount_to_fill}")
-
-            #     self.pwp_res.put(pwp_amount_to_fill)
-
-            #     if g.debug_level >= 2:
-            #         print(f"New PwP Level: {self.pwp_res.level}")
-
-            if group_amount_to_fill > 0:
-                if g.debug_level >= 2:
-                    print(f"Group Level: {self.group_res.level}")
-                    print(f"Putting in {group_amount_to_fill}")
-
-                self.group_res.put(group_amount_to_fill)
-
-                if g.debug_level >= 2:
-                    print(f"New Group Level: {self.group_res.level}")
-
-            # ##### CBT #####
-
-            # if cbt_amount_to_fill > 0:
-            #     if g.debug_level >= 2:
-            #         print(f"CBT Level: {self.cbt_res.level}")
-            #         print(f"Putting in {cbt_amount_to_fill}")
-
-            #     self.cbt_res.put(cbt_amount_to_fill)
-
-            #     if g.debug_level >= 2:
-            #         print(f"New CBT Level: {self.cbt_res.level}")
-
-            # ##### Counsellor #####
-
-            # if couns_amount_to_fill > 0:
-            #     if g.debug_level >= 2:
-            #         print(f"Couns Level: {self.couns_res.level}")
-            #         print(f"Putting in {couns_amount_to_fill}")
-
-            #     self.couns_res.put(couns_amount_to_fill)
-
-            #     if g.debug_level >= 2:
-            #         print(f"New Couns Level: {self.couns_res.level}")
-
-            # Wait one unit of simulation time (1 week)
-            yield(self.env.timeout(1))
-
-            if g.debug_level >= 1:
-                print(
-                    f"""
-
-#----------------------------------
-# Week {self.week_number} Complete
-#----------------------------------
-
-                    """
-                    )
-
-            # increment week number by 1 week
-            self.week_number += 1
+            # hand control back to the governor function
+            yield self.env.timeout(0)
 
     ##### generator function that represents the DES generator for referrals
-    def generator_patient_referrals(self):
+    def generator_patient_referrals(self,ref_week_number):
+
+        self.ref_week_number = ref_week_number
 
         # get the number of referrals that week based on the mean + seasonal variance
         self.referrals_this_week = round(g.mean_referrals_pw +
                                     (g.mean_referrals_pw *
                                     g.referral_rate_lookup.at[
-                                    self.week_number+1,'PCVar'])) # weeks start at 1
-
-        # print(f"Referrals generated this week: {self.referrals_this_week}")
-
-        # print(self.referrals_this_week)
+                                    self.ref_week_number+1,'PCVar'])) # weeks start at 1
 
         if g.debug_level >= 1:
             print(f'Week {self.week_number}: {self.referrals_this_week}'
                                                     ' referrals generated')
-            print('')
-            # print(f'Still remaining on TA WL from last week: {g.number_on_ta_wl}')
-
-            # print('')
-            # print(f'Still remaining on PwP WL from last week: {g.number_on_pwp_wl}')
-
-            # print('')
-            # print(f'Still remaining on Group WL from last week: {g.number_on_group_wl}')
-
-            # print('')
-            # print(f'Still remaining on CBT WL from last week: {g.number_on_cbt_wl}')
-
-            # print('')
-            # print(f'Still remaining on Couns WL from last week: {g.number_on_couns_wl}')
-            # print("----------------")
-
-        self.referral_counter = 0
-
-        while self.referral_counter <= self.referrals_this_week:
-
-            # increment the referral counter by 1
-            self.referral_counter += 1
-
-            # start up the patient pathway generator
-            self.env.process(self.patient_asst_pathway(self.week_number))
-
-        # reset the referral counter
-        self.referral_counter = 0
-
-        yield(self.env.timeout(1))
-
+        # return the number of referrals for that week
+        return self.referrals_this_week    
+        
     # this function builds staff resources containing the number of slots on the caseload
     def resource_builder(self):
 
