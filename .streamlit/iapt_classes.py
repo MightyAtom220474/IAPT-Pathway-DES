@@ -1021,12 +1021,12 @@ class Model:
 
         if p.initial_step == 'Step2':
             print(f'PATHWAY RUNNER: Patient {p.id} sent down **{p.initial_step}** pathway')
-            #yield self.env.timeout(0)
-            yield self.env.process(self.patient_step2_pathway(p))
+            yield self.env.timeout(0)
+            self.env.process(self.patient_step2_pathway(p))
         else:
             print(f'PATHWAY RUNNER: Patient {p.id} sent down {p.initial_step} pathway')
-            #yield self.env.timeout(0)
-            yield self.env.process(self.patient_step3_pathway(p))
+            yield self.env.timeout(0)
+            self.env.process(self.patient_step3_pathway(p))
 
     ###### step2 pathway #####
     def patient_step2_pathway(self, patient):
@@ -1048,8 +1048,8 @@ class Model:
         if self.selected_step2_pathway == 'PwP':
             # add to PwP WL
             g.number_on_pwp_wl += 1
-            # yield self.env.timeout(0)
-            yield self.env.process(self.step2_pwp_process(p))
+            yield self.env.timeout(0)
+            self.env.process(self.step2_pwp_process(p))
         else:
             if g.debug_level >=2:
                 print(f"Patient {p.id} sent to Group store")
@@ -1076,8 +1076,8 @@ class Model:
                             print(f'Putting Patient {p.id} through Group Therapy, {len(self.group_store.items)} remaining')
                         if g.debug_level >=2:
                                 print(f"FUNC PROCESS patient_step2_pathway: Patient {p.id} Initiating {p.step2_path_route} Step 2 Route")
-                        #yield self.env.timeout(0)
-                        yield self.env.process(self.step2_group_process(p))
+                        yield self.env.timeout(0)
+                        self.env.process(self.step2_group_process(p))
 
         #yield self.env.timeout(0)
             
@@ -1101,13 +1101,13 @@ class Model:
         if self.selected_step3_pathway == 'CBT':
             # add to CBT WL
             g.number_on_cbt_wl += 1
-            # yield self.env.timeout(0)
-            yield self.env.process(self.step3_cbt_process(p))
+            yield self.env.timeout(0)
+            self.env.process(self.step3_cbt_process(p))
         else:
             # add to Couns WL
             g.number_on_couns_wl += 1
-            # yield self.env.timeout(0)
-            yield self.env.process(self.step3_couns_process(p))
+            yield self.env.timeout(0)
+            self.env.process(self.step3_couns_process(p))
             
         if g.debug_level >=2:
                 print(f"FUNC PROCESS patient_step3_pathway: Patient {p.id} Initiating {p.step3_path_route} Step 3 Route")
