@@ -305,7 +305,6 @@ class Model:
         self.step3_weekly_stats = []
         # list to hold weekly Staff statistics
         self.staff_weekly_stats = []
-        
 
         ######### Create our resources #########
         ########## PwP ##########
