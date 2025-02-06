@@ -10,7 +10,7 @@ class g:
     debug_level = 2
 
     # Referrals
-    mean_referrals_pw = 200
+    mean_referrals_pw = 100
 
     # Screening
     referral_rej_rate = 0.1 # 0.3 # % of referrals rejected, advised 30%
@@ -369,6 +369,9 @@ class Model:
             if g.debug_level >= 2:
                     print(f"Week {self.week_number-1} complete, moving on to Week {self.week_number}")
 
+            # wait a week before moving onto the next week
+            yield self.env.timeout(1)
+
     def patient_treatment_generator(self,number_of_referrals,treatment_week_number):
 
         self.referrals_to_process = number_of_referrals
@@ -382,7 +385,8 @@ class Model:
 
             self.referrals_to_process -= 1
 
-        yield self.env.timeout(0)       
+        # wait 1 unit of time i.e. 1 week
+        yield self.env.timeout(1)       
 
     def replenish_weekly_resources(self):
 
@@ -410,6 +414,7 @@ class Model:
                 if g.debug_level >= 2:
                     print(f"New Group Level: {self.group_res.level}")
 
+            # don't wait, go to the next step
             yield self.env.timeout(0)
 
     # process to capture all the results we need at the end of each week
@@ -865,6 +870,7 @@ class Model:
             if g.debug_level >=2:
                 print(f"Patient {p.id} Rejected")
 
+            yield self.env.timeout(0)
         else:
 
             self.asst_results_df.at[p.id, 'Run Number'] = self.run_number
@@ -888,6 +894,8 @@ class Model:
                 # record how long they waited for MDT review between 0 and 2 weeks
                 self.asst_results_df.at[p.id, 'Review Wait'] = random.uniform(0,
                                                                 g.mdt_freq)
+
+                yield self.env.timeout(0)
             
             # patient doesn't need a review or does and was accepted                                                  g.mdt_freq)
             else :
@@ -923,6 +931,8 @@ class Model:
                     self.asst_results_df.at[p.id, 'Opt-in Wait'] = 0
                     # and didn't queue for TA appt
                     self.asst_results_df.at[p.id, 'Opt-in Q Time'] = 0
+
+                    yield self.env.timeout(0)
                 else:
                     # otherwise set flag to show they opted-in
                     self.asst_results_df.at[p.id, 'Opted In'] = 1
@@ -973,6 +983,7 @@ class Model:
                         self.asst_results_df.at[p.id, 'TA Outcome'] = 0
                         if g.debug_level >=2:
                             print(f"Patient {p.id} Rejected at TA Stage")
+                        yield self.env.timeout(0)
 
                         # used to decide whether further parts of the pathway are run or not
                         self.ta_accepted = 0
@@ -1005,14 +1016,14 @@ class Model:
                             if g.debug_level >=2:
                                 print(f"-- Pathway Runner Initiated --")
                             # proceed to next patient and run pathway runner
-                            #yield self.env.timeout(0)
+                            yield self.env.timeout(0)
                             self.env.process(self.pathway_runner(p))
 
                             #return self.asst_results_df
 
-                        else:
-                            # otherwise proceed to next patient
-                            yield self.env.timeout(0)
+                        # else:
+                        #     # otherwise proceed to next patient
+                        #     yield self.env.timeout(0)
         # print(self.asst_results_df)
 
     def pathway_runner(self, patient):
@@ -1048,8 +1059,8 @@ class Model:
         if self.selected_step2_pathway == 'PwP':
             # add to PwP WL
             g.number_on_pwp_wl += 1
-            yield self.env.timeout(0)
-            self.env.process(self.step2_pwp_process(p))
+            #yield self.env.timeout(0)
+            yield self.env.process(self.step2_pwp_process(p))
         else:
             if g.debug_level >=2:
                 print(f"Patient {p.id} sent to Group store")
@@ -1076,8 +1087,8 @@ class Model:
                             print(f'Putting Patient {p.id} through Group Therapy, {len(self.group_store.items)} remaining')
                         if g.debug_level >=2:
                                 print(f"FUNC PROCESS patient_step2_pathway: Patient {p.id} Initiating {p.step2_path_route} Step 2 Route")
-                        yield self.env.timeout(0)
-                        self.env.process(self.step2_group_process(p))
+                        #yield self.env.timeout(0)
+                        yield self.env.process(self.step2_group_process(p))
 
         #yield self.env.timeout(0)
             
@@ -1101,13 +1112,13 @@ class Model:
         if self.selected_step3_pathway == 'CBT':
             # add to CBT WL
             g.number_on_cbt_wl += 1
-            yield self.env.timeout(0)
-            self.env.process(self.step3_cbt_process(p))
+            #yield self.env.timeout(0)
+            yield self.env.process(self.step3_cbt_process(p))
         else:
             # add to Couns WL
             g.number_on_couns_wl += 1
-            yield self.env.timeout(0)
-            self.env.process(self.step3_couns_process(p))
+            #yield self.env.timeout(0)
+            yield self.env.process(self.step3_couns_process(p))
             
         if g.debug_level >=2:
                 print(f"FUNC PROCESS patient_step3_pathway: Patient {p.id} Initiating {p.step3_path_route} Step 3 Route")
@@ -1267,10 +1278,6 @@ class Model:
 
         # # remove from this specific caseload
         # self.pwp_caseload_posn -=1
-
-        # Return PwP caseload resource to the container
-        with self.pwp_caseload_res.put(1) as pwp_rel:
-            yield pwp_rel
 
         if self.pwp_dna_counter >= 2:
             # if patient dropped out hold onto the resource latest attended session
