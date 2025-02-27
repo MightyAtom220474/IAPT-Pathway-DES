@@ -13,7 +13,7 @@ class g:
     mean_referrals_pw = 100
 
     # Screening
-    referral_rej_rate = 0.1 # 0.3 # % of referrals rejected, advised 30%
+    referral_rej_rate = 0.3 # % of referrals rejected, advised 30%
     referral_review_rate = 0.4 # % that go to MDT as prev contact with Trust
     mdt_freq = 2 # how often in weeks MDT takes place, longest time a review referral may wait for review
     review_rej_rate = 0.1 #0.5 # % ref that got to MDT and get rejected
@@ -26,7 +26,7 @@ class g:
 
     # TA
     ta_time_mins = 60 # time allocated to each TA
-    ta_accept_rate = 0.9 #0.7 ##### assume 70% of TA's accepted, need to check this #####
+    ta_accept_rate = 0.7 ##### assume 70% of TA's accepted, need to check this #####
 
     # Step 2
     step2_ratio = 0.85 # proportion of patients that go onto Step2 vs Step3
@@ -51,7 +51,7 @@ class g:
     
     # Step 3
     step3_ratio = 0.15 # proportion of patients that go onto Step3 vs Step2
-    step3_routes =['DepC','CBT'] # full pathway options = ['PfCBT','Group','CBT','EMDR','DepC','DIT','IPT','CDEP']
+    step3_routes =['Couns','CBT'] # full pathway options = ['PfCBT','Group','CBT','EMDR','DepC','DIT','IPT','CDEP']
     step3_path_ratios = [0.368,0.632]# [0.1,0.25,0.25,0.05,0.05,0.1,0.1,0.1] # Step3 proportion for each route ##### Need to clarify exact split
     step3_cbt_sessions = 12 # number of PwP sessions at Step2
     step3_cbt_1st_mins = 45 # minutes allocated for 1st cbt session
@@ -73,26 +73,29 @@ class g:
     cpd_time = 225 # half day per month CPD
     
     # Job Plans
-    number_staff_cbt = 1
-    number_staff_couns = 1
-    number_staff_pwp = 1
+    number_staff_cbt = 10
+    number_staff_couns = 10
+    number_staff_pwp = 10
     hours_avail_cbt = 22.0
     hours_avail_couns = 22.0
     hours_avail_pwp = 21.0
     ta_resource = number_staff_pwp * 3 # job plan = 3 TA per week per PwP
     pwp_resource = number_staff_pwp # starting point for PwP resources
-    pwp_res_dict = {}
+    # pwp_res_dict = {} # store for pwp caseload resources
+    # pwp_rel_dict = {} # store for release of pwp resources
     pwp_caseload = 30
     pwp_id = 0 # unique ID for PwP resources
     pwp_avail = number_staff_pwp # used to check whether a PwP is available
     group_resource = number_staff_pwp #  job plan = 1 group per week per PwP, assume 12 per group
     cbt_resource = number_staff_cbt # job plan = 2 x 1st + 20 X FUP per cbt per week
-    cbt_res_dict = {}
+    # cbt_res_dict = {} # store for cbt caseload resources
+    # cbt_rel_dict = {} # store for release of cbt resources
     cbt_caseload = 25
     cbt_id = 0 # unique ID for CBT resources
     cbt_avail = number_staff_cbt # used to check whether a PwP caseload slot is available
     couns_resource = number_staff_couns # job plan = 2 x 1st + 20 X FUP per cbt per week
-    couns_res_dict = {}
+    # couns_res_dict = {} # store for couns caseload resources
+    # couns_rel_dict = {} # store for release of couns resources
     couns_caseload = 25
     couns_id = 0 # unique ID for Couns resources
     couns_avail = number_staff_couns # used to check whether a Couns is available
@@ -298,6 +301,12 @@ class Model:
         # start off the governor at week 0
         self.week_number = 0
 
+        # build the caseload resources here, these will be topped up periodically
+        yield self.env.process(self.caseload_builder())
+
+        if g.debug_level >= 2:
+                    print(f"Caseload Resources Ready")
+
         # list to hold weekly asst statistics
         self.asst_weekly_stats = []
         # list to hold weekly Step2 statistics
@@ -317,14 +326,6 @@ class Model:
             ''')
             
             if g.debug_level >= 2:
-                    print(f"Firing up the referral generator")
-            # start up the referral generator
-            yield self.env.process(self.generator_patient_referrals(self.week_number))
-            
-            if g.debug_level >= 2:
-                    print(f"Referral generator has returned {self.referrals_this_week} referrals")
-            
-            if g.debug_level >= 2:
                     print(f"Firing up the staff entity generator")
             
             # start up the staff entity generator
@@ -339,6 +340,14 @@ class Model:
             yield self.env.process(self.resource_builder())
             if g.debug_level >= 2:
                     print(f"Sim Resources Ready")
+
+            if g.debug_level >= 2:
+                    print(f"Firing up the referral generator")
+            # start up the referral generator
+            yield self.env.process(self.generator_patient_referrals(self.week_number))
+            
+            if g.debug_level >= 2:
+                    print(f"Referral generator has returned {self.referrals_this_week} referrals")
 
             if g.debug_level >= 2:
                     print(f"Passing {self.referrals_this_week} to the patient treatment generator")
@@ -361,7 +370,10 @@ class Model:
             yield self.env.process(self.replenish_weekly_resources())
 
             if g.debug_level >= 2:
-                    print(f"Staff generator complete")
+                    print(f"Topping Up Caseloads")
+            
+            # top up the caseload resources ready for next run
+            yield self.env.process(self.top_up_caseloads(self.week_number))
 
             # increment the week number by one now everything has been run for this week
             self.week_number += 1
@@ -375,47 +387,24 @@ class Model:
     def patient_treatment_generator(self,number_of_referrals,treatment_week_number):
 
         self.referrals_to_process = number_of_referrals
-
+        if g.debug_level >=2:
+                print(f'Processing {number_of_referrals} referral through treatment')
         self.treatment_week_number = treatment_week_number
 
         while self.referrals_to_process > 0:
 
-            #yield self.env.timeout(0) 
-            self.env.process(self.patient_asst_pathway(self.treatment_week_number)) 
-
+            if g.debug_level >=2:
+                print(f'Processing referral, {self.referrals_to_process} left out of {number_of_referrals}')
+            yield self.env.timeout(0) 
+            self.env.process(self.patient_asst_pathway(self.treatment_week_number))
+            
             self.referrals_to_process -= 1
+            
+            if g.debug_level >=2:
+                print(f'Referral processed, proceeding to next referral, {self.referrals_to_process} left')
 
         # wait 1 unit of time i.e. 1 week
-        yield self.env.timeout(1)       
-
-    def replenish_weekly_resources(self):
-
-            ta_amount_to_fill = g.ta_resource - self.ta_res.level
-            # pwp_amount_to_fill = g.pwp_resource - self.pwp_res.level
-            group_amount_to_fill = g.group_resource - self.group_res.level
-
-            if ta_amount_to_fill > 0:
-                if g.debug_level >= 2:
-                    print(f"TA Level: {self.ta_res.level}")
-                    print(f"Putting in {ta_amount_to_fill}")
-
-                self.ta_res.put(ta_amount_to_fill)
-
-                if g.debug_level >= 2:
-                    print(f"New TA Level: {self.ta_res.level}")
-
-            if group_amount_to_fill > 0:
-                if g.debug_level >= 2:
-                    print(f"Group Level: {self.group_res.level}")
-                    print(f"Putting in {group_amount_to_fill}")
-
-                self.group_res.put(group_amount_to_fill)
-
-                if g.debug_level >= 2:
-                    print(f"New Group Level: {self.group_res.level}")
-
-            # don't wait, go to the next step
-            yield self.env.timeout(0)
+        #yield self.env.timeout(1)       
 
     # process to capture all the results we need at the end of each week
     def weekly_stats(self,stats_week_number):
@@ -647,48 +636,161 @@ class Model:
             init=g.group_resource
             )
         
-        ########## Caseload Resources ##########
+        yield(self.env.timeout(0))
+
+    def caseload_builder(self):
+
         ##### PwP #####
         self.p_type = 'PwP'
         # dictionary to hold PwP caseload resources
         self.pwp_resources = {f'{self.p_type}_{p}':simpy.Container(self.env,
                     capacity=g.pwp_caseload,
                     init=g.pwp_caseload) for p in range(g.number_staff_pwp)}
-            # caseload counter for each CBT resource
+
+        self.weekly_usage = {week: {"week_number": 0, "res_topup": 0} for week in range(g.sim_duration)}
+
+        # dictionary to keep track of resources to be restored
+        self.pwp_restore = {f'{self.p_type}_{p}':{} for p in range(g.number_staff_pwp)}
         
-        # dictionary to hold PwP resource caseload levels
-        #self.pwp_caseloads = {f'{self.p_type}_{p}': 0 for p in range(g.number_staff_pwp)}
-            
+        if g.debug_level >= 2:
+            print(self.pwp_restore)
         ##### CBT #####
         self.c_type = 'CBT'
         # dictionary to hold CBT caseload resources
         self.cbt_resources = {f'{self.c_type}_{c}':simpy.Container(self.env,
                     capacity=g.cbt_caseload,
                     init=g.cbt_caseload) for c in range(g.number_staff_cbt)}
-            
-        # dictionary to hold CBT resource caseload levels
-        #self.cbt_caseloads = {f'{self.c_type}_{c}': 0 for c in range(g.number_staff_cbt)}
         
+        # dictionary to keep track of resources to be restored
+        self.cbt_restore = {f'{self.c_type}_{c}':{} for c in range(g.number_staff_cbt)}
+        
+        if g.debug_level >= 2:
+            print(self.cbt_restore)
         ##### Couns #####
         self.s_type = 'Couns'
         # dictionary to hold Couns caseload resources
         self.couns_resources = {f'{self.s_type}_{s}':simpy.Container(self.env,
                     capacity=g.couns_caseload,
                     init=g.couns_caseload) for s in range(g.number_staff_couns)}
-                    
-        # dictionary to hold Couns resource caseload levels
-        #self.couns_caseloads = {f'{self.s_type}_{c}': 0 for c in range(g.number_staff_couns)}
 
-        yield(self.env.timeout(0))
+        # dictionary to keep track of resources to be restored
+        self.couns_restore = {f'{self.s_type}_{s}':{} for s in range(g.number_staff_couns)}
 
+        if g.debug_level >= 2:
+            print(self.couns_restore)
+        
+        yield self.env.timeout(0)
+
+    def record_caseload_use(self,r_type,r_id,week_number):
+        
+        self.restore_week = week_number
+        
+        # Load in the correct resource use dictionary
+        if r_type == 'PwP':
+            self.resources_used = self.pwp_restore
+        elif r_type == 'CBT':
+            self.resources_used = self.cbt_restore
+        elif r_type == 'Couns':
+            self.resources_used = self.couns_restore
+        
+        if g.debug_level >= 2:
+            print(f'resource used level was:{self.resources_used[r_id]}')
+        
+        if r_id not in self.resources_used:
+            print(f"Error: {r_id} not found in {r_type} resources.")
+            return
+
+        # Ensure the week entry exists
+        if self.restore_week not in self.resources_used[r_id]:
+            self.resources_used[r_id][self.restore_week] = {"week_number": self.restore_week, "res_topup": 0}
+
+        # Now safely update
+        self.resources_used[r_id][self.restore_week]['res_topup'] += 1
+
+        if g.debug_level >= 2:
+            print(f"Resource {r_id} usage recorded for week {self.restore_week}: {self.resources_used[r_id][self.restore_week]}")
+
+        yield self.env.timeout(0)
+
+    def replenish_weekly_resources(self):
+
+            ##### TA and Group Resources #####
+            ta_amount_to_fill = g.ta_resource - self.ta_res.level
+            # pwp_amount_to_fill = g.pwp_resource - self.pwp_res.level
+            group_amount_to_fill = g.group_resource - self.group_res.level
+
+            if ta_amount_to_fill > 0:
+                if g.debug_level >= 2:
+                    print(f"TA Level: {self.ta_res.level}")
+                    print(f"Putting in {ta_amount_to_fill}")
+
+                self.ta_res.put(ta_amount_to_fill)
+
+                if g.debug_level >= 2:
+                    print(f"New TA Level: {self.ta_res.level}")
+
+            if group_amount_to_fill > 0:
+                if g.debug_level >= 2:
+                    print(f"Group Level: {self.group_res.level}")
+                    print(f"Putting in {group_amount_to_fill}")
+
+                self.group_res.put(group_amount_to_fill)
+
+                if g.debug_level >= 2:
+                    print(f"New Group Level: {self.group_res.level}")
+
+            # don't wait, go to the next step
+            yield self.env.timeout(0)
+
+    def top_up_caseloads(self,week_number):
+            
+             ##### Caseload Resources #####
+            self.week_num = week_number
+
+            for self.pwp_restore_id, week_data in self.pwp_restore.items():
+                if self.week_num in week_data and week_data[self.week_num]['res_topup'] > 0:
+                    self.pwp_topup_value = week_data[self.week_num]['res_topup']
+                    if g.debug_level >= 2:
+                        print(f"PwP Resource {self.pwp_restore_id} at week {self.week_num}: {self.pwp_resources[self.pwp_restore_id].level}, {self.pwp_topup_value} available to restore")
+
+                    self.pwp_resources[self.pwp_restore_id].put(self.pwp_topup_value)
+
+                if g.debug_level >= 2:
+                    print(f"PwP Resource {self.pwp_restore_id} now at: {self.pwp_resources[self.pwp_restore_id].level}")
+        
+            for self.cbt_restore_id, week_data in self.cbt_restore.items():
+                if self.week_num in week_data and week_data[self.week_num]['res_topup'] > 0:
+                    self.cbt_topup_value = week_data[self.week_num]['res_topup']
+                    if g.debug_level >= 2:
+                        print(f"PwP Resource {self.cbt_restore_id} at week {self.week_num}: {self.cbt_resources[self.cbt_restore_id].level}, {self.cbt_topup_value} available to restore")
+
+                    self.cbt_resources[self.cbt_restore_id].put(self.cbt_topup_value)
+
+                if g.debug_level >= 2:
+                    print(f"PwP Resource {self.cbt_restore_id} now at: {self.cbt_resources[self.cbt_restore_id].level}")
+                      
+            for self.couns_restore_id, week_data in self.couns_restore.items():
+                if self.week_num in week_data and week_data[self.week_num]['res_topup'] > 0:
+                    self.couns_topup_value = week_data[self.week_num]['res_topup']
+                    if g.debug_level >= 2:
+                            print(f"PwP Resource {self.couns_restore_id} at week {self.week_num}: {self.couns_resources[self.couns_restore_id].level}, {self.couns_topup_value} available to restore")
+
+                    self.couns_resources[self.couns_restore_id].put(self.couns_topup_value)
+
+                if g.debug_level >= 2:
+                    print(f"PwP Resource {self.couns_restore_id} now at: {self.couns_resources[self.couns_restore_id].level}")
+            # don't wait, go to the next step
+            yield self.env.timeout(0)
+            
     def find_caseload_slot(self,r_type):
 
+        self.r_type = r_type
         # load in the right resource dictionary
-        if r_type == 'PwP':
+        if self.r_type == 'PwP':
             self.resources = self.pwp_resources
-        elif r_type == 'CBT':
+        elif self.r_type == 'CBT':
             self.resources = self.cbt_resources
-        elif r_type == 'Couns':
+        elif self.r_type == 'Couns':
             self.resources = self.couns_resources
 
         while True:
@@ -696,7 +798,7 @@ class Model:
             for self.resource_name, self.container in self.resources.items():
                 if self.container.level > 0:
                     if g.debug_level >=2:
-                        print(f'Resource {self.resource_name} with a caseload of {self.container.level} selected')
+                        print(f'Resource {self.resource_name} with a remaining caseload of {self.container.level} selected')
                     return self.resource_name, self.container  # Return the label and the container if available
 
             # If no resource is available, wait and check again
@@ -834,7 +936,7 @@ class Model:
         self.requires_review = random.uniform(0,1)
         # decide whether the referral is rejected at review
         self.asst_review_reject = random.uniform(0,1)
-            # decide whether the Patient opts-in
+        # decide whether the Patient opts-in
         self.patient_optedin = random.uniform(0,1)
         # decide whether the Patient is accepted following TA
         self.ta_accepted = random.uniform(0,1)
@@ -854,8 +956,6 @@ class Model:
                                         ] = self.random_normal(
                                         g.referral_screen_time
                                         ,g.std_dev)
-
-        #print(f'Week {week_number}: Patient number {p.id} created')
 
         # check whether the referral was a straight reject or not
         if self.reject_referral <= g.referral_rej_rate:
@@ -894,8 +994,6 @@ class Model:
                 # record how long they waited for MDT review between 0 and 2 weeks
                 self.asst_results_df.at[p.id, 'Review Wait'] = random.uniform(0,
                                                                 g.mdt_freq)
-
-                yield self.env.timeout(0)
             
             # patient doesn't need a review or does and was accepted                                                  g.mdt_freq)
             else :
@@ -954,10 +1052,13 @@ class Model:
                                                         g.number_on_ta_wl
 
                     # Request a Triage resource from the container
+                    if g.debug_level >=2:
+                        print(f"Patient {p.id} requesting TA resource, current res level {self.ta_res.level}")
                     with self.ta_res.get(1) as ta_req:
                         yield ta_req
 
-                    #print(f'Patient {p} started TA')
+                    if g.debug_level >=2:
+                        print(f"Patient {p.id} allocated TA resource, new res level {self.ta_res.level}")
 
                     # as each patient reaches this stage take them off TA wl
                     g.number_on_ta_wl -= 1
@@ -974,9 +1075,9 @@ class Model:
 
                     # Now do Telephone Assessment using mean and varying
                     self.asst_results_df.at[p.id, 'TA Mins'
-                                                    ] = self.random_normal(
+                                                    ] = int(self.random_normal(
                                                     g.ta_time_mins
-                                                    ,g.std_dev)
+                                                    ,g.std_dev))
                     # decide if the patient is accepted following TA
                     if self.ta_accepted >= g.ta_accept_rate:
                         # Patient was rejected at TA stage
@@ -993,7 +1094,7 @@ class Model:
                         if g.debug_level >=2:
                             print(f"Patient {p.id} Accepted at TA Stage")
 
-                            # used to decide whether further parts of the pathway are run or not
+                        # used to decide whether further parts of the pathway are run or not
                         self.ta_accepted = 1
 
                         if self.ta_accepted == 1 :
@@ -1015,9 +1116,9 @@ class Model:
 
                             if g.debug_level >=2:
                                 print(f"-- Pathway Runner Initiated --")
-                            # proceed to next patient and run pathway runner
-                            yield self.env.timeout(0)
-                            self.env.process(self.pathway_runner(p))
+                            
+                            # now run the pathway runner
+                            yield self.env.process(self.pathway_runner(p,p.initial_step))
 
                             #return self.asst_results_df
 
@@ -1026,18 +1127,18 @@ class Model:
                         #     yield self.env.timeout(0)
         # print(self.asst_results_df)
 
-    def pathway_runner(self, patient):
+    def pathway_runner(self, patient, step_chosen):
 
         p = patient
 
-        if p.initial_step == 'Step2':
+        if step_chosen == 'Step2':
             print(f'PATHWAY RUNNER: Patient {p.id} sent down **{p.initial_step}** pathway')
-            yield self.env.timeout(0)
-            self.env.process(self.patient_step2_pathway(p))
+            #yield self.env.timeout(0)
+            yield self.env.process(self.patient_step2_pathway(p))
         else:
             print(f'PATHWAY RUNNER: Patient {p.id} sent down {p.initial_step} pathway')
-            yield self.env.timeout(0)
-            self.env.process(self.patient_step3_pathway(p))
+            #yield self.env.timeout(0)
+            yield self.env.process(self.patient_step3_pathway(p))
 
     ###### step2 pathway #####
     def patient_step2_pathway(self, patient):
@@ -1056,7 +1157,7 @@ class Model:
                                             ] = p.step2_path_route
 
         # push the patient down the chosen step2 route
-        if self.selected_step2_pathway == 'PwP':
+        if p.step2_path_route == 'PwP':
             # add to PwP WL
             g.number_on_pwp_wl += 1
             #yield self.env.timeout(0)
@@ -1109,20 +1210,20 @@ class Model:
                                             ] = p.step3_path_route
 
         # push the patient down the chosen step2 route
-        if self.selected_step3_pathway == 'CBT':
+        if p.step3_path_route == 'CBT':
             # add to CBT WL
             g.number_on_cbt_wl += 1
-            #yield self.env.timeout(0)
+            if g.debug_level >=2:
+                print(f"FUNC PROCESS patient_step3_pathway: Patient {p.id} Initiating {p.step3_path_route} Step 3 Route")
+
             yield self.env.process(self.step3_cbt_process(p))
         else:
             # add to Couns WL
             g.number_on_couns_wl += 1
+            if g.debug_level >=2:
+                print(f"FUNC PROCESS patient_step3_pathway: Patient {p.id} Initiating {p.step3_path_route} Step 3 Route")
             #yield self.env.timeout(0)
             yield self.env.process(self.step3_couns_process(p))
-            
-        if g.debug_level >=2:
-                print(f"FUNC PROCESS patient_step3_pathway: Patient {p.id} Initiating {p.step3_path_route} Step 3 Route")
-
         #yield self.env.timeout(0)
 
     def step2_pwp_process(self,patient):
@@ -1143,15 +1244,24 @@ class Model:
         self.step2_results_df.at[p.id, 'PwP WL Posn'] = \
                                             g.number_on_pwp_wl
 
+        if g.debug_level >=2:
+            print(f'Patient sent down {p.step2_path_route}')
+        
         # Check if there is a caseload slot available and return the resource
-        result = yield self.env.process(self.find_caseload_slot('PwP'))
+        self.result = yield self.env.process(self.find_caseload_slot(p.step2_path_route))
+
+        if g.debug_level >=2:
+            print(self.result)
 
         # Safeguard unpacking: Ensure result is not None and has two elements
-        if result:
-            self.pwp_caseload_id, self.pwp_caseload_res = result
+        if self.result:
+            self.pwp_caseload_id, self.pwp_caseload_res = self.result
         else:
             # Handle the case where no resource was available (shouldn't happen as function keeps checking)
             print("No available resource found!")
+        
+        # assign the caseload to the patient
+        p.step2_resource_id = self.pwp_caseload_id
             
         if g.debug_level >=2:
             print(f'Resource {self.pwp_caseload_id} with a caseload remaining of {self.pwp_caseload_res.level} allocated to patient {p.id}')
@@ -1165,7 +1275,7 @@ class Model:
         # self.pwp_caseload_posn +=1
 
         if g.debug_level >=2:
-            print(f'Patient {p.id} added to caseload {self.pwp_caseload_id},{self.pwp_resources[self.pwp_caseload_id].level} spaces left')
+            print(f'Patient {p.id} added to caseload {p.step2_resource_id} spaces left')
 
         # add to caseload
         g.number_on_pwp_cl += 1
@@ -1280,22 +1390,18 @@ class Model:
         # self.pwp_caseload_posn -=1
 
         if self.pwp_dna_counter >= 2:
-            # if patient dropped out hold onto the resource latest attended session
-            yield self.env.timeout(self.pwp_random_weeks[self.pwp_session_counter])
-            # Return PwP caseload resource to the container
-            with self.pwp_caseload_res.put(1) as pwp_rel:
-                yield pwp_rel
-            if g.debug_level >= 2:
-                print(f'Patient {p.id} starting at week {p.step2_start_week} discharged from {p.step2_path_route} at week {p.step2_end_week}')
+
+            self.env.process(self.record_caseload_use(p.step2_path_route,self.pwp_caseload_id,self.pwp_random_weeks[self.pwp_session_counter]))
+            
         else:
-            # otherwise hold onto the resource until the last session
-            yield self.env.timeout(max(self.pwp_random_weeks))
-            # Return PwP caseload resource to the container
-            with self.pwp_caseload_res.put(1) as pwp_rel:
-                yield pwp_rel
-            if g.debug_level >= 2:
-                print(f'Patient {p.id} starting at week {p.step2_start_week} discharged from {p.step2_path_route} at week {p.step2_end_week}')
-    
+            # record when the caseload resource can be restored
+            self.env.process(self.record_caseload_use(p.step2_path_route,self.pwp_caseload_id,max(self.pwp_random_weeks)))
+        
+        # take off caseload
+        g.number_on_pwp_cl -=1
+        
+        yield self.env.timeout(0)
+               
     def step2_group_process(self,patient):
 
         p = patient
@@ -1408,15 +1514,18 @@ class Model:
                                             g.number_on_cbt_wl
 
         # Check if there is a caseload slot available and return the resource
-        result = yield self.env.process(self.find_caseload_slot('CBT'))
+        self.result = yield self.env.process(self.find_caseload_slot(p.step3_path_route))
 
         # Safeguard unpacking: Ensure result is not None and has two elements
-        if result:
-            self.cbt_caseload_id, self.cbt_caseload_res = result
+        if self.result:
+            self.cbt_caseload_id, self.cbt_caseload_res = self.result
         else:
             # Handle the case where no resource was available (shouldn't happen as function keeps checking)
             print("No available resource found!")
-            
+
+        # assign the caseload to the patient
+        p.step3_resource_id = self.cbt_caseload_id
+
         if g.debug_level >=2:
             print(f'Resource {self.cbt_caseload_id} with a caseload remaining of {self.cbt_caseload_res.level} allocated to patient {p.id}')
         
@@ -1429,7 +1538,7 @@ class Model:
         # self.pwp_caseload_posn +=1
 
         if g.debug_level >=2:
-            print(f'Patient {p.id} added to caseload {self.cbt_caseload_id}, {self.cbt_resources[self.cbt_caseload_id].level} spaces left')
+            print(f'Patient {p.id} added to caseload {p.step3_resource_id}, {self.cbt_resources[p.step3_resource_id].level} spaces left')
 
         # add to overall caseload
         g.number_on_cbt_cl +=1
@@ -1546,21 +1655,17 @@ class Model:
         # self.cbt_caseloads[self.cbt_caseload_id] -=1
 
         if self.cbt_dna_counter >= 2:
-            # if patient dropped out hold onto the resource latest attended session
-            yield self.env.timeout(self.cbt_random_weeks[self.cbt_session_counter])
-            # Return CBT caseload resource to the container
-            with self.cbt_caseload_res.put(1) as cbt_rel:
-                yield cbt_rel
-            if g.debug_level >= 2:
-                print(f'Patient {p.id} starting at week {p.step3_start_week} discharged from {p.step3_path_route} at week {p.step3_end_week}')
+            # record when the caseload resource can be restored
+            self.env.process(self.record_caseload_use(p.step3_path_route,self.cbt_caseload_id,self.cbt_random_weeks[self.cbt_session_counter]))
+            
         else:
-            # otherwise hold onto the resource until the last session
-            yield self.env.timeout(max(self.cbt_random_weeks))
-            # Return CBT caseload resource to the container
-            with self.cbt_caseload_res.put(1) as cbt_rel:
-                yield cbt_rel
-            if g.debug_level >= 2:
-                print(f'Patient {p.id} starting at week {p.step3_start_week} discharged from {p.step3_path_route} at week {p.step3_end_week}')
+            # record when the caseload resource can be restored
+            self.env.process(self.record_caseload_use(p.step3_path_route,self.cbt_caseload_id,max(self.cbt_random_weeks)))
+            
+        # take off caseload
+        g.number_on_cbt_cl -=1
+        
+        yield self.env.timeout(0)
 
     def step3_couns_process(self,patient):
 
@@ -1581,14 +1686,17 @@ class Model:
                                             g.number_on_couns_wl
 
         # Check if there is a caseload slot available and return the resource
-        result = yield self.env.process(self.find_caseload_slot('Couns'))
+        self.result = yield self.env.process(self.find_caseload_slot(p.step3_path_route))
 
         # Safeguard unpacking: Ensure result is not None and has two elements
-        if result:
-            self.couns_caseload_id, self.couns_caseload_res = result
+        if self.result:
+            self.couns_caseload_id, self.couns_caseload_res = self.result
         else:
             # Handle the case where no resource was available (shouldn't happen as function keeps checking)
             print("No available resource found!")
+
+        # assign the caseload to the patient
+        p.step3_resource_id = self.couns_caseload_id
             
         if g.debug_level >=2:
             print(f'Resource {self.couns_caseload_id} with a caseload remaining of {self.couns_caseload_res.level} allocated to patient {p.id}')
@@ -1602,7 +1710,7 @@ class Model:
         # self.pwp_caseload_posn +=1
 
         if g.debug_level >=2:
-            print(f'Patient {p.id} added to caseload {self.couns_caseload_id}, {self.couns_resources[self.couns_caseload_id].level} spaces left')
+            print(f'Patient {p.id} added to caseload {p.step3_resource_id }, {self.couns_resources[p.step3_resource_id ].level} spaces left')
 
         # add to overall caseload
         g.number_on_couns_cl +=1
@@ -1641,7 +1749,7 @@ class Model:
         while self.couns_session_counter < g.step3_couns_sessions and self.couns_dna_counter < 2:
 
             if g.debug_level >= 2:
-                print(f'FUNC PROCESS step3_cbt_process: Week {self.env.now}: Patient {p.id} (added week {p.week_added}) on {p.step3_path_route} Session {self.couns_session_counter} on Week {self.week_number + self.couns_random_weeks[self.couns_session_counter]}')
+                print(f'FUNC PROCESS step3_couns process: Week {self.env.now}: Patient {p.id} (added week {p.week_added}) on {p.step3_path_route} Session {self.couns_session_counter} on Week {self.week_number + self.couns_random_weeks[self.couns_session_counter]}')
 
             # increment the pwp session counter by 1
             self.couns_session_counter += 1
@@ -1731,26 +1839,17 @@ class Model:
         # self.couns_caseloads[self.couns_caseload_id] -=1
 
         if self.couns_dna_counter >= 2:
-            # if patient dropped out hold onto the resource latest attended session
-            yield self.env.timeout(self.couns_random_weeks[self.couns_session_counter])
-            # Return Couns caseload resource to the container
-            with self.couns_caseload_res.put(1) as couns_rel:
-                yield couns_rel
-            if g.debug_level >= 2:
-                print(f'Patient {p.id} starting at week {p.step3_start_week} discharged from {p.step3_path_route} at week {p.step3_end_week}')
+            # record when the caseload resource can be restored
+            self.env.process(self.record_caseload_use(p.step3_path_route,self.couns_caseload_id,self.couns_random_weeks[self.couns_session_counter]))
+            
         else:
-            # otherwise hold onto the resource until the last session
-            yield self.env.timeout(max(self.couns_random_weeks))
-            # Return Couns caseload resource to the container
-            with self.couns_caseload_res.put(1) as couns_rel:
-                yield couns_rel
-            if g.debug_level >= 2:
-                print(f'Patient {p.id} starting at week {p.step3_start_week} discharged from {p.step3_path_route} at week {p.step3_end_week}')
-        
-        # add to caseload
+            # record when the caseload resource can be restored
+            self.env.process(self.record_caseload_use(p.step3_path_route,self.couns_caseload_id,max(self.couns_random_weeks)))
+
+        # take off caseload
         g.number_on_couns_cl -=1
 
-        #yield self.env.timeout(0)
+        yield self.env.timeout(0)
 
     # This method calculates results over each single run
     def calculate_run_results(self):
