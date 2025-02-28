@@ -64,6 +64,7 @@ class g:
     step3_couns_fup_mins = 30 # minutes allocated for couns follow-up session
     step3_couns_dna_rate = 0.216 # Wellbeing Workshop attendance 78.6%
     step3_couns_period = 16 # max number of weeks couns delivered over
+    step_3_session_var = 0.15 # % of instances where number sessions goes over standard amount
 
     # Staff
     supervision_time = 120 # 2 hours per month per modality ##### could use modulus for every 4th week
@@ -121,6 +122,32 @@ class g:
     referral_rate_lookup = pd.read_csv('talking_therapies_referral_rates.csv'
                                                                 ,index_col=0)
     #print(referral_rate_lookup)
+# function to vary the number of sessions
+def vary_number_sessions(lower, upper, lambda_val=0.1):
+        """
+        Generates a single random number from an exponential distribution, truncated to a given range.
+        This is used to vary the number of sessions for step 3 
+
+        Parameters:
+            lower (float): Minimum value of the range.
+            upper (float): Maximum value of the range.
+            lambda_param (float): The rate parameter (1/mean) of the exponential distribution.
+
+        Returns:
+            float: A random number within the specified range.
+        """
+        while True:
+            # Generate a random number from the exponential distribution
+            random_value = np.random.exponential(1 / lambda_val)
+
+            # Shift the distribution to start at 'lower'
+            sessions = random_value + lower #added lower to the random value.
+
+            # Check if the generated value is within the desired range
+            if lower <= sessions <= upper:
+                # Convert to integer and return
+                return int(sessions)
+            
 
 # Patient to capture flow of patient through pathway
 class Patient:
@@ -290,7 +317,7 @@ class Model:
             activity_time = random.gauss(mean, std_dev)
             if activity_time > 0:
                 return activity_time
-            
+           
     # master process to control the running of all the other processes
     def the_governor(self):
 
@@ -1578,16 +1605,7 @@ class Model:
         self.q_time_cbt = end_q_cbt - start_q_cbt
         # Record how long patient queued for CBT
         self.asst_results_df.at[p.id, 'CBT Q Time'] = self.q_time_cbt
-
-        # Generate a list of week numbers the patient is going to attend
-        self.cbt_random_weeks = random.sample(range(self.week_number+1, self.week_number+g.step3_cbt_period), g.step3_cbt_sessions)
-
-        # Add 1 at the start of the list
-        self.cbt_random_weeks.insert(0, 0)
-
-        # Optionally, sort the list to maintain sequential order
-        self.cbt_random_weeks.sort()
-
+        
         # decide whether the DNA policy had been followed or not
         self.vary_dna_policy = random.uniform(0,1)
 
@@ -1596,9 +1614,35 @@ class Model:
         else:
             self.dnas_allowed = 3
 
+        # decide whether the number of sessions is going to be varied from standard
+        self.vary_step3_sessions = random.uniform(0,1)
+
+        self.random_num_sessions = 0
+
+        self.random_num_sessions += vary_number_sessions(13,35)
+
+        if self.vary_step3_sessions >= g.step_3_session_var:
+            self.number_sessions = g.step3_cbt_sessions
+            self.step3_cbt_period = g.step3_cbt_period
+        else:
+            self.number_sessions = self.random_num_sessions
+            self.step3_cbt_period = (g.step3_cbt_period-g.step3_cbt_sessions)+self.random_num_sessions
+
+        # Generate a list of week numbers the patient is going to attend
+        self.cbt_random_weeks = random.sample(range(self.week_number+1, self.week_number+self.step3_cbt_period), self.number_sessions)
+
+        # Add 1 at the start of the list
+        self.cbt_random_weeks.insert(0, 0)
+
+        # sort the list to maintain sequential order
+        self.cbt_random_weeks.sort()
+
+        if g.debug_level >=2:
+            print(f'Number of sessions is {self.number_sessions}')
+
         # print(self.random_weeks)
 
-        while self.cbt_session_counter < g.step3_cbt_sessions and self.cbt_dna_counter < self.dnas_allowed:
+        while self.cbt_session_counter < self.number_sessions and self.cbt_dna_counter < self.dnas_allowed:
 
             if g.debug_level >= 2:
                 print(f'FUNC PROCESS step3_cbt_process: Week {self.env.now}: Patient {p.id} (added week {p.week_added}) on {p.step3_path_route} Session {self.cbt_session_counter} on Week {self.week_number + self.cbt_random_weeks[self.cbt_session_counter]}')
@@ -1758,16 +1802,7 @@ class Model:
         self.q_time_couns = end_q_couns - start_q_couns
         # Record how long patient queued for TA
         self.asst_results_df.at[p.id, 'Couns Q Time'] = self.q_time_couns
-
-        # Generate a list of week numbers the patient is going to attend
-        self.couns_random_weeks = random.sample(range(self.week_number+1, self.week_number+g.step3_couns_period), g.step3_couns_sessions)
-
-        # always start at week 0
-        self.couns_random_weeks.insert(0, 0)
-
-        # sort the list to maintain sequential order
-        self.couns_random_weeks.sort()
-
+        
         # decide whether the DNA policy had been followed or not
         self.vary_dna_policy = random.uniform(0,1)
 
@@ -1777,8 +1812,33 @@ class Model:
             self.dnas_allowed = 3
 
         # print(self.counsrandom_weeks)
+         # decide whether the number of sessions is going to be varied from standard
+        self.vary_step3_sessions = random.uniform(0,1)
 
-        while self.couns_session_counter < g.step3_couns_sessions and self.couns_dna_counter < self.dnas_allowed:
+        self.random_num_sessions = 0
+
+        self.random_num_sessions += vary_number_sessions(8,22)
+
+        if self.vary_step3_sessions >= g.step_3_session_var:
+            self.number_sessions = g.step3_couns_sessions
+            self.step3_couns_period = g.step3_couns_period
+        else:
+            self.number_sessions = self.random_num_sessions
+            self.step3_couns_period = (g.step3_couns_period-g.step3_couns_sessions)+self.random_num_sessions
+
+        # Generate a list of week numbers the patient is going to attend
+        self.couns_random_weeks = random.sample(range(self.week_number+1, self.week_number+self.step3_couns_period), self.number_sessions)
+
+        # always start at week 0
+        self.couns_random_weeks.insert(0, 0)
+
+        # sort the list to maintain sequential order
+        self.couns_random_weeks.sort()
+
+        if g.debug_level >=2:
+            print(f'Number of sessions is {self.number_sessions}')
+
+        while self.couns_session_counter < self.number_sessions and self.couns_dna_counter < self.dnas_allowed:
 
             if g.debug_level >= 2:
                 print(f'FUNC PROCESS step3_couns process: Week {self.env.now}: Patient {p.id} (added week {p.week_added}) on {p.step3_path_route} Session {self.couns_session_counter} on Week {self.week_number + self.couns_random_weeks[self.couns_session_counter]}')
