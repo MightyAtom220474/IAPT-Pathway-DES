@@ -807,12 +807,7 @@ class Model:
             print("No available caseload with spaces available!")
             return None, None
             yield self.env.timeout(0)
-        
-            
-            
-        # # If no resource is available, wait and check again
-        # yield self.env.timeout(0)
-                    
+                     
     ###### generator for staff to record non-clinical activity #####
     def staff_entity_generator(self, week_number):
 
