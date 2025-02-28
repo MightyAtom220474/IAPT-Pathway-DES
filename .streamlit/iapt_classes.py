@@ -81,28 +81,24 @@ class g:
     hours_avail_pwp = 21.0
     ta_resource = number_staff_pwp * 3 # job plan = 3 TA per week per PwP
     pwp_resource = number_staff_pwp # starting point for PwP resources
-    # pwp_res_dict = {} # store for pwp caseload resources
-    # pwp_rel_dict = {} # store for release of pwp resources
     pwp_caseload = 30
     pwp_id = 0 # unique ID for PwP resources
     pwp_avail = number_staff_pwp # used to check whether a PwP is available
     group_resource = number_staff_pwp #  job plan = 1 group per week per PwP, assume 12 per group
     cbt_resource = number_staff_cbt # job plan = 2 x 1st + 20 X FUP per cbt per week
-    # cbt_res_dict = {} # store for cbt caseload resources
-    # cbt_rel_dict = {} # store for release of cbt resources
     cbt_caseload = 25
     cbt_id = 0 # unique ID for CBT resources
     cbt_avail = number_staff_cbt # used to check whether a PwP caseload slot is available
     couns_resource = number_staff_couns # job plan = 2 x 1st + 20 X FUP per cbt per week
-    # couns_res_dict = {} # store for couns caseload resources
-    # couns_rel_dict = {} # store for release of couns resources
     couns_caseload = 25
     couns_id = 0 # unique ID for Couns resources
     couns_avail = number_staff_couns # used to check whether a Couns is available
+    dna_policy = 2 # number of DNA's allowed before discharged
+    dna_policy_var = 0.05 # % of cases where the DNA policy is varied
 
     # Simulation
     sim_duration = 52
-    number_of_runs = 1
+    number_of_runs = 5
     std_dev = 3 # used for randomising activity times
     event_week_tracker = {} # used to track the latest events week for each patient
 
@@ -1313,7 +1309,15 @@ class Model:
 
         # print(self.random_weeks)
 
-        while self.pwp_session_counter < g.step2_pwp_sessions and self.pwp_dna_counter < 2:
+        # decide whether the DNA policy had been followed or not
+        self.vary_dna_policy = random.uniform(0,1)
+
+        if self.vary_dna_policy >= g.dna_policy_var:
+            self.dnas_allowed = 2
+        else:
+            self.dnas_allowed = 3
+
+        while self.pwp_session_counter < g.step2_pwp_sessions and self.pwp_dna_counter < self.dnas_allowed:
 
             if g.debug_level >= 2:
                 print(f'FUNC PROCESS step2_pwp_process: Week {self.env.now}: Patient {p.id} (added week {p.week_added}) on {p.step2_path_route} Session {self.pwp_session_counter} on Week {self.week_number + self.pwp_random_weeks[self.pwp_session_counter]}')
@@ -1369,7 +1373,7 @@ class Model:
                     self.step2_results_df.at[p.id,'Admin Time'] = g.step2_session_admin
 
         # record whether patient dropped out before completing pwP
-        if self.pwp_dna_counter >= 2:
+        if self.pwp_dna_counter >= self.dnas_allowed:
             self.step2_results_df.at[p.id, 'IsDropOut'] = 1
             if g.debug_level >= 2:
                 print(f'Patient {p.id} dropped out of {p.step2_path_route} treatment')
@@ -1393,7 +1397,7 @@ class Model:
         # # remove from this specific caseload
         # self.pwp_caseload_posn -=1
 
-        if self.pwp_dna_counter >= 2:
+        if self.pwp_dna_counter >= self.dnas_allowed:
 
             self.env.process(self.record_caseload_use(p.step2_path_route,self.pwp_caseload_id,self.pwp_random_weeks[self.pwp_session_counter]))
             
@@ -1441,7 +1445,15 @@ class Model:
         # Record how long patient queued for groups
         self.asst_results_df.at[p.id, 'Group Q Time'] = self.q_time_group
 
-        while self.group_session_counter < g.step2_group_sessions and self.group_dna_counter < 2:
+        # decide whether the DNA policy had been followed or not
+        self.vary_dna_policy = random.uniform(0,1)
+
+        if self.vary_dna_policy >= g.dna_policy_var:
+            self.dnas_allowed = 2
+        else:
+            self.dnas_allowed = 3
+
+        while self.group_session_counter < g.step2_group_sessions and self.group_dna_counter < self.dnas_allowed:
             if g.debug_level >= 2:
                 print(f'Week {self.env.now+self.group_session_counter}: Patient {p.id} (added week {p.week_added}) on {p.step2_path_route} Session {self.group_session_counter}')
 
@@ -1479,7 +1491,7 @@ class Model:
                 self.step2_results_df.at[p.id,'Admin Time'] = g.step2_session_admin
 
         # record whether patient dropped out before completing Wellbeing Workshop
-        if self.group_dna_counter >= 2:
+        if self.group_dna_counter >= self.dnas_allowed:
             self.step2_results_df.at[p.id, 'IsDropOut'] = 1
             if g.debug_level >= 2:
                 print(f'Patient {p.id} dropped out of {p.step2_path_route} treatment')
@@ -1576,9 +1588,17 @@ class Model:
         # Optionally, sort the list to maintain sequential order
         self.cbt_random_weeks.sort()
 
+        # decide whether the DNA policy had been followed or not
+        self.vary_dna_policy = random.uniform(0,1)
+
+        if self.vary_dna_policy >= g.dna_policy_var:
+            self.dnas_allowed = 2
+        else:
+            self.dnas_allowed = 3
+
         # print(self.random_weeks)
 
-        while self.cbt_session_counter < g.step3_cbt_sessions and self.cbt_dna_counter < 2:
+        while self.cbt_session_counter < g.step3_cbt_sessions and self.cbt_dna_counter < self.dnas_allowed:
 
             if g.debug_level >= 2:
                 print(f'FUNC PROCESS step3_cbt_process: Week {self.env.now}: Patient {p.id} (added week {p.week_added}) on {p.step3_path_route} Session {self.cbt_session_counter} on Week {self.week_number + self.cbt_random_weeks[self.cbt_session_counter]}')
@@ -1634,7 +1654,7 @@ class Model:
                         self.step3_results_df.at[p.id,'Admin Time'] = g.step3_session_admin
 
         # record whether patient dropped out before completing Wellbeing Workshop
-        if self.cbt_dna_counter >= 2:
+        if self.cbt_dna_counter >= self.dnas_allowed:
             self.step3_results_df.at[p.id, 'IsDropOut'] = 1
             if g.debug_level >= 2:
                 print(f'Patient {p.id} dropped out of {p.step3_path_route} treatment')
@@ -1658,7 +1678,7 @@ class Model:
         # # remove from clinician caseload
         # self.cbt_caseloads[self.cbt_caseload_id] -=1
 
-        if self.cbt_dna_counter >= 2:
+        if self.cbt_dna_counter >= self.dnas_allowed:
             # record when the caseload resource can be restored
             self.env.process(self.record_caseload_use(p.step3_path_route,self.cbt_caseload_id,self.cbt_random_weeks[self.cbt_session_counter]))
             
@@ -1748,9 +1768,17 @@ class Model:
         # sort the list to maintain sequential order
         self.couns_random_weeks.sort()
 
+        # decide whether the DNA policy had been followed or not
+        self.vary_dna_policy = random.uniform(0,1)
+
+        if self.vary_dna_policy >= g.dna_policy_var:
+            self.dnas_allowed = 2
+        else:
+            self.dnas_allowed = 3
+
         # print(self.counsrandom_weeks)
 
-        while self.couns_session_counter < g.step3_couns_sessions and self.couns_dna_counter < 2:
+        while self.couns_session_counter < g.step3_couns_sessions and self.couns_dna_counter < self.dnas_allowed:
 
             if g.debug_level >= 2:
                 print(f'FUNC PROCESS step3_couns process: Week {self.env.now}: Patient {p.id} (added week {p.week_added}) on {p.step3_path_route} Session {self.couns_session_counter} on Week {self.week_number + self.couns_random_weeks[self.couns_session_counter]}')
@@ -1819,7 +1847,7 @@ class Model:
                         self.step3_results_df.at[p.id,'Admin Time'] = g.step3_session_admin
 
         # record whether patient dropped out before completing Wellbeing Workshop
-        if self.couns_dna_counter >= 2:
+        if self.couns_dna_counter >= self.dnas_allowed:
             self.step3_results_df.at[p.id, 'IsDropOut'] = 1
             if g.debug_level >= 2:
                 print(f'Patient {p.id} dropped out of {p.step3_path_route} treatment')
@@ -1842,7 +1870,7 @@ class Model:
         # # remove from clinician caseload
         # self.couns_caseloads[self.couns_caseload_id] -=1
 
-        if self.couns_dna_counter >= 2:
+        if self.couns_dna_counter >= self.dnas_allowed:
             # record when the caseload resource can be restored
             self.env.process(self.record_caseload_use(p.step3_path_route,self.couns_caseload_id,self.couns_random_weeks[self.couns_session_counter]))
             
