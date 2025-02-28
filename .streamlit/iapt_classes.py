@@ -693,8 +693,8 @@ class Model:
         elif r_type == 'Couns':
             self.resources_used = self.couns_restore
         
-        if g.debug_level >= 2:
-            print(f'resource used level was:{self.resources_used[r_id]}')
+        # if g.debug_level >= 2:
+        #     print(f'resource used level was:{self.resources_used[r_id]}')
         
         if r_id not in self.resources_used:
             print(f"Error: {r_id} not found in {r_type} resources.")
@@ -716,7 +716,6 @@ class Model:
 
             ##### TA and Group Resources #####
             ta_amount_to_fill = g.ta_resource - self.ta_res.level
-            # pwp_amount_to_fill = g.pwp_resource - self.pwp_res.level
             group_amount_to_fill = g.group_resource - self.group_res.level
 
             if ta_amount_to_fill > 0:
@@ -793,16 +792,26 @@ class Model:
         elif self.r_type == 'Couns':
             self.resources = self.couns_resources
 
-        while True:
-            # Iterate over the resources to check if any have a level > 0
-            for self.resource_name, self.container in self.resources.items():
-                if self.container.level > 0:
-                    if g.debug_level >=2:
-                        print(f'Resource {self.resource_name} with a remaining caseload of {self.container.level} selected')
-                    return self.resource_name, self.container  # Return the label and the container if available
+        self.available_caseloads = {k: v for k, v in self.resources.items() if v.level > 0}
 
-            # If no resource is available, wait and check again
+        if self.available_caseloads:
+            # Randomly select from the non-empty resources
+            self.random_caseload_id = random.choice(list(self.available_caseloads.keys()))
+            self.selected_resource = self.available_caseloads[self.random_caseload_id]
+
+            if g.debug_level >= 2:
+                print(f'Resource {self.random_caseload_id} with a remaining caseload of {self.selected_resource.level} selected')
+            return self.random_caseload_id, self.selected_resource # Return the ID and the container if available
             yield self.env.timeout(0)
+        else:
+            print("No available caseload with spaces available!")
+            return None, None
+            yield self.env.timeout(0)
+        
+            
+            
+        # # If no resource is available, wait and check again
+        # yield self.env.timeout(0)
                     
     ###### generator for staff to record non-clinical activity #####
     def staff_entity_generator(self, week_number):
