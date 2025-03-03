@@ -74,9 +74,9 @@ class g:
     cpd_time = 225 # half day per month CPD
     
     # Job Plans
-    number_staff_cbt = 10
-    number_staff_couns = 10
-    number_staff_pwp = 10
+    number_staff_cbt = 10.0
+    number_staff_couns = 10.0
+    number_staff_pwp = 10.0
     hours_avail_cbt = 22.0
     hours_avail_couns = 22.0
     hours_avail_pwp = 21.0

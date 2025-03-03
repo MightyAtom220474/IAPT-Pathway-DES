@@ -6,10 +6,8 @@ import streamlit as st
 #import matplotlib.pyplot as plt
 import plotly.express as px
 import plotly.graph_objects as go
-import kaleido
-import io
 
-from des_classes_v5 import g, Trial
+from iapt_classes import g, Trial
 #from app_style import global_page_style
 
 ########## Streamlit App ##########
@@ -29,133 +27,170 @@ with st.sidebar:
 
     st.subheader("Model Inputs")
 
-    with st.expander("Referrals"):
+    with st.expander("Screening"):
 
         # Referral Inputs
-        st.markdown("#### Referrals")
+        st.markdown("#### Screening")
         referral_input = st.slider("Number of Referrals Per Week", 1, 100, 50)
         referral_reject_input = st.number_input("Referral Rejection Rate (%)",
                         min_value=0.0, max_value=20.0, step=0.25, value=4.25)
+        referral_review_input = st.number_input("% of Referral sent for Review",
+                        min_value=0.0, max_value=50.0, step=0.25, value=40.0)
+        referral_screen_input = st.slider("Number of Mins to Screen Referral",
+                                          1, 20, 25)
+        opt_in_input = st.number_input("% of Referrals that Opt-in",
+                        min_value=50.0, max_value=100.0, step=0.5, value=75.0)
+        ta_accept_input = st.number_input("% of TA's that are Accepted",
+                        min_value=50.0, max_value=100.0, step=0.5, value=70.0)
+        ta_time_input = st.slider("Number of Mins to Perform TA", 1, 90, 60)
+        step2_step3_rate_input = st.number_input("% of Patients Assigned to Step 2",
+                        min_value=50.0, max_value=100.0, step=0.5, value=85.0)
            
-    with st.expander("Triage"):
+    with st.expander("Step 2"):
         
         # Triage Inputs
         st.divider()
-        st.markdown("#### Triage")
-        triage_rejection_input = st.number_input("Triage Rejection Rate (%)",
-                        min_value=0.0, max_value=20.0, step=0.25, value=7.0)
-        triage_wl_input = st.number_input("Current Triage Waiting List", min_value=0, max_value=2500, step=1, value=0)
-        if triage_wl_input > 0:
-            triage_wait_input = st.number_input("Current Average Triage Waiting Time (weeks)", min_value=0, max_value=52, step=1, value=0)
-        else:
-            triage_wait_input = 0
-        triage_target_input = st.slider("Number of Weeks to Triage", 1, 10, 4)
-        triage_clin_time_input =  st.slider("Avg Clinical Time per Triage (mins)", 20, 60, 48)
-        triage_admin_time_input =  st.slider("Avg Admin Time per Triage (mins)", 20, 60, 48)
+        st.markdown("#### Step 2")
+        
+        step2_path_ratio = st.number_input("% of Step 2 Allocated to PwP vs Group",
+                                           min_value=0.0, max_value=100.0, 
+                                           step=1.0, value=85.0)
+        step2_first_input = st.slider("Number of Mins for First PwP Appointment",
+                                            1, 60, 45)
+        step2_fup_input = st.slider("Number of Mins for Follow-up PwP Appointment",
+                                    1, 60, 30)
+        step_up_input = st.number_input("% of Patients Stepped Up", 
+                                        min_value=0.0, max_value=10.0,
+                                        step=0.25, value=1.0)
+        step2_pwp_dna_input = st.number_input("% DNA's for PwP Appointments",
+                                            min_value=0.0, max_value=30.0,
+                                            step=0.5, value=15.0)
+        step2_group_dna_input = st.number_input("% DNA's for Group Sessions",
+                                               min_value=0.0, max_value=30.0,
+                                               step=0.25, value=22.0)
+        step2_group_sessions_input = st.slider("Number of Step2 Group Sessions",
+                                              1, 10, 7)
+        step2_group_size_input = st.slider("Maximum Step2 Group Size", 1, 12, 7)
+        step2_group_duration_input = st.number_input("Length of Group Sessions",
+                                                min_value=180, max_value=300,
+                                                step=30, value=240)
 
-    with st.expander("Pack & Observations"):
-
-        # School/Home Assessment Packs
+    with st.expander("Step 3"):
+        
+        # Triage Inputs
         st.divider()
-        st.markdown("#### School/Home Assessment Packs")
-        target_pack_input = st.slider("Number of Weeks to Return Information Pack"
-                                                                        ,2, 6, 3)
-        pack_rejection_input = st.number_input("Pack Rejection Rate (%)",
-                        min_value=0.0, max_value=20.0, step=0.25, value=3.0)
-        # Observations
-        st.divider()
-        st.markdown("#### QB and Observations")
-        target_obs_input = st.slider("Number of Weeks to Return Observations"
-                                                                        ,2, 6, 4)
-        obs_rejection_input = st.number_input("Observations Rejection Rate (%)",
-                        min_value=0.0, max_value=20.0, step=0.25, value=1.0)
-    with st.expander("MDT"):
-   
-        # MDT Inputs
-        st.divider()
-        st.markdown("#### MDT")
-        mdt_rejection_input = st.number_input("MDT Rejection Rate (%)",
-                        min_value=0.0, max_value=20.0, step=0.25, value=5.0)
-        mdt_target_input = st.slider("Number of Weeks to MDT", 0, 5, 1)
-        mdt_resource_input =  st.slider("Number of MDT Slots p/w", 0, 100, 60)
-
-    with st.expander("Assessment"):
+        st.markdown("#### Step 3")
+        
+        step3_path_ratio = st.number_input("% of Step 3 Allocated to Couns vs CBT",
+                                           min_value=0.0, max_value=100.0,
+                                           step=0.5, value=37.0)
+        step_down_input = st.number_input("% of Patients Stepped Down",
+                                          min_value=0.0, max_value=20.0,
+                                          step=0.5, value=12.0)
+        step3_cbt_first_input = st.slider("Number of Mins for First CBT Appointment",
+                                          1, 60, 45)
+        step3_cbt_fup_input = st.slider("Number of Mins for Follow-up CBT Appointment",
+                                        1, 60, 30)
+        step3_cbt_dna_input = st.number_input("% DNA's for CBT Appointments",
+                                              min_value=0.0, max_value=30.0,
+                                              step=0.5, value=20.0)
+        step3_couns_first_input = st.slider("Number of Mins for First CBT Appointment",
+                                            1, 60, 45)
+        step3_couns_fup_input = st.slider("Number of Mins for Follow-up CBT Appointment",
+                                          1, 60, 30)
+        step3_couns_dna_input = st.number_input("% DNA's for Counselling Sessions",
+                                                min_value=0.0, max_value=30.0,
+                                                step=0.25, value=20.0)
+        step3_session_var_input = st.number_input("% of Instances where Patients Receive Additional Sessions ",
+                                                  min_value=0.0, max_value=30.0,
+                                                  step=0.25, value=20.0)
+        # code for conditional streamlit inputs
+        # if triage_wl_input > 0:
+        #     triage_wait_input = st.number_input("Current Average Triage Waiting Time (weeks)", min_value=0, max_value=52, step=1, value=0)
+        # else:
+        #     triage_wait_input = 0
     
-        # Assessment Inputs
-        st.divider()
-        st.markdown("#### Assessment")
-        asst_rejection_input = st.number_input("Referral Rejection Rate (%)",
-                        min_value=0.0, max_value=20.0, step=0.25, value=3.0)
-        asst_target_input = st.slider("Number of Weeks to Assess", 0, 5, 4)
-        asst_wl_input = st.number_input("Current Assessment Waiting List", min_value=0, max_value=2500, step=1, value=0)
-        if asst_wl_input > 0:
-            asst_wait_input = st.number_input("Current Average Assessment Waiting Time (weeks)", min_value=0, max_value=156, step=1, value=0)
-        else:
-            asst_wait_input = 0
-        asst_clin_time_input =  st.slider("Avg Clinical Time per Asst (mins)", 60, 120, 90)
-        asst_admin_time_input =  st.slider("Avg Admin Time per Asst (mins)", 60, 120, 90)
-
     with st.expander("Job Plans"):
-   
-        # MDT Inputs
+
         st.divider()
         st.markdown("#### Job Plans")
-        b6_prac_avail_input = st.number_input(label="Starting Number of B6 Practitioner WTE",min_value=0.5,max_value=20.0, step=0.5,value = g.number_staff_b6_prac)
-        b6_prac_hours_input = st.slider(label="Number of B6 Hours per WTE", min_value=0.0, max_value=25.0, value=g.hours_avail_b6_prac)
-        b6_prac_add_input = st.number_input("Additional Number of B6 Practitioners WTE",
+        cbt_avail_input = st.number_input(label="Starting Number of CBT Practitioners WTE",
+                                          min_value=0.5,max_value=20.0,
+                                          step=0.5,value = g.number_staff_cbt)
+        couns_avail_input = st.number_input(label="Starting Number of Counselling Practitioners WTE",
+                                            min_value=0.5,max_value=20.0,
+                                            step=0.5,value = g.number_staff_couns)
+        pwp_avail_input = st.number_input(label="Starting Number of PwP Practitioners WTE",
+                                          min_value=0.5,max_value=20.0,
+                                          step=0.5,value = g.number_staff_pwp)
+        cbt_add_input = st.number_input("Additional Number of CBT Practitioners WTE",
                         min_value=0.0, max_value=20.0, step=0.5, value=0.0)
-        asst_resource_input =  st.slider("Number of Assessment Slots per B6", 0, 25, 3)
-        triage_resource_input =  st.slider("Number of Triage Slots per B6 WTE", 0, 25, 8)
-        b4_prac_avail_input = st.number_input(label="Starting Number of B4 Practitioner WTE",min_value=0.5,max_value=20.0, step=0.5,value = g.number_staff_b4_prac)
-        b4_prac_hours_input = st.slider(label="Number of B4 Hours per WTE", min_value=0.0, max_value=25.0, value=g.hours_avail_b4_prac)
-        b4_prac_add_input = st.number_input("Additional Number of B4 Practitioners WTE",
+        couns_add_input = st.number_input("Additional Number of Counselling Practitioners WTE",
                         min_value=0.0, max_value=20.0, step=0.5, value=0.0)
+        pwp_add_input = st.number_input("Additional Number of PwP Practitioners WTE",
+                        min_value=0.0, max_value=20.0, step=0.5, value=0.0)
+        cbt_hours_avail_input = st.number_input(label="Non-Clinical Hours p/w for CBT Pratitioners",
+                                                min_value=10.0,max_value=25.0,
+                                                step=0.5,value = g.hours_avail_cbt)
+        couns_hours_avail_input = st.number_input(label="Non-Clinical Hours p/w for Counselling Pratitioners",
+                                                  min_value=10.0,max_value=25.0,
+                                                  step=0.5,value = g.hours_avail_couns)
+        pwp_hours_avail_input = st.number_input(label="Non-Clinical Hours p/w for PwP Pratitioners",
+                                                min_value=10.0,max_value=25.0,
+                                                step=0.5,value = g.hours_avail_pwp)
         weeks_lost_input = st.number_input("Weeks Lost to Leave/Sickness etc.",
-                        min_value=0.0, max_value=20.0, step=0.25, value=10.0)
+                            min_value=0.0, max_value=20.0, step=0.25, value=10.0)
             
     with st.expander("Simulation Parameters"):
     
         st.divider()
         st.markdown("#### Simulation Parameters")
-        sim_duration_input =  st.slider("Simulation Duration (weeks)", min_value=26, max_value=520, value=52, step=26)
+        sim_duration_input =  st.slider("Simulation Duration (weeks)",
+                                        min_value=26, max_value=520,
+                                        value=52, step=26)
         st.write(f"The service is running for {sim_duration_input} weeks")
-        number_of_runs_input = st.slider("Number of Simulation Runs", 1, 20, 10)
+        number_of_runs_input = st.slider("Number of Simulation Runs", 1, 20, 5)
 
+##### Screening
 g.mean_referrals_pw = referral_input
-g.base_waiting_list = 2741
+#g.base_waiting_list = 2741
 g.referral_rejection_rate = referral_reject_input/100
-g.triage_rejection_rate = triage_rejection_input/100
-g.target_triage_wait = triage_target_input
-g.triage_waiting_list = triage_wl_input
-g.triage_average_wait = triage_wait_input
-g.triage_resource = int(triage_resource_input * (b6_prac_avail_input+b6_prac_add_input))
-g.triage_time_clin = triage_clin_time_input
-g.triage_time_admin = triage_admin_time_input
-g.target_pack_wait = target_pack_input
-g.pack_rejection_rate = pack_rejection_input/100
-g.target_obs_wait = target_obs_input
-g.obs_rejection_rate = obs_rejection_input/100
-g.mdt_rejection_rate = mdt_rejection_input/100
-g.target_mdt_wait = mdt_target_input
-g.mdt_resource = mdt_resource_input
-g.staff_weeks_lost = weeks_lost_input
+g.referral_review_rate = referral_review_input
+g.referral_screen_time = referral_screen_input
+g.opt_in_rate = opt_in_input/100
+g.ta_accept_rate = ta_accept_input/100
+g.step2_step3_ratio = (step2_step3_rate_input/100,1-(step2_step3_rate_input/100))
 
-g.asst_rejection_rate = asst_rejection_input/100
-g.target_asst_wait = asst_target_input
-g.asst_waiting_list = asst_wl_input
-g.asst_average_wait = asst_wait_input
-g.asst_resource = int(asst_resource_input * (b6_prac_avail_input+b6_prac_add_input))
-g.asst_time_clin = asst_clin_time_input
-g.asst_time_admin = asst_admin_time_input
+##### Step 2
+g.step2_path_ratios = (step2_path_ratio/100,1-(step2_path_ratio/100))
+g.step2_pwp_1st_mins = step2_first_input
+g.step2_pwp_fup_mins = step2_fup_input
+g.step2_pwp_dna_rate = step2_pwp_dna_input/100
+g.step2_group_dna_rate = step2_group_dna_input/100
+g.step2_group_sessions = step2_group_sessions_input
+g.step2_group_size = step2_group_size_input
+g.step2_group_session_mins = step2_group_duration_input
+g.step_up_rate = step_up_input/100
 
-g.number_staff_b6_prac = b6_prac_avail_input
-g.number_staff_b4_prac = b4_prac_avail_input
-g.hours_avail_b6_prac = b6_prac_hours_input
-g.hours_avail_b4_prac = b4_prac_hours_input
+##### Step 3
+g.step3_path_ratios = (step3_path_ratio/100,1-(step3_path_ratio/100))
+g.step3_cbt_1st_mins = step2_first_input
+g.step3_cbt_fup_mins = step2_fup_input
+g.step3_cbt_dna_rate = step3_cbt_dna_input/100
+g.step3_couns_1st_mins = step2_first_input
+g.step3_couns_fup_mins = step2_fup_input
+g.step3_couns_dna_rate = step3_couns_dna_input/100
+g.step_down_rate = step_down_input/100
+g.step_up_rate = step_up_input/100 
 
+##### Job Plans
+g.cbt_avail = cbt_avail_input + cbt_add_input
+g.couns_avail = couns_avail_input + couns_add_input
+g.pwp_avail = pwp_avail_input + pwp_add_input
 # calculate total hours for job plans
-total_b6_prac_hours = b6_prac_avail_input*b6_prac_hours_input
-total_b4_prac_hours = b4_prac_avail_input*b4_prac_hours_input
+total_cbt_hours = cbt_avail_input*cbt_hours_avail_input
+total_couns_hours = couns_avail_input*couns_hours_avail_input
+total_pwp_hours = pwp_avail_input*pwp_hours_avail_input
 
 g.sim_duration = sim_duration_input
 g.number_of_runs = number_of_runs_input
@@ -175,29 +210,57 @@ if button_run_pressed:
         pd.set_option('display.max_rows', 1000)
         # Call the run_trial method of our Trial class object
         
-        df_trial_results, df_weekly_stats = my_trial.run_trial()
+        df_trial_results, asst_weekly_dfs, step2_weekly_dfs, step3_weekly_dfs, staff_weekly_dfs, caseload_weekly_dfs = my_trial.run_trial()
 
         st.subheader(f'Summary of all {g.number_of_runs} Simulation Runs over {g.sim_duration}'
-                     f' Weeks with {b6_prac_add_input} Additional B6 and {b4_prac_add_input} Additional B4')
+                     f' Weeks with {cbt_add_input} additional CBT,'
+                      f' {couns_add_input} additional Counsellors and '
+                      f'{pwp_add_input} additional PwP Practitioners')
         
-        # turn mins values from running total to weekly total in hours
-        df_weekly_stats['Referral Screen Hrs'] = (df_weekly_stats['Referral Screen Mins']-df_weekly_stats['Referral Screen Mins'].shift(1))/60
-        df_weekly_stats['Triage Clin Hrs'] = (df_weekly_stats['Triage Clin Mins']-df_weekly_stats['Triage Clin Mins'].shift(1))/60
-        df_weekly_stats['Triage Admin Hrs'] = (df_weekly_stats['Triage Admin Mins']-df_weekly_stats['Triage Admin Mins'].shift(1))/60
-        df_weekly_stats['Triage Reject Hrs'] = (df_weekly_stats['Triage Reject Mins']-df_weekly_stats['Triage Reject Mins'].shift(1))/60
-        df_weekly_stats['Pack Send Hrs'] = (df_weekly_stats['Pack Send Mins']-df_weekly_stats['Pack Send Mins'].shift(1))/60
-        df_weekly_stats['Pack Reject Hrs'] = (df_weekly_stats['Pack Reject Mins']-df_weekly_stats['Pack Reject Mins'].shift(1))/60
-        df_weekly_stats['Obs Visit Hrs'] = (df_weekly_stats['Obs Visit Mins']-df_weekly_stats['Obs Visit Mins'].shift(1))/60
-        df_weekly_stats['Obs Reject Hrs'] = (df_weekly_stats['Obs Reject Mins']-df_weekly_stats['Obs Reject Mins'].shift(1))/60
-        df_weekly_stats['MDT Prep Hrs'] = (df_weekly_stats['MDT Prep Mins']-df_weekly_stats['MDT Prep Mins'].shift(1))/60
-        df_weekly_stats['MDT Meet Hrs'] = (df_weekly_stats['MDT Meet Mins']-df_weekly_stats['MDT Meet Mins'].shift(1))/60
-        df_weekly_stats['MDT Reject Hrs'] = (df_weekly_stats['MDT Reject Mins']-df_weekly_stats['MDT Reject Mins'].shift(1))/60
-        df_weekly_stats['Asst Clin Hrs'] = (df_weekly_stats['Asst Clin Mins']-df_weekly_stats['Asst Clin Mins'].shift(1))/60
-        df_weekly_stats['Asst Admin Hrs'] = (df_weekly_stats['Asst Admin Mins']-df_weekly_stats['Asst Admin Mins'].shift(1))/60
-        df_weekly_stats['Diag Reject Hrs'] = (df_weekly_stats['Diag Reject Mins']-df_weekly_stats['Diag Reject Mins'].shift(1))/60
-        df_weekly_stats['Diag Accept Hrs'] = (df_weekly_stats['Diag Accept Mins']-df_weekly_stats['Diag Accept Mins'].shift(1))/60
+        # turn asst mins values from running total to weekly total in hours
+        asst_weekly_dfs['Referral Screen Hrs'] = (asst_weekly_dfs['Referral Screen Mins']-asst_weekly_dfs['Referral Screen Mins'].shift(1))/60
+        
+        step2_weekly_summaries = [] 
+        
+        step2_route_list = ['PwP','Group']
+        # create summary stats for each of the Step2 routes
+        for i, route_name in enumerate(step2_route_list):
+            # filter data for appropriate route
+            step2_weekly_dfs_filtered = step2_weekly_dfs[
+                                    step2_weekly_dfs["Route Name"]==route_name]
+    
+            # turn mins values from running total to weekly total in hours
+            step2_run_number = step2_weekly_dfs['Run Number']
+            step2_route_name = step2_weekly_dfs["Route Name"]
+            step2_week_number = step2_weekly_dfs["Week Number"]
+            step2_clin_hours = (step2_weekly_dfs['Step2 Clin Mins']-asst_weekly_dfs['Step2 Clin Mins'].shift(1))/60
+            step2_admin_hours = (step2_weekly_dfs['Step2 Admin Mins']-asst_weekly_dfs['Step2 Admin Mins'].shift(1))/60
+            step2_session_count = step2_weekly_dfs_filtered['Step2 Sessions']-asst_weekly_dfs['Step2 Sessions'].shift(1)
+            step2_dna_count = step2_weekly_dfs_filtered['Step2 DNAs']-asst_weekly_dfs['Step2 DNAs'].shift(1)
+            step2_complete_count = step2_weekly_dfs_filtered['Step2 Complete']-asst_weekly_dfs['Step2 Complete'].shift(1)
+            step2_dropout_count = step2_weekly_dfs_filtered['Step2 Dropout']-asst_weekly_dfs['Step2 Dropout'].shift(1)
+            
+            step2_weekly_summary.append({
+                'Run Number':step2_run_number,
+                'Route Name':step2_route_name,
+                'Week Number':step2_week_number,
+                'Step2 Clin Hrs':step2_clin_hours,
+                'Step2 Admin Hrs':step2_admin_hours,
+                'Step2 Sessions':step2_session_count,
+                'Step2 DNAs':step2_dna_count,
+                'Step2 Completes':step2_complete_count,
+                'Step2 Dropouts':step2_dropout_count
+                })
+            
+            # turn weekly stats into a dataframe
+            step2_weekly_summary = pd.DataFrame(step2_weekly_summary)
+                       
+            step2_weekly_summaries.append(step2_weekly_summary)
+
+    st.write(step2_weekly_summaries)
+            
         # get rid of negative values
-        num = df_weekly_stats._get_numeric_data()
+        num = asst_weekly_dfs._get_numeric_data()
 
         num[num < 0] = 0
 
@@ -209,41 +272,9 @@ if button_run_pressed:
 
         with st.expander("See explanation"):
             st.write('This ADHD Simulation is designed to replicate the flow '
-                     'of patients through the new ADHD Diagnostic Pathway. Each '
-                     'week referrals (patients) are generated by taking the '
-                     'input of Referrals per Week and randomising this to '
-                     'better reflect real life variability in referral rates. '
-                     'It is randomised using a Poisson Distribution. Each week '
-                     'a set amount of resource is allocated based upon the '
-                     'inputs for the number of Triage, MDT and Assessment '
-                     'slots per week. Each patient that is put through the '
-                     'pathway takes a unit of resource for that part of the '
-                     'pathway. If no resources for that specific part of the '
-                     'pathway is available as they have all been used for that '
-                     'week the patient is added to a waiting list and waits '
-                     'until a resource becomes available for that part of the '
-                     'pathway. Once a resource is available the patient is put '
-                     'through that part of the pathway, and how long they '
-                     'waited is recorded along with how long it took to '
-                     'complete that part of the pathway and how much staff '
-                     'resource (in minutes by taking the average clinical and '
-                     'admin time input and randomising this, again using a '
-                     'Poisson Distribution) was used to complete this. Once '
-                     'they start that part of the pathway they are removed '
-                     'from the waiting list and the next patient in the queue '
-                     'starts that part of the pathway, if a resource is '
-                     'available.')
-            
-            st.write('At any point along the pathway a patient can be rejected '
-                     '. The decision to reject is based upon the rejection '
-                     'rate input set for that part of the pathway. For '
-                     'example, if the rejection rate is set to zero then no '
-                     'patients will be rejected, but if it is set to 5% then '
-                     '5% of patients will be rejected by being randomly '
-                     'selected for rejection. Once a patient is rejected at '
-                     'any stage they will no longer progress to any subsequent '
-                     'parts of the pathway. Once a patient completes that part '
-                     'of the pathway they are taken off that waiting list.')
+                     'of patients through the Talking Therapies Assessment and'
+                     'Treatment Pathway.')
+
         
         df_weekly_wl = df_weekly_stats[['Run','Week Number','Triage WL',
                                         'MDT WL','Asst WL']]
