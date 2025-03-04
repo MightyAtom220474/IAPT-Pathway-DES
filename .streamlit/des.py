@@ -262,8 +262,16 @@ if button_run_pressed:
             step2_weekly_summaries = pd.DataFrame(step2_weekly_summary)
                        
             #step2_weekly_summaries.append(step2_weekly_summaries)
+    step2_weekly_sum_unpivot = pd.melt(step2_weekly_summaries, value_vars=['Step2 Clin Hrs',
+                                                                 'Step2 Admin Hrs',
+                                                                 'Step2 Sessions',
+                                                                 'Step2 DNAs',
+                                                                 'Step2 Completes',
+                                                                 'Step2 Dropouts'],
+                                                                 id_vars=['Run Number',
+                                                                'Route Name','Week Number'])
 
-    st.write(step2_weekly_summaries)
+    print(step2_weekly_sum_unpivot)
             
         # get rid of negative values
         # num = asst_weekly_dfs._get_numeric_data()
