@@ -21,7 +21,7 @@ st.logo("https://lancsvp.org.uk/wp-content/uploads/2021/08/nhs-logo-300x189.png"
 
 #global_page_style('static/css/style.css')
 
-st.title("ADHD Pathway Simulation")
+st.title("Talking Therapies Pathway Simulation")
 
 with st.sidebar:
 
@@ -237,14 +237,14 @@ if button_run_pressed:
     
             # turn mins values from running total to weekly total in hours
             step2_run_number = step2_weekly_dfs['Run Number']
-            step2_route_name = step2_weekly_dfs["Route Name"]
-            step2_week_number = step2_weekly_dfs["Week Number"]
-            step2_clin_hours = (step2_weekly_dfs['Step2 Clin Mins']-asst_weekly_dfs['Step2 Clin Mins'].shift(1))/60
-            step2_admin_hours = (step2_weekly_dfs['Step2 Admin Mins']-asst_weekly_dfs['Step2 Admin Mins'].shift(1))/60
-            step2_session_count = step2_weekly_dfs_filtered['Step2 Sessions']-asst_weekly_dfs['Step2 Sessions'].shift(1)
-            step2_dna_count = step2_weekly_dfs_filtered['Step2 DNAs']-asst_weekly_dfs['Step2 DNAs'].shift(1)
-            step2_complete_count = step2_weekly_dfs_filtered['Step2 Complete']-asst_weekly_dfs['Step2 Complete'].shift(1)
-            step2_dropout_count = step2_weekly_dfs_filtered['Step2 Dropout']-asst_weekly_dfs['Step2 Dropout'].shift(1)
+            step2_route_name = step2_weekly_dfs['Route Name']
+            step2_week_number = step2_weekly_dfs['Week Number']
+            step2_clin_hours = (step2_weekly_dfs['Step2 Clin Mins']-step2_weekly_dfs['Step2 Clin Mins'].shift(1))/60
+            step2_admin_hours = (step2_weekly_dfs['Step2 Admin Mins']-step2_weekly_dfs['Step2 Admin Mins'].shift(1))/60
+            step2_session_count = step2_weekly_dfs_filtered['Step2 Sessions']-step2_weekly_dfs['Step2 Sessions'].shift(1)
+            step2_dna_count = step2_weekly_dfs_filtered['Step2 DNAs']-step2_weekly_dfs['Step2 DNAs'].shift(1)
+            step2_complete_count = step2_weekly_dfs_filtered['Step2 Complete']-step2_weekly_dfs['Step2 Complete'].shift(1)
+            step2_dropout_count = step2_weekly_dfs_filtered['Step2 Dropout']-step2_weekly_dfs['Step2 Dropout'].shift(1)
             
             step2_weekly_summary.append({
                 'Run Number':step2_run_number,
