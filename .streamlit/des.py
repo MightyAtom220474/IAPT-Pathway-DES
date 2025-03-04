@@ -232,7 +232,7 @@ if button_run_pressed:
         step2_group_weekly_summary = step2_weekly_dfs[
                                 step2_weekly_dfs["Route Name"]=='Group']
     
-        # turn mins values from running total to weekly total in hours
+        # turn mins values from running total to weekly total and mins in hrs
         ##### PwP #####
         step2_pwp_weekly_summary['Step2 Clin Hrs'] = (step2_pwp_weekly_summary['Step2 Clin Mins']-step2_pwp_weekly_summary['Step2 Clin Mins'].shift(1))/60
         step2_pwp_weekly_summary['Step2 Admin Hrs'] = (step2_pwp_weekly_summary['Step2 Admin Mins']-step2_pwp_weekly_summary['Step2 Admin Mins'].shift(1))/60

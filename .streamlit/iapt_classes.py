@@ -442,6 +442,7 @@ class Model:
             self.asst_optin_delay = self.asst_results_df['Opt-in Wait'].mean()
             self.asst_tot_optin = self.asst_results_df['Opted In'].sum()
             self.asst_optin_wait = self.asst_results_df['Opt-in Q Time'].mean()
+            self.asst_waiting_list = g.number_on_ta_wl
             self.asst_tot_accept = self.asst_results_df['TA Outcome'].sum()
 
             self.asst_weekly_stats.append(
@@ -452,6 +453,7 @@ class Model:
                  'Referrals Delay Opt-in':self.asst_optin_delay,
                  'Referrals Opted-in':self.asst_tot_optin,
                  'Referrals Wait Opt-in':self.asst_optin_wait,
+                 'TA Waiting List':self.asst_waiting_list,
                  'TA Total Accept':self.asst_tot_accept
                 }
                 )
