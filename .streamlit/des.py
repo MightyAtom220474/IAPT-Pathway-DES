@@ -271,7 +271,7 @@ if button_run_pressed:
                                                                  id_vars=['Run Number',
                                                                 'Route Name','Week Number'])
 
-    print(step2_weekly_sum_unpivot)
+    st.write(step2_weekly_sum_unpivot)
             
         # get rid of negative values
         # num = asst_weekly_dfs._get_numeric_data()
