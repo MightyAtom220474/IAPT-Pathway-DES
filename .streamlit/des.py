@@ -153,7 +153,7 @@ with st.sidebar:
                                         min_value=26, max_value=520,
                                         value=52, step=26)
         st.write(f"The service is running for {sim_duration_input} weeks")
-        number_of_runs_input = st.slider("Number of Simulation Runs", 1, 20, 5)
+        number_of_runs_input = st.slider("Number of Simulation Runs", 1, 20, 2)
 
 ##### Screening
 g.mean_referrals_pw = referral_input
@@ -226,7 +226,7 @@ if button_run_pressed:
         # turn asst mins values from running total to weekly total in hours
         asst_weekly_dfs['Referral Screen Hrs'] = (asst_weekly_dfs['Referral Screen Mins']-asst_weekly_dfs['Referral Screen Mins'].shift(1))/60
         
-        step2_weekly_summaries = [] 
+        step2_weekly_summary = [] 
         
         step2_route_list = ['PwP','Group']
         # create summary stats for each of the Step2 routes
@@ -246,7 +246,7 @@ if button_run_pressed:
             step2_complete_count = step2_weekly_dfs_filtered['Step2 Complete']-step2_weekly_dfs['Step2 Complete'].shift(1)
             step2_dropout_count = step2_weekly_dfs_filtered['Step2 Dropout']-step2_weekly_dfs['Step2 Dropout'].shift(1)
             
-            step2_weekly_summaries.append({
+            step2_weekly_summary.append({
                 'Run Number':step2_run_number,
                 'Route Name':step2_route_name,
                 'Week Number':step2_week_number,
@@ -259,9 +259,9 @@ if button_run_pressed:
                 })
             
             # turn weekly stats into a dataframe
-            step2_weekly_summaries = pd.DataFrame(step2_weekly_summaries)
+            step2_weekly_summaries = pd.DataFrame(step2_weekly_summary)
                        
-            step2_weekly_summaries.append(step2_weekly_summaries)
+            #step2_weekly_summaries.append(step2_weekly_summaries)
 
     st.write(step2_weekly_summaries)
             
