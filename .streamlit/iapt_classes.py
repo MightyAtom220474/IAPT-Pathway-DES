@@ -99,7 +99,7 @@ class g:
 
     # Simulation
     sim_duration = 52
-    number_of_runs = 5
+    number_of_runs = 10
     std_dev = 3 # used for randomising activity times
     event_week_tracker = {} # used to track the latest events week for each patient
 
@@ -445,7 +445,7 @@ class Model:
             self.asst_tot_accept = self.asst_results_df['TA Outcome'].sum()
 
             self.asst_weekly_stats.append(
-                {
+                {'Run Number': self.run_number,
                  'Week Number':self.stats_week_number,
                  'Referral Screen Mins':self.asst_tot_screen,
                  'Referrals Rejected':self.asst_tot_reject,
@@ -491,7 +491,7 @@ class Model:
                     self.step2_tot_caseload = g.number_on_group_cl
                 # weekly Step2 Activity
                 self.step2_weekly_stats.append(
-                    {
+                    {'Run Number': self.run_number,
                     'Route Name':self.step2_route,
                     'Week Number':self.stats_week_number,
                     'Step2 WL':self.step2_max_wl,
@@ -542,7 +542,7 @@ class Model:
                     self.step3_tot_caseload = g.number_on_couns_cl
                 # weekly Step3 Activity
                 self.step3_weekly_stats.append(
-                    {
+                    {'Run Number': self.run_number
                     'Route Name':self.step3_route,
                     'Week Number':self.stats_week_number,
                     'Step3 WL':self.step3_max_wl,
@@ -575,7 +575,7 @@ class Model:
  
                 # weekly staff non-clinical activity
                 self.staff_weekly_stats.append(
-                    {
+                    {'Run Number':self.run_number,
                     'Job Role':self.job_role_name,
                     'Week Number':self.stats_week_number,
                     'Supervision Mins':self.staff_tot_superv,
@@ -1376,6 +1376,10 @@ class Model:
             # is the patient approaching the end of treatment and do they need to be stepped up?
             if self.pwp_session_counter >= g.step2_pwp_sessions-1 and self.step_patient_up <= g.step_up_rate:
                 
+                # reset counters for pwp sessions
+                self.pwp_session_counter = 0
+                self.pwp_dna_counter = 0
+                
                 self.step2_results_df['IsStepUp'] = 1
                 if g.debug_level >= 2:
                     print(f'### STEPPED UP ###: Patient {p.id} has been stepped up, running Step3 route selector')
@@ -1630,15 +1634,14 @@ class Model:
         self.random_num_sessions += vary_number_sessions(13,35)
 
         if self.vary_step3_sessions >= g.step_3_session_var:
-            self.number_sessions = g.step3_cbt_sessions
-            self.step3_cbt_period = g.step3_cbt_period
+            self.number_cbt_sessions = g.step3_cbt_sessions # use the standard number of sessions
+            self.step3_cbt_period = g.step3_cbt_period # use the standard delivery period
         else:
-            self.number_sessions = self.random_num_sessions
-            self.step3_cbt_period = (g.step3_cbt_period-g.step3_cbt_sessions)+self.random_num_sessions
+            self.number_cbt_sessions = self.random_num_sessions # use the randomly generated number of sessions
+            self.step3_cbt_period = g.step3_cbt_period+(self.random_num_sessions*2)
 
         # Generate a list of week numbers the patient is going to attend
-        self.cbt_random_weeks = random.sample(range(self.week_number+1, self.week_number+self.step3_cbt_period), self.number_sessions+3)
-
+        self.cbt_random_weeks = random.sample(range(self.week_number+1, self.week_number+(self.step3_cbt_period*2)), self.number_cbt_sessions)
         # Add 1 at the start of the list
         self.cbt_random_weeks.insert(0, p.step3_start_week)
 
@@ -1649,11 +1652,11 @@ class Model:
             print(f'Random Session week {len(self.cbt_random_weeks)} numbers are {self.cbt_random_weeks}')
 
         if g.debug_level >=2:
-            print(f'Number of sessions is {self.number_sessions}')
+            print(f'Number of sessions is {self.number_cbt_sessions}')
 
         # print(self.random_weeks)
 
-        while self.cbt_session_counter < self.number_sessions and self.cbt_dna_counter < self.dnas_allowed:
+        while self.cbt_session_counter < self.number_cbt_sessions and self.cbt_dna_counter < self.dnas_allowed:
 
             if g.debug_level >= 2:
                 print(f'FUNC PROCESS step3_cbt_process: Week {self.env.now}: Patient {p.id} (added week {p.week_added}) on {p.step3_path_route} Session {self.cbt_session_counter} on Week {self.cbt_random_weeks[self.cbt_session_counter]}')
@@ -1678,7 +1681,7 @@ class Model:
             # decide whether the patient was stepped down
             self.step_patient_down = random.uniform(0,1)
             # is the patient approaching the end of treatment and do they need to be stepped down?
-            if self.cbt_session_counter >= self.number_sessions-1 and self.step_patient_down <= g.step_down_rate:
+            if self.cbt_session_counter >= self.number_cbt_sessions-1 and self.step_patient_down <= g.step_down_rate:
                 
                 self.step3_results_df['IsStepDown'] = 1
 
@@ -1724,7 +1727,7 @@ class Model:
             self.step3_results_df.at[p.id, 'IsDropOut'] = 1
             if g.debug_level >= 2:
                 print(f'Patient {p.id} dropped out of {p.step3_path_route} treatment')
-            p.step3_end_week = p.step3_start_week+self.cbt_random_weeks[self.cbt_session_counter]
+            p.step3_end_week = p.step3_start_week+self.cbt_random_weeks[self.cbt_session_counter-1]
         else:
             self.step3_results_df.at[p.id, 'IsDropOut'] = 0
             if g.debug_level >= 2:
@@ -1841,14 +1844,14 @@ class Model:
         self.random_num_sessions += vary_number_sessions(8,22)
 
         if self.vary_step3_sessions >= g.step_3_session_var:
-            self.number_sessions = g.step3_couns_sessions
+            self.number_couns_sessions = g.step3_couns_sessions
             self.step3_couns_period = g.step3_couns_period
         else:
-            self.number_sessions = self.random_num_sessions
-            self.step3_couns_period = (g.step3_couns_period-g.step3_couns_sessions)+self.random_num_sessions
+            self.number_couns_sessions = self.random_num_sessions
+            self.step3_couns_period = g.step3_couns_period+(self.random_num_sessions*2)
 
         # Generate a list of week numbers the patient is going to attend
-        self.couns_random_weeks = random.sample(range(self.week_number+1, self.week_number+self.step3_couns_period), self.number_sessions+3)
+        self.couns_random_weeks = random.sample(range(self.week_number+1, self.week_number+(self.step3_couns_period*2)), self.number_couns_sessions)
 
         # Add 1 at the start of the list
         self.couns_random_weeks.insert(0, p.step3_start_week)
@@ -1865,11 +1868,11 @@ class Model:
             print(f'Random Session week {len(self.couns_random_weeks)} numbers are {self.couns_random_weeks}')
 
         if g.debug_level >=2:
-            print(f'Number of sessions is {self.number_sessions}')
+            print(f'Number of sessions is {self.number_couns_sessions}')
 
         # print(self.random_weeks)
 
-        while self.couns_session_counter < self.number_sessions and self.couns_dna_counter < self.dnas_allowed:
+        while self.couns_session_counter < self.number_couns_sessions and self.couns_dna_counter < self.dnas_allowed:
 
             if g.debug_level >= 2:
                 print(f'FUNC PROCESS step3_couns_process: Week {self.env.now}: Patient {p.id} (added week {p.week_added}) on {p.step3_path_route} Session {self.couns_session_counter} on Week {self.couns_random_weeks[self.couns_session_counter]}')
@@ -1894,7 +1897,7 @@ class Model:
             # decide whether the patient was stepped down
             self.step_patient_down = random.uniform(0,1)
             # is the patient approaching the end of treatment and do they need to be stepped down?
-            if self.couns_session_counter >= self.number_sessions-1 and self.step_patient_down <= g.step_down_rate:
+            if self.couns_session_counter >= self.number_couns_sessions-1 and self.step_patient_down <= g.step_down_rate:
                 
                 self.step3_results_df['IsStepDown'] = 1
 
@@ -1938,16 +1941,16 @@ class Model:
         if self.couns_dna_counter >= self.dnas_allowed:
             self.step3_results_df.at[p.id, 'IsDropOut'] = 1
             if self.couns_session_counter < len(self.couns_random_weeks):
-                p.step3_end_week = p.step3_start_week + self.couns_random_weeks[self.couns_session_counter]
+                p.step3_end_week = p.step3_start_week + self.couns_random_weeks[self.couns_session_counter-1]
             else:
                 print(f"Warning: Index {self.couns_session_counter} out of range for couns_random_weeks.")
             if g.debug_level >= 2:
                 print(f'Patient {p.id} dropped out of {p.step3_path_route} treatment')
-            p.step3_end_week = p.step3_start_week+self.couns_random_weeks[self.couns_session_counter]
+            p.step3_end_week = p.step3_start_week+self.couns_random_weeks[self.couns_session_counter-1]
         else:
             self.step3_results_df.at[p.id, 'IsDropOut'] = 0
             if self.couns_session_counter < len(self.couns_random_weeks):
-                p.step3_end_week = p.step3_start_week + self.couns_random_weeks[self.couns_session_counter]
+                p.step3_end_week = p.step3_start_week + max(self.couns_random_weeks)
             else:
                 print(f"Warning: Index {self.couns_session_counter} out of range for couns_random_weeks.")
             if g.debug_level >= 2:
