@@ -542,7 +542,7 @@ class Model:
                     self.step3_tot_caseload = g.number_on_couns_cl
                 # weekly Step3 Activity
                 self.step3_weekly_stats.append(
-                    {'Run Number': self.run_number
+                    {'Run Number': self.run_number,
                     'Route Name':self.step3_route,
                     'Week Number':self.stats_week_number,
                     'Step3 WL':self.step3_max_wl,
