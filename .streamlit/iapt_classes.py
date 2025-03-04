@@ -1430,9 +1430,6 @@ class Model:
         self.pwp_session_counter = 0
         self.pwp_dna_counter = 0
 
-        # remove from overall caseload
-        g.number_on_pwp_cl -=1
-
         # # remove from this specific caseload
         # self.pwp_caseload_posn -=1
 
@@ -1741,9 +1738,6 @@ class Model:
         self.cbt_session_counter = 0
         self.cbt_dna_counter = 0
 
-        # remove from overall caseload
-        g.number_on_cbt_cl -=1
-
         # # remove from clinician caseload
         # self.cbt_caseloads[self.cbt_caseload_id] -=1
 
@@ -1963,9 +1957,6 @@ class Model:
         # reset counters for couns sessions
         self.couns_session_counter = 0
         self.couns_dna_counter = 0
-
-        # remove from overall caseload
-        g.number_on_couns_cl -=1
 
         # # remove from clinician caseload
         # self.couns_caseloads[self.couns_caseload_id] -=1
