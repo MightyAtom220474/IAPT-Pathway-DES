@@ -231,45 +231,36 @@ if button_run_pressed:
         
         step2_group_weekly_summary = step2_weekly_dfs[
                                 step2_weekly_dfs["Route Name"]=='Group']
-        
-        step2_route_list = ['PwP','Group']
-        # create summary stats for each of the Step2 routes
- 
+    
         # turn mins values from running total to weekly total in hours
-        
+        ##### PwP #####
         step2_pwp_weekly_summary['Step2 Clin Hrs'] = (step2_pwp_weekly_summary['Step2 Clin Mins']-step2_pwp_weekly_summary['Step2 Clin Mins'].shift(1))/60
         step2_pwp_weekly_summary['Step2 Admin Hrs'] = (step2_pwp_weekly_summary['Step2 Admin Mins']-step2_pwp_weekly_summary['Step2 Admin Mins'].shift(1))/60
         step2_pwp_weekly_summary['Step2 Sessions'] = step2_pwp_weekly_summary['Step2 Sessions']-step2_pwp_weekly_summary['Step2 Sessions'].shift(1)
         step2_pwp_weekly_summary['Step2 DNAs'] = step2_pwp_weekly_summary['Step2 DNAs']-step2_pwp_weekly_summary['Step2 DNAs'].shift(1)
         step2_pwp_weekly_summary['Step2 Completes'] = step2_pwp_weekly_summary['Step2 Complete']-step2_pwp_weekly_summary['Step2 Complete'].shift(1)
         step2_pwp_weekly_summary['Step2 Dropouts'] = step2_pwp_weekly_summary['Step2 Dropout']-step2_pwp_weekly_summary['Step2 Dropout'].shift(1)
-        
-    #         step2_weekly_summary.append({
-    #             'Run Number':step2_run_number,
-    #             'Route Name':step2_route_name,
-    #             'Week Number':step2_week_number,
-    #             'Step2 Clin Hrs':step2_clin_hours,
-    #             'Step2 Admin Hrs':step2_admin_hours,
-    #             'Step2 Sessions':step2_session_count,
-    #             'Step2 DNAs':step2_dna_count,
-    #             'Step2 Completes':step2_complete_count,
-    #             'Step2 Dropouts':step2_dropout_count
-    #             })
-            
-    #         # turn weekly stats into a dataframe
-    #         step2_weekly_summaries = pd.DataFrame(step2_weekly_summary)
-                       
-    #         #step2_weekly_summaries.append(step2_weekly_summaries)
-    # step2_weekly_sum_unpivot = pd.melt(step2_weekly_summaries, value_vars=['Step2 Clin Hrs',
-    #                                                              'Step2 Admin Hrs',
-    #                                                              'Step2 Sessions',
-    #                                                              'Step2 DNAs',
-    #                                                              'Step2 Completes',
-    #                                                              'Step2 Dropouts'],
-    #                                                              id_vars=['Run Number',
-                                                                # 'Route Name','Week Number'])
+        ##### Groups #####
+        step2_group_weekly_summary['Step2 Clin Hrs'] = (step2_group_weekly_summary['Step2 Clin Mins']-step2_group_weekly_summary['Step2 Clin Mins'].shift(1))/60
+        step2_group_weekly_summary['Step2 Admin Hrs'] = (step2_group_weekly_summary['Step2 Admin Mins']-step2_group_weekly_summary['Step2 Admin Mins'].shift(1))/60
+        step2_group_weekly_summary['Step2 Sessions'] = step2_group_weekly_summary['Step2 Sessions']-step2_group_weekly_summary['Step2 Sessions'].shift(1)
+        step2_group_weekly_summary['Step2 DNAs'] = step2_group_weekly_summary['Step2 DNAs']-step2_group_weekly_summary['Step2 DNAs'].shift(1)
+        step2_group_weekly_summary['Step2 Completes'] = step2_group_weekly_summary['Step2 Complete']-step2_group_weekly_summary['Step2 Complete'].shift(1)
+        step2_group_weekly_summary['Step2 Dropouts'] = step2_group_weekly_summary['Step2 Dropout']-step2_group_weekly_summary['Step2 Dropout'].shift(1)
 
+    # get rid of negative values
+    num = step2_pwp_weekly_summary._get_numeric_data()
+
+    num[num < 0] = 0
+
+    num = step2_group_weekly_summary._get_numeric_data()
+
+    num[num < 0] = 0
+
+    # print data for testing
     st.write(step2_pwp_weekly_summary)
+
+    st.write(step2_group_weekly_summary)
             
         # get rid of negative values
         # num = asst_weekly_dfs._get_numeric_data()

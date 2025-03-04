@@ -1686,10 +1686,6 @@ class Model:
                 self.cbt_session_counter = 0
                 self.cbt_dna_counter = 0
 
-                # remove from overall caseload
-                g.number_on_cbt_cl -=1
-
-                
                 if g.debug_level >= 2:
                     print(f'### STEPPED DOWN ###: Patient {p.id} has been stepped down, running Step2 route selector')
                 yield self.env.process(self.patient_step2_pathway(p))
@@ -1899,9 +1895,6 @@ class Model:
                 self.couns_session_counter = 0
                 self.couns_dna_counter = 0
 
-                # remove from overall caseload
-                g.number_on_couns_cl -=1
-
                 if g.debug_level >= 2:
                     print(f'### STEPPED DOWN ###: Patient {p.id} has been stepped down, running Step2 route selector')
                 yield self.env.process(self.patient_step2_pathway(p))
@@ -1968,9 +1961,9 @@ class Model:
         else:
             # record when the caseload resource can be restored
             self.env.process(self.record_caseload_use(p.step3_path_route,self.couns_caseload_id,max(self.couns_random_weeks)))
-            
+        
         # take off caseload
-        g.number_on_couns_cl -=1
+        g.number_on_couns_cl -=1      
         
         yield self.env.timeout(0)
 
