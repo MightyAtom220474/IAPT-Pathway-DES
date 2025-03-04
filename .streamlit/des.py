@@ -256,8 +256,10 @@ if button_run_pressed:
     num = step2_group_weekly_summary._get_numeric_data()
 
     num[num < 0] = 0
-
+    
     # print data for testing
+    st.write(asst_weekly_dfs)
+
     st.write(step2_pwp_weekly_summary)
 
     st.write(step2_group_weekly_summary)
