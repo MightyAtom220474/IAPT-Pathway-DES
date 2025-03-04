@@ -246,7 +246,7 @@ if button_run_pressed:
             step2_complete_count = step2_weekly_dfs_filtered['Step2 Complete']-step2_weekly_dfs['Step2 Complete'].shift(1)
             step2_dropout_count = step2_weekly_dfs_filtered['Step2 Dropout']-step2_weekly_dfs['Step2 Dropout'].shift(1)
             
-            step2_weekly_summary.append({
+            step2_weekly_summaries.append({
                 'Run Number':step2_run_number,
                 'Route Name':step2_route_name,
                 'Week Number':step2_week_number,
@@ -259,9 +259,9 @@ if button_run_pressed:
                 })
             
             # turn weekly stats into a dataframe
-            step2_weekly_summary = pd.DataFrame(step2_weekly_summary)
+            step2_weekly_summaries = pd.DataFrame(step2_weekly_summaries)
                        
-            step2_weekly_summaries.append(step2_weekly_summary)
+            step2_weekly_summaries.append(step2_weekly_summaries)
 
     st.write(step2_weekly_summaries)
             
