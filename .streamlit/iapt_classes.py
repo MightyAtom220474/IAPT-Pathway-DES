@@ -7,7 +7,7 @@ import math
 class g:
 
     # used for testing
-    debug_level = 2
+    debug_level = 0
 
     # Referrals
     mean_referrals_pw = 100
@@ -74,9 +74,9 @@ class g:
     cpd_time = 225 # half day per month CPD
     
     # Job Plans
-    number_staff_cbt = 10
-    number_staff_couns = 10
-    number_staff_pwp = 10
+    number_staff_cbt = 3
+    number_staff_couns = 3
+    number_staff_pwp = 5
     hours_avail_cbt = 22.0
     hours_avail_couns = 22.0
     hours_avail_pwp = 21.0
@@ -448,6 +448,7 @@ class Model:
             self.asst_weekly_stats.append(
                 {'Run Number': self.run_number,
                  'Week Number':self.stats_week_number,
+                 'Referrals Received':self.referrals_this_week,
                  'Referral Screen Mins':self.asst_tot_screen,
                  'Referrals Rejected':self.asst_tot_reject,
                  'Referrals Delay Opt-in':self.asst_optin_delay,

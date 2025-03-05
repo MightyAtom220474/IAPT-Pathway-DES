@@ -224,7 +224,17 @@ if button_run_pressed:
                       f'{pwp_add_input} additional PwP Practitioners')
         
         # turn asst mins values from running total to weekly total in hours
+        asst_weekly_dfs['Referrals Recvd'] = (asst_weekly_dfs['Referrals Received']-asst_weekly_dfs['Referrals Received'].shift(1))
         asst_weekly_dfs['Referral Screen Hrs'] = (asst_weekly_dfs['Referral Screen Mins']-asst_weekly_dfs['Referral Screen Mins'].shift(1))/60
+        asst_weekly_dfs['Referrals Accept Total'] = (asst_weekly_dfs['Referrals Received']-asst_weekly_dfs['Referrals Received'].shift(1))-(asst_weekly_dfs['Referrals Rejected']-asst_weekly_dfs['Referrals Rejected'].shift(1))
+        asst_weekly_dfs['Referrals Reject Total'] = (asst_weekly_dfs['Referrals Rejected']-asst_weekly_dfs['Referrals Rejected'].shift(1))
+        asst_weekly_dfs['Referrals Optin Total'] = (asst_weekly_dfs['Referrals Opted-in']-asst_weekly_dfs['Referrals Opted-in'].shift(1))
+        #asst_weekly_dfs['TA Waiting List'] = (asst_weekly_dfs['TA Waiting List']-asst_weekly_dfs['TA Waiting List'].shift(1))
+        asst_weekly_dfs['Referrals TA Accept'] = (asst_weekly_dfs['TA Total Accept']-asst_weekly_dfs['TA Total Accept'].shift(1))
+
+        # filter dataframe to just return columns needed
+        asst_weekly_summary = asst_weekly_dfs[['Referrals Rcvd','Referral Screen Hrs','Referrals Accept Total','Referrals Reject Total','Referrals Optin Total','Referrals TA Accept']]
+
         
         step2_pwp_weekly_summary = step2_weekly_dfs[
                                     step2_weekly_dfs["Route Name"]=='PwP']
@@ -258,7 +268,7 @@ if button_run_pressed:
     num[num < 0] = 0
     
     # print data for testing
-    st.write(asst_weekly_dfs)
+    st.write(asst_weekly_summary)
 
     st.write(step2_pwp_weekly_summary)
 
