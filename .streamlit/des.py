@@ -154,7 +154,7 @@ with st.sidebar:
                                         min_value=26, max_value=520,
                                         value=52, step=26)
         st.write(f"The service is running for {sim_duration_input} weeks")
-        number_of_runs_input = st.slider("Number of Simulation Runs", 1, 20, 5)
+        number_of_runs_input = st.slider("Number of Simulation Runs", 1, 20, 3)
 
 ##### Screening
 g.mean_referrals_pw = referral_input
@@ -227,17 +227,24 @@ if button_run_pressed:
         # turn asst values from running total to weekly total
         #asst_weekly_dfs['Referrals Recvd'] = (asst_weekly_dfs['Referrals Received']-asst_weekly_dfs['Referrals Received'].shift(1))
         asst_weekly_dfs['Referral Screen Hrs'] = (asst_weekly_dfs['Referral Screen Mins']-asst_weekly_dfs['Referral Screen Mins'].shift(1))/60
-        asst_weekly_dfs['Accepted Referrals'] = (asst_weekly_dfs['Referrals Accepted']-asst_weekly_dfs['Referrals Accepted'].shift(1))
-        asst_weekly_dfs['Referrals Rejected'] = (asst_weekly_dfs['Referrals Rejected']-asst_weekly_dfs['Referrals Rejected'].shift(1))
-        asst_weekly_dfs['Referral Reviews'] = (asst_weekly_dfs['Referrals Reviewed']-asst_weekly_dfs['Referrals Reviewed'].shift(1))
-        asst_weekly_dfs['Reviewed Rejected'] = (asst_weekly_dfs['Reviews Rejected']-asst_weekly_dfs['Reviews Rejected'].shift(1))
+        asst_weekly_dfs['Rejected Referrals'] = (asst_weekly_dfs['Referrals Rejected']-asst_weekly_dfs['Referrals Rejected'].shift(1))
+        asst_weekly_dfs['Referral Reviews'] = asst_weekly_dfs['Referrals Reviewed']#-asst_weekly_dfs['Referrals Reviewed'].shift(1))
+        asst_weekly_dfs['Reviewed Rejected'] = asst_weekly_dfs['Reviews Rejected']#-asst_weekly_dfs['Reviews Rejected'].shift(1))
         asst_weekly_dfs['Optin Total'] = (asst_weekly_dfs['Referrals Opted-in']-asst_weekly_dfs['Referrals Opted-in'].shift(1))
         #asst_weekly_dfs['TA Waiting List'] = (asst_weekly_dfs['TA Waiting List']-asst_weekly_dfs['TA Waiting List'].shift(1))
         asst_weekly_dfs['TA Accept'] = (asst_weekly_dfs['TA Total Accept']-asst_weekly_dfs['TA Total Accept'].shift(1))
 
-        # filter dataframe to just return columns needed
-        asst_weekly_summary = asst_weekly_dfs[['Run Number','Week Number','Referrals Received','Referral Screen Hrs','Accepted Referrals','Referrals Rejected','Referral Reviews','Reviewed Rejected','Optin Total','TA Waiting List','TA Avg Wait','TA Accept']]
+        # get rid of negative values
+        num = asst_weekly_dfs._get_numeric_data()
 
+        num[num < 0] = 0
+
+        asst_weekly_dfs['Accepted Referrals'] = asst_weekly_dfs['Referrals Received']-asst_weekly_dfs['Rejected Referrals']
+        
+        # filter dataframe to just return columns needed
+        asst_weekly_summary = asst_weekly_dfs[['Run Number','Week Number','Referrals Received','Referral Screen Hrs','Accepted Referrals','Rejected Referrals','Referral Reviews','Reviewed Rejected','Optin Total','TA Waiting List','TA Avg Wait','TA Accept']]
+               
+        asst_weekly_summary = asst_weekly_summary[asst_weekly_summary["Week Number"] != 0]
         
         step2_pwp_weekly_summary = step2_weekly_dfs[
                                     step2_weekly_dfs["Route Name"]=='PwP']
@@ -283,10 +290,7 @@ if button_run_pressed:
         step3_couns_weekly_summary['Step3 Dropouts'] = step3_couns_weekly_summary['Step3 Dropout']-step3_couns_weekly_summary['Step3 Dropout'].shift(1)
 
 
-        # get rid of negative values
-        num = asst_weekly_summary._get_numeric_data()
-
-        num[num < 0] = 0
+       
 
         num = step2_pwp_weekly_summary._get_numeric_data()
 
@@ -305,9 +309,9 @@ if button_run_pressed:
         num[num < 0] = 0
         
         # print data for testing
-        st.write(asst_weekly_summary)
+        #st.write(asst_weekly_summary)
 
-        # st.write(step2_pwp_weekly_summary)
+        st.write(step2_pwp_weekly_summary)
 
         # st.write(step2_group_weekly_summary)
 
@@ -336,12 +340,12 @@ if button_run_pressed:
         #                                 'MDT WL','Asst WL']]
 
         asst_referrals_col1_unpivot = pd.melt(asst_weekly_summary, value_vars=['Referrals Received',
-                                                                 'Optin Total'],
+                                                                 'TA Avg Wait'],
                                                                  id_vars=['Run Number',
                                                                 'Week Number'])
         
-        asst_referrals_col2_unpivot = pd.melt(asst_weekly_summary, value_vars=['Referrals Rejected',
-                                                                 'TA Avg Wait'],
+        asst_referrals_col2_unpivot = pd.melt(asst_weekly_summary, value_vars=['Rejected Referrals',
+                                                                 'TA Waiting List'],
                                                                  id_vars=['Run Number',
                                                                 'Week Number'])
         
@@ -483,8 +487,13 @@ if button_run_pressed:
 
                     if list_name == 'Referrals Received':
                         section_title = 'Referrals'
-                    elif list_name == 'Optin Total':
+                    elif list_name == 'TA Avg Wait':
                         section_title = 'Assessment'
+
+                    if list_name == 'Referrals Received':
+                        axis_title = 'Referrals'
+                    elif list_name == 'TA Avg Wait':
+                        axis_title = 'Patients'
 
                     st.subheader(section_title)
 
@@ -498,7 +507,7 @@ if button_run_pressed:
                                 #line_dash="Run",
                                 y="value",
                                 labels={
-                                        "value": "Patients"
+                                        "value": axis_title
                                        },
                                 height=500,
                                 width=350,
@@ -543,6 +552,11 @@ if button_run_pressed:
                     asst_referrals_col2_filtered = asst_referrals_col2_unpivot[
                                         asst_referrals_col2_unpivot["variable"]==list_name]
                     
+                    if list_name == 'Rejected Referrals':
+                        axis_title = 'Referrals'
+                    elif list_name == 'TA Waiting List':
+                        axis_title = 'Weeks'
+                    
                     st.subheader('') 
 
                     fig = px.line(
@@ -552,10 +566,8 @@ if button_run_pressed:
                                 #line_dash="Run",
                                 y="value",
                                 labels={
-                                            "value": "Patients"
-                                            #"sepal_width": "Sepal Width (cm)",
-                                            #"species": "Species of Iris"
-                                            },
+                                        "value": axis_title
+                                        },
                                     #facet_row="variable", # show each facet as a row
                                     #facet_col="variable", # show each facet as a column
                                     height=500,
@@ -599,6 +611,11 @@ if button_run_pressed:
 
                 asst_referrals_col3_filtered = asst_referrals_col3_unpivot[
                                     asst_referrals_col3_unpivot["variable"]==list_name]
+                
+                if list_name == 'Accepted Referrals':
+                        axis_title = 'Referrals'
+                elif list_name == 'TA Accept':
+                    axis_title = 'Patients'
 
                 st.subheader('') 
                 
@@ -609,10 +626,8 @@ if button_run_pressed:
                             #line_dash="Run",
                             y="value",
                             labels={
-                                        "value": "Patients",
-                                        #"sepal_width": "Sepal Width (cm)",
-                                        #"species": "Species of Iris"
-                                        },
+                                    "value": axis_title
+                                    },
                                 #facet_row="variable", # show each facet as a row
                                 #facet_col="variable", # show each facet as a column
                                 height=500,

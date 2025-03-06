@@ -425,7 +425,7 @@ class Model:
             if g.debug_level >=2:
                 print(f'Processing referral, {self.referrals_to_process} left out of {number_of_referrals}')
             yield self.env.timeout(0) 
-            self.env.process(self.patient_asst_pathway(self.treatment_week_number))
+            self.env.process(self.screen_referral(self.treatment_week_number))
             
             self.referrals_to_process -= 1
             
@@ -443,16 +443,11 @@ class Model:
             ##### record all weekly results #####
             ## Screening & TA
             self.referrals_recvd = self.referrals_this_week
-            self.asst_tot_screen = self.asst_results_df[
-                                                'Referral Time Screen'].sum()
-            self.asst_tot_accept = self.asst_results_df[
-                                                'Referral Accepted'].sum()
-            self.asst_tot_reject = self.asst_results_df[
-                                                'Referral Rejected'].sum()
-            self.asst_tot_revwd = self.asst_results_df[
-                                                'Referral Reviewed'].sum()
-            self.asst_revw_reject = self.asst_results_df[
-                                                'Review Rejected'].sum()
+            self.asst_tot_screen = self.asst_results_df['Referral Time Screen'].sum()
+            self.asst_tot_accept = self.asst_results_df['Referral Accepted'].sum()
+            self.asst_tot_reject = self.asst_results_df['Referral Rejected'].sum()
+            self.asst_tot_revwd = self.asst_results_df['Referral Reviewed'].sum()
+            self.asst_revw_reject = self.asst_results_df['Review Rejected'].sum()
             self.asst_optin_delay = self.asst_results_df['Opt-in Wait'].mean()
             self.asst_tot_optin = self.asst_results_df['Opted In'].sum()
             self.asst_optin_wait = self.asst_results_df['Opt-in Q Time'].mean()
@@ -465,8 +460,8 @@ class Model:
                  'Week Number':self.stats_week_number,
                  'Referrals Received':self.referrals_recvd,
                  'Referral Screen Mins':self.asst_tot_screen,
-                 'Referrals Rejected':self.asst_tot_reject,
                  'Referrals Accepted':self.asst_tot_accept,
+                 'Referrals Rejected':self.asst_tot_reject,
                  'Referrals Reviewed':self.asst_tot_revwd,
                  'Reviews Rejected':self.asst_revw_reject,
                  'Referrals Delay Opt-in':self.asst_optin_delay,
@@ -974,7 +969,7 @@ class Model:
         self.couns_staff_counter = 300
 
     ###### assessment part of the clinical pathway #####
-    def patient_asst_pathway(self, asst_week_number):
+    def screen_referral(self, asst_week_number):
 
         self.asst_week_number = asst_week_number
 
@@ -998,9 +993,24 @@ class Model:
                                         ,g.std_dev)
 
         # check whether the referral was a straight reject or not
-        if self.reject_referral < g.referral_rej_rate:
+        if self.reject_referral > g.referral_rej_rate:
 
-            # if this referral is rejected mark as rejected
+             # if this referral is accepted mark as accepted
+            self.asst_results_df.at[p.id, 'Run Number'] = self.run_number
+
+            self.asst_results_df.at[p.id, 'Week Number'] = self.asst_week_number
+
+            self.asst_results_df.at[p.id, 'Referral Rejected'] = 0
+
+            self.asst_results_df.at[p.id, 'Referral Accepted'] = 1
+
+            if g.debug_level >=2:
+                print(f"Referral Accepted flag set to {self.asst_results_df.at[p.id,'Referral Accepted']} for Patient {p.id}")
+            # now review the patient
+   
+        else:
+
+             # if this referral is rejected mark as rejected
             self.asst_results_df.at[p.id, 'Run Number'] = self.run_number
 
             self.asst_results_df.at[p.id, 'Week Number'] = self.asst_week_number
@@ -1011,22 +1021,13 @@ class Model:
 
             if g.debug_level >=2:
                 print(f"Referral Rejected for Patient {p.id}")
-        
+
+        if self.reject_referral > g.referral_rej_rate:
+            yield self.env.process(self.review_referral(p))
         else:
-
-            self.asst_results_df.at[p.id, 'Run Number'] = self.run_number
-
-            self.asst_results_df.at[p.id, 'Week Number'] = self.asst_week_number
-            # Mark referral as accepted and move on to whether it needs a review
-            self.asst_results_df.at[p.id, 'Referral Rejected'] = 0
-
-            self.asst_results_df.at[p.id, 'Referral Accepted'] = 1
-
-            print(f"Referral Accepted for Patient {p.id}")
-
-            yield self.env.process(self.review_patient(p))
-    
-    def review_patient(self,patient):
+            yield self.env.timeout(0)
+  
+    def review_referral(self,patient):
 
         # decide whether the referral needs to go for review if not rejected
         self.requires_review = random.uniform(0,1)
@@ -1034,54 +1035,76 @@ class Model:
         self.review_reject = random.uniform(0,1)
         
         p = patient
-        # patient requires review and was rejected
-        if self.requires_review > g.referral_review_rate and self.review_reject <= g.review_rej_rate:
-            
-            p.referral_review_rej = 1
-            p.referral_req_review = 1
-            
-            self.asst_results_df.at[p.id, 'Review Rejected'] = p.referral_review_rej
-            
-            if g.debug_level >=2:
-                print(f"Patient {p.id} Reviewed and Review Rejection flag set to {p.referral_review_rej}")
+        # patient needs to be reviewed
+        if self.requires_review > g.referral_review_rate:
 
-            # set flag to show Patient required review
-            self.asst_results_df.at[p.id, 'Referral Reviewed'] = 1
-            # record how long they waited for MDT review between 0 and 2 weeks
-            self.asst_results_df.at[p.id, 'Review Wait'] = random.uniform(0,
-                                                            g.mdt_freq)
-            # can stop here and move on to next patient
-            #yield self.env.timeout(0) 
-        
-        # patient doesn't need a review or does and was accepted                                                  g.mdt_freq)
-        else: # self.requires_review >= g.referral_review_rate and self.asst_review_reject >= g.review_rej_rate:
-            
-            if self.requires_review >= g.referral_review_rate:
+            if g.debug_level >=2:
+                    print(f"Patient {p.id} Sent For Review")
+            # patient requires review and was rejected
+            if self.review_reject < g.review_rej_rate:
+                
+                p.referral_review_rej = 1
+                p.referral_req_review = 1
+                
+                self.asst_results_df.at[p.id,'Review Rejected'] = p.referral_review_rej
+                
+                if g.debug_level >=2:
+                    print(f"Patient {p.id} Reviewed and Rejection flag set to {self.asst_results_df.at[p.id,'Review Rejected']}")
+
+                # set flag to show Patient required review
+                self.asst_results_df.at[p.id,'Referral Reviewed'] = p.referral_req_review
+                # record how long they waited for MDT review between 0 and 2 weeks
+                self.asst_results_df.at[p.id,'Review Wait'] = random.uniform(0,
+                                                                g.mdt_freq)
+                # set flag to show they were accepted and go to opt-in
+                self.asst_results_df.at[p.id,'Review Rejected'] = p.referral_review_rej
+
+                if g.debug_level >=2:
+                    print(f"Patient {p.id} Rejected at Review")
+                
+            else:
+                # patient requires review and was accepted
+                p.referral_review_rej = 0
+                p.referral_req_review = 1
                 # set flag to show if Patient required review
-                self.asst_results_df.at[p.id, 'Referral Reviewed'] = 1
+                self.asst_results_df.at[p.id, 'Referral Reviewed'] = p.referral_req_review
                 # therefore no review wait
                 self.asst_results_df.at[p.id, 'Review Wait'] = random.uniform(0,
                                                             g.mdt_freq)
                 # set flag to show they were accepted and go to opt-in
-                self.asst_results_df.at[p.id, 'Review Rejected'] = 0
+                self.asst_results_df.at[p.id, 'Review Rejected'] = p.referral_review_rej
+
+                if g.debug_level >=2:
+                    print(f"Patient {p.id} Reviewed and Rejection flag set to {self.asst_results_df.at[p.id,'Review Rejected']}")
 
                 if g.debug_level >=2:
                     print(f"Patient {p.id} Accepted at Review - go to opt-in")
+                             
+        else:
+            # patient didn't require review
+            p.referral_review_rej = 0
+            p.referral_req_review = 0
+            if g.debug_level >=2:
+                    print(f"Patient {p.id} Didn't Need Review")
+            # patient didn't require reviews
+            self.asst_results_df.at[p.id, 'Referral Reviewed'] = p.referral_req_review
+            # therefore no review wait
+            self.asst_results_df.at[p.id, 'Review Wait'] = 0
+            # set flag to show they were accepted and go to opt-in
+            self.asst_results_df.at[p.id, 'Review Rejected'] = p.referral_review_rej
 
-                yield self.env.process(self.patient_opt_in(p))
-                
-            else:
-                # set flag to show if Patient required review
-                self.asst_results_df.at[p.id, 'Referral Reviewed'] = 0
-                # therefore no review wait
-                self.asst_results_df.at[p.id, 'Review Wait'] = 0
-                # set flag to show they were accepted and go to opt-in
-                self.asst_results_df.at[p.id, 'Review Rejected'] = 0
+            if g.debug_level >=2:
+                print(f"Patient {p.id} Did Not Require Review, Rejection flag set to {self.asst_results_df.at[p.id,'Review Rejected']}")
 
-                if g.debug_level >=2:
-                    print(f"Patient {p.id} did not require a Review - go to opt-in")
+            
+            if g.debug_level >=2:
+                print(f"Patient {p.id} did not require a Review - go to opt-in")
 
-                yield self.env.process(self.patient_opt_in(p))
+        if p.referral_review_rej == 1:
+            yield self.env.timeout(0)
+        else:
+            # go to opt-in
+            yield self.env.process(self.patient_opt_in(p))
     
     def patient_opt_in(self,patient):
 
@@ -1103,7 +1126,7 @@ class Model:
             self.asst_results_df.at[p.id, 'Opt-in Q Time'] = 0
 
             # # can stop here and move on to next patient
-            # yield self.env.timeout(0) 
+            yield self.env.timeout(0) 
 
         else: # self.patient_optedin < g.opt_in_rate:
             # otherwise set flag to show they opted-in
@@ -1116,6 +1139,12 @@ class Model:
             # record lag-time between opting in and TA appointment, max 4 week window
             self.asst_results_df.at[p.id, 'Opt-in Q Time'
                                         ] = random.uniform(0,4)
+            
+            yield self.env.process(self.telephone_assessment(p))
+            
+    def telephone_assessment(self,patient):
+            
+            p = patient
 
             start_q_ta = self.env.now
 
@@ -1196,7 +1225,7 @@ class Model:
                         print(f"-- Pathway Runner Initiated --")
                     
                     # now run the pathway runner
-                    yield self.env.process(self.pathway_runner(p,p.initial_step))
+                yield self.env.process(self.pathway_runner(p,p.initial_step))
 
     def pathway_runner(self, patient, step_chosen):
 
@@ -1399,8 +1428,6 @@ class Model:
 
             if g.debug_level >= 2:
                 print(f'FUNC PROCESS step2_pwp_process: Week {self.env.now}: Patient {p.id} (added week {p.week_added}) on {p.step2_path_route} Session {self.pwp_session_counter} on Week {self.pwp_random_weeks[self.pwp_session_counter]}')
-
-            
 
             # record the pwp session number for the patient
             self.step2_results_df.at[p.id, 'Session Number'] = self.pwp_session_counter
