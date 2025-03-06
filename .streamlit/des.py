@@ -27,7 +27,7 @@ with st.sidebar:
 
     st.subheader("Model Inputs")
 
-    with st.expander("Screening"):
+    with st.expander("Screening & Assessment"):
 
         # Referral Inputs
         st.markdown("#### Screening")
@@ -40,10 +40,11 @@ with st.sidebar:
                                           1, 20, 25)
         opt_in_input = st.number_input("% of Referrals that Opt-in",
                         min_value=50.0, max_value=100.0, step=0.5, value=75.0)
+        st.markdown("#### Assessment")
         ta_accept_input = st.number_input("% of TA's that are Accepted",
                         min_value=50.0, max_value=100.0, step=0.5, value=70.0)
         ta_time_input = st.slider("Number of Mins to Perform TA", 1, 90, 60)
-        step2_step3_rate_input = st.number_input("% of Patients Assigned to Step 2",
+        step2_step3_rate_input = st.number_input("% of Patients Assigned to Step 2 vs Step 3",
                         min_value=50.0, max_value=100.0, step=0.5, value=85.0)
            
     with st.expander("Step 2"):
@@ -153,7 +154,7 @@ with st.sidebar:
                                         min_value=26, max_value=520,
                                         value=52, step=26)
         st.write(f"The service is running for {sim_duration_input} weeks")
-        number_of_runs_input = st.slider("Number of Simulation Runs", 1, 20, 2)
+        number_of_runs_input = st.slider("Number of Simulation Runs", 1, 20, 5)
 
 ##### Screening
 g.mean_referrals_pw = referral_input
@@ -223,17 +224,19 @@ if button_run_pressed:
                       f' {couns_add_input} additional Counsellors and '
                       f'{pwp_add_input} additional PwP Practitioners')
         
-        # turn asst mins values from running total to weekly total in hours
-        asst_weekly_dfs['Referrals Recvd'] = (asst_weekly_dfs['Referrals Received']-asst_weekly_dfs['Referrals Received'].shift(1))
+        # turn asst values from running total to weekly total
+        #asst_weekly_dfs['Referrals Recvd'] = (asst_weekly_dfs['Referrals Received']-asst_weekly_dfs['Referrals Received'].shift(1))
         asst_weekly_dfs['Referral Screen Hrs'] = (asst_weekly_dfs['Referral Screen Mins']-asst_weekly_dfs['Referral Screen Mins'].shift(1))/60
-        asst_weekly_dfs['Referrals Accept Total'] = (asst_weekly_dfs['Referrals Received']-asst_weekly_dfs['Referrals Received'].shift(1))-(asst_weekly_dfs['Referrals Rejected']-asst_weekly_dfs['Referrals Rejected'].shift(1))
-        asst_weekly_dfs['Referrals Reject Total'] = (asst_weekly_dfs['Referrals Rejected']-asst_weekly_dfs['Referrals Rejected'].shift(1))
-        asst_weekly_dfs['Referrals Optin Total'] = (asst_weekly_dfs['Referrals Opted-in']-asst_weekly_dfs['Referrals Opted-in'].shift(1))
+        asst_weekly_dfs['Accepted Referrals'] = (asst_weekly_dfs['Referrals Accepted']-asst_weekly_dfs['Referrals Accepted'].shift(1))
+        asst_weekly_dfs['Referrals Rejected'] = (asst_weekly_dfs['Referrals Rejected']-asst_weekly_dfs['Referrals Rejected'].shift(1))
+        asst_weekly_dfs['Referral Reviews'] = (asst_weekly_dfs['Referrals Reviewed']-asst_weekly_dfs['Referrals Reviewed'].shift(1))
+        asst_weekly_dfs['Reviewed Rejected'] = (asst_weekly_dfs['Reviews Rejected']-asst_weekly_dfs['Reviews Rejected'].shift(1))
+        asst_weekly_dfs['Optin Total'] = (asst_weekly_dfs['Referrals Opted-in']-asst_weekly_dfs['Referrals Opted-in'].shift(1))
         #asst_weekly_dfs['TA Waiting List'] = (asst_weekly_dfs['TA Waiting List']-asst_weekly_dfs['TA Waiting List'].shift(1))
-        asst_weekly_dfs['Referrals TA Accept'] = (asst_weekly_dfs['TA Total Accept']-asst_weekly_dfs['TA Total Accept'].shift(1))
+        asst_weekly_dfs['TA Accept'] = (asst_weekly_dfs['TA Total Accept']-asst_weekly_dfs['TA Total Accept'].shift(1))
 
         # filter dataframe to just return columns needed
-        asst_weekly_summary = asst_weekly_dfs[['Referrals Rcvd','Referral Screen Hrs','Referrals Accept Total','Referrals Reject Total','Referrals Optin Total','Referrals TA Accept']]
+        asst_weekly_summary = asst_weekly_dfs[['Run Number','Week Number','Referrals Received','Referral Screen Hrs','Accepted Referrals','Referrals Rejected','Referral Reviews','Reviewed Rejected','Optin Total','TA Waiting List','TA Avg Wait','TA Accept']]
 
         
         step2_pwp_weekly_summary = step2_weekly_dfs[
@@ -241,6 +244,12 @@ if button_run_pressed:
         
         step2_group_weekly_summary = step2_weekly_dfs[
                                 step2_weekly_dfs["Route Name"]=='Group']
+        
+        step3_cbt_weekly_summary = step3_weekly_dfs[
+                                    step3_weekly_dfs["Route Name"]=='CBT']
+        
+        step3_couns_weekly_summary = step3_weekly_dfs[
+                                step3_weekly_dfs["Route Name"]=='Couns']
     
         # turn mins values from running total to weekly total and mins in hrs
         ##### PwP #####
@@ -258,22 +267,54 @@ if button_run_pressed:
         step2_group_weekly_summary['Step2 Completes'] = step2_group_weekly_summary['Step2 Complete']-step2_group_weekly_summary['Step2 Complete'].shift(1)
         step2_group_weekly_summary['Step2 Dropouts'] = step2_group_weekly_summary['Step2 Dropout']-step2_group_weekly_summary['Step2 Dropout'].shift(1)
 
-    # get rid of negative values
-    num = step2_pwp_weekly_summary._get_numeric_data()
+        ##### CBT #####
+        step3_cbt_weekly_summary['Step3 Clin Hrs'] = (step3_cbt_weekly_summary['Step3 Clin Mins']-step3_cbt_weekly_summary['Step3 Clin Mins'].shift(1))/60
+        step3_cbt_weekly_summary['Step3 Admin Hrs'] = (step3_cbt_weekly_summary['Step3 Admin Mins']-step3_cbt_weekly_summary['Step3 Admin Mins'].shift(1))/60
+        step3_cbt_weekly_summary['Step3 Sessions'] = step3_cbt_weekly_summary['Step3 Sessions']-step3_cbt_weekly_summary['Step3 Sessions'].shift(1)
+        step3_cbt_weekly_summary['Step3 DNAs'] = step3_cbt_weekly_summary['Step3 DNAs']-step3_cbt_weekly_summary['Step3 DNAs'].shift(1)
+        step3_cbt_weekly_summary['Step3 Completes'] = step3_cbt_weekly_summary['Step3 Complete']-step3_cbt_weekly_summary['Step3 Complete'].shift(1)
+        step3_cbt_weekly_summary['Step3 Dropouts'] = step3_cbt_weekly_summary['Step3 Dropout']-step3_cbt_weekly_summary['Step3 Dropout'].shift(1)
+        ##### counss #####
+        step3_couns_weekly_summary['Step3 Clin Hrs'] = (step3_couns_weekly_summary['Step3 Clin Mins']-step3_couns_weekly_summary['Step3 Clin Mins'].shift(1))/60
+        step3_couns_weekly_summary['Step3 Admin Hrs'] = (step3_couns_weekly_summary['Step3 Admin Mins']-step3_couns_weekly_summary['Step3 Admin Mins'].shift(1))/60
+        step3_couns_weekly_summary['Step3 Sessions'] = step3_couns_weekly_summary['Step3 Sessions']-step3_couns_weekly_summary['Step3 Sessions'].shift(1)
+        step3_couns_weekly_summary['Step3 DNAs'] = step3_couns_weekly_summary['Step3 DNAs']-step3_couns_weekly_summary['Step3 DNAs'].shift(1)
+        step3_couns_weekly_summary['Step3 Completes'] = step3_couns_weekly_summary['Step3 Complete']-step3_couns_weekly_summary['Step3 Complete'].shift(1)
+        step3_couns_weekly_summary['Step3 Dropouts'] = step3_couns_weekly_summary['Step3 Dropout']-step3_couns_weekly_summary['Step3 Dropout'].shift(1)
 
-    num[num < 0] = 0
 
-    num = step2_group_weekly_summary._get_numeric_data()
+        # get rid of negative values
+        num = asst_weekly_summary._get_numeric_data()
 
-    num[num < 0] = 0
-    
-    # print data for testing
-    st.write(asst_weekly_summary)
+        num[num < 0] = 0
 
-    st.write(step2_pwp_weekly_summary)
+        num = step2_pwp_weekly_summary._get_numeric_data()
 
-    st.write(step2_group_weekly_summary)
-            
+        num[num < 0] = 0
+
+        num = step2_group_weekly_summary._get_numeric_data()
+
+        num[num < 0] = 0
+
+        num = step3_cbt_weekly_summary._get_numeric_data()
+
+        num[num < 0] = 0
+
+        num = step3_couns_weekly_summary._get_numeric_data()
+
+        num[num < 0] = 0
+        
+        # print data for testing
+        st.write(asst_weekly_summary)
+
+        # st.write(step2_pwp_weekly_summary)
+
+        # st.write(step2_group_weekly_summary)
+
+        # st.write(step3_cbt_weekly_summary)
+
+        # st.write(step3_couns_weekly_summary)
+                
         # get rid of negative values
         # num = asst_weekly_dfs._get_numeric_data()
 
@@ -285,20 +326,29 @@ if button_run_pressed:
 
         # ##### get all data structured correctly #####
 
-        # with st.expander("See explanation"):
-        #     st.write('This ADHD Simulation is designed to replicate the flow '
-        #              'of patients through the Talking Therapies Assessment and'
-        #              'Treatment Pathway.')
+        with st.expander("See explanation"):
+            st.write('This Simulation is designed to replicate the flow '
+                     'of patients through the Talking Therapies Assessment and'
+                     'Treatment Pathway.')
 
         
-        # df_weekly_wl = df_weekly_stats[['Run','Week Number','Triage WL',
+        # asst_weekly_wl = asst_weekly_summary[['Run Number','Week Number','Triage WL',
         #                                 'MDT WL','Asst WL']]
 
-        # df_weekly_wl_unpivot = pd.melt(df_weekly_wl, value_vars=['Triage WL',
-        #                                                          'MDT WL',
-        #                                                          'Asst WL'],
-        #                                                          id_vars=['Run',
-        #                                                         'Week Number'])
+        asst_referrals_col1_unpivot = pd.melt(asst_weekly_summary, value_vars=['Referrals Received',
+                                                                 'Optin Total'],
+                                                                 id_vars=['Run Number',
+                                                                'Week Number'])
+        
+        asst_referrals_col2_unpivot = pd.melt(asst_weekly_summary, value_vars=['Referrals Rejected',
+                                                                 'TA Avg Wait'],
+                                                                 id_vars=['Run Number',
+                                                                'Week Number'])
+        
+        asst_referrals_col3_unpivot = pd.melt(asst_weekly_summary, value_vars=['Accepted Referrals',
+                                                                 'TA Accept'],
+                                                                 id_vars=['Run Number',
+                                                                'Week Number'])
         
         # df_weekly_rej = df_weekly_stats[['Run','Week Number','Triage Rejects',
         #                                  'MDT Rejects','Asst Rejects']]
@@ -418,205 +468,186 @@ if button_run_pressed:
         #                                 id_vars=['Week Number'])
         
                        
-        # tab1, tab2, tab3 = st.tabs(["Waiting Lists", "Clinical & Admin","Job Plans"])
+        tab1, tab2, tab3, tab4 = st.tabs(["Referral & Assessment", "Step 2","Step 3","Job Plans"])
         
-        # ########## Waiting Lists Tab ##########
+        # ########## Referral & Assessment Tab ##########
         
-        # with tab1:    
+        with tab1:    
 
-        #     col1, col2, col3 = st.columns(3)
+            col1, col2, col3 = st.columns(3)
 
-        #     with col1:
+            with col1:
             
-        #         for i, list_name in enumerate(df_weekly_wl_unpivot['variable']
-        #                                     .unique()):
+                for i, list_name in enumerate(asst_referrals_col1_unpivot['variable']
+                                            .unique()):
 
-        #             if list_name == 'Triage WL':
-        #                 section_title = 'Triage'
-        #             elif list_name == 'MDT WL':
-        #                 section_title = 'MDT'
-        #             elif list_name == 'Asst WL':
-        #                 section_title = 'Assessment'
+                    if list_name == 'Referrals Received':
+                        section_title = 'Referrals'
+                    elif list_name == 'Optin Total':
+                        section_title = 'Assessment'
 
-        #             st.subheader(section_title)
+                    st.subheader(section_title)
 
-        #             df_weekly_wl_filtered = df_weekly_wl_unpivot[
-        #                                 df_weekly_wl_unpivot["variable"]==list_name]
+                    asst_referrals_col1_filtered = asst_referrals_col1_unpivot[
+                                        asst_referrals_col1_unpivot["variable"]==list_name]
                     
-        #             fig = px.line(
-        #                         df_weekly_wl_filtered,
-        #                         x="Week Number",
-        #                         color="Run",
-        #                         #line_dash="Run",
-        #                         y="value",
-        #                         labels={
-        #                                 "value": "Waiters",
-        #                                 #"sepal_width": "Sepal Width (cm)",
-        #                                 #"species": "Species of Iris"
-        #                                 },
-        #                         #facet_row="variable", # show each facet as a row
-        #                         #facet_col="variable", # show each facet as a column
-        #                         height=500,
-        #                         width=350,
-        #                         title=f'{list_name} by Week'
-        #                         )
+                    fig = px.line(
+                                asst_referrals_col1_filtered,
+                                x="Week Number",
+                                color="Run Number",
+                                #line_dash="Run",
+                                y="value",
+                                labels={
+                                        "value": "Patients"
+                                       },
+                                height=500,
+                                width=350,
+                                title=f'{list_name} by Week'
+                                )
                     
-        #             fig.update_traces(line=dict(dash='dot'))
+                    fig.update_traces(line=dict(dash='dot'))
                     
-        #             # get the average waiting list across all the runs
-        #             weekly_avg_wl = df_weekly_wl_filtered.groupby(['Week Number',
-        #                                             'variable'])['value'].mean(
-        #                                             ).reset_index()
+                    # get the average waiting list across all the runs
+                    weekly_avg_col1 = asst_referrals_col1_filtered.groupby(['Week Number',
+                                                    'variable'])['value'].mean(
+                                                    ).reset_index()
                     
-        #             fig.add_trace(
-        #                         go.Scatter(x=weekly_avg_wl["Week Number"],
-        #                                 y=weekly_avg_wl["value"], name='Average',
-        #                                 line=dict(width=3,color='blue')))
+                    fig.add_trace(
+                                go.Scatter(x=weekly_avg_col1["Week Number"],
+                                        y=weekly_avg_col1["value"], name='Average',
+                                        line=dict(width=3,color='blue')))
         
                     
-        #             # get rid of 'variable' prefix resulting from df.melt
-        #             fig.for_each_annotation(lambda a: a.update(text=a.text.split
-        #                                                     ("=")[1]))
-        #             #fig.for_each_trace(lambda t: t.update(name=t.name.split("=")[1]))
+                    # get rid of 'variable' prefix resulting from df.melt
+                    fig.for_each_annotation(lambda a: a.update(text=a.text.split
+                                                            ("=")[1]))
+                    #fig.for_each_trace(lambda t: t.update(name=t.name.split("=")[1]))
 
-        #             # fig.update_layout(
-        #             #     title=dict(text=f'ADHD {'variable'} Waiting Lists by Week, 
-        #             #               font=dict(size=20), automargin=True, yref='paper')
-        #             #     ))
-        #             fig.update_layout(title_x=0.3,font=dict(size=10))
-        #             #fig.
+                    # fig.update_layout(
+                    #     title=dict(text=f'ADHD {'variable'} Waiting Lists by Week, 
+                    #               font=dict(size=20), automargin=True, yref='paper')
+                    #     ))
+                    fig.update_layout(title_x=0.3,font=dict(size=10))
+                    #fig.
 
-        #             st.plotly_chart(fig, use_container_width=True)
+                    st.plotly_chart(fig, use_container_width=True)
 
-        #             st.divider()
+                    st.divider()
 
-        #     with col2:
+            with col2:
             
-        #         for i, list_name in enumerate(df_weekly_rej_unpivot['variable']
-        #                                     .unique()):
-                
-        #             df_weekly_rej_filtered = df_weekly_rej_unpivot[
-        #                             df_weekly_rej_unpivot["variable"]==list_name]
-                    
-        #             st.subheader('')
+                              
+                for i, list_name in enumerate(asst_referrals_col2_unpivot['variable']
+                                            .unique()):
 
-        #             fig2 = px.line(
-        #                         df_weekly_rej_filtered,
-        #                         x="Week Number",
-        #                         color="Run",
-        #                         #line_dash="Run",
-        #                         y="value",
-        #                         labels={
-        #                                 "value": "Rejections",
-        #                                 #"sepal_width": "Sepal Width (cm)",
-        #                                 #"species": "Species of Iris"
-        #                                 },
-        #                         #facet_row="variable", # show each facet as a row
-        #                         #facet_col="variable", # show each facet as a column
-        #                         height=500,
-        #                         width=350,
-        #                         title=f'{list_name} by Week'
-        #                         )
+                    asst_referrals_col2_filtered = asst_referrals_col2_unpivot[
+                                        asst_referrals_col2_unpivot["variable"]==list_name]
                     
-        #             fig2.update_traces(line=dict(dash='dot'))
+                    st.subheader('') 
+
+                    fig = px.line(
+                                asst_referrals_col2_filtered,
+                                x="Week Number",
+                                color="Run Number",
+                                #line_dash="Run",
+                                y="value",
+                                labels={
+                                            "value": "Patients"
+                                            #"sepal_width": "Sepal Width (cm)",
+                                            #"species": "Species of Iris"
+                                            },
+                                    #facet_row="variable", # show each facet as a row
+                                    #facet_col="variable", # show each facet as a column
+                                    height=500,
+                                    width=350,
+                                    title=f'{list_name} by Week'
+                                    )
+                        
+                    fig.update_traces(line=dict(dash='dot'))
                     
-        #             # get the average waiting list across all the runs
-        #             weekly_avg_rej = df_weekly_rej_filtered.groupby(['Week Number',
-        #                                             'variable'])['value'].mean(
-        #                                             ).reset_index()
+                    # get the average waiting list across all the runs
+                    weekly_avg_col2 = asst_referrals_col2_filtered.groupby(['Week Number',
+                                                    'variable'])['value'].mean(
+                                                    ).reset_index()
                     
-        #             fig2.add_trace(
-        #                         go.Scatter(x=weekly_avg_rej["Week Number"],y=
-        #                                 weekly_avg_rej["value"], name='Average',
-        #                                 line=dict(width=3,color='blue')))
+                    fig.add_trace(
+                                go.Scatter(x=weekly_avg_col2["Week Number"],
+                                        y=weekly_avg_col2["value"], name='Average',
+                                        line=dict(width=3,color='blue')))
         
                     
-        #             # get rid of 'variable' prefix resulting from df.melt
-        #             fig2.for_each_annotation(lambda a: a.update(text=a.text.split
-        #                                                                 ("=")[1]))
-        #             #fig.for_each_trace(lambda t: t.update(name=t.name.split("=")[1]))
+                    # get rid of 'variable' prefix resulting from df.melt
+                    fig.for_each_annotation(lambda a: a.update(text=a.text.split
+                                                            ("=")[1]))
+                    #fig.for_each_trace(lambda t: t.update(name=t.name.split("=")[1]))
 
-        #             # fig.update_layout(
-        #             #     title=dict(text=f'ADHD {'variable'} Waiting Lists by Week, 
-        #             #       font=dict(size=20), automargin=True, yref='paper')
-        #             #     ))
-        #             fig2.update_layout(title_x=0.3,font=dict(size=10))
-        #             #fig.
+                    # fig.update_layout(
+                    #     title=dict(text=f'ADHD {'variable'} Waiting Lists by Week, 
+                    #               font=dict(size=20), automargin=True, yref='paper')
+                    #     ))
+                    fig.update_layout(title_x=0.3,font=dict(size=10))
+                    #fig.
 
-        #             st.plotly_chart(fig2, use_container_width=True)
+                    st.plotly_chart(fig, use_container_width=True)
 
-        #             st.divider()
+                    st.divider()
 
-        # with col3:
-            
-        #         for i, list_name in enumerate(df_weekly_wt_unpivot['variable']
-        #                                     .unique()):
+        with col3:
+
+            for i, list_name in enumerate(asst_referrals_col3_unpivot['variable']
+                                            .unique()):
+
+                asst_referrals_col3_filtered = asst_referrals_col3_unpivot[
+                                    asst_referrals_col3_unpivot["variable"]==list_name]
+
+                st.subheader('') 
                 
-        #             df_weekly_wt_filtered = df_weekly_wt_unpivot[
-        #                                 df_weekly_wt_unpivot["variable"]==list_name]
-
-        #             st.subheader('')
+                fig = px.line(
+                            asst_referrals_col3_filtered,
+                            x="Week Number",
+                            color="Run Number",
+                            #line_dash="Run",
+                            y="value",
+                            labels={
+                                        "value": "Patients",
+                                        #"sepal_width": "Sepal Width (cm)",
+                                        #"species": "Species of Iris"
+                                        },
+                                #facet_row="variable", # show each facet as a row
+                                #facet_col="variable", # show each facet as a column
+                                height=500,
+                                width=350,
+                                title=f'{list_name} by Week'
+                                )
                     
-        #             if list_name == 'Triage Wait':
-        #                 y_var_targ = triage_target_input
-        #             elif list_name == 'MDT Wait':
-        #                 y_var_targ = mdt_target_input
-        #             elif list_name == 'Asst Wait':
-        #                 y_var_targ = asst_target_input
+                fig.update_traces(line=dict(dash='dot'))
                 
-        #             fig3 = px.line(
-        #                         df_weekly_wt_filtered,
-        #                         x="Week Number",
-        #                         color="Run",
-        #                         #line_dash="Run",
-        #                         y="value",
-        #                         labels={
-        #                                 "value": "Avg Wait(weeks)",
-        #                                 #"sepal_width": "Sepal Width (cm)",
-        #                                 #"species": "Species of Iris"
-        #                                 },
-        #                         #facet_row="variable", # show each facet as a row
-        #                         #facet_col="variable", # show each facet as a column
-        #                         height=500,
-        #                         width=350,
-        #                         title=f'{list_name} by Week'
-        #                         )
-                    
-        #             fig3.update_traces(line=dict(dash='dot'))
-                    
-        #             weekly_avg_wt = df_weekly_wt_filtered.groupby(['Week Number',
-        #                                             'variable'])['value'
-        #                                             ].mean().reset_index()
+                # get the average waiting list across all the runs
+                weekly_avg_col3 = asst_referrals_col3_filtered.groupby(['Week Number',
+                                                'variable'])['value'].mean(
+                                                ).reset_index()
+                
+                fig.add_trace(
+                            go.Scatter(x=weekly_avg_col3["Week Number"],
+                                    y=weekly_avg_col3["value"], name='Average',
+                                    line=dict(width=3,color='blue')))
+    
+                
+                # get rid of 'variable' prefix resulting from df.melt
+                fig.for_each_annotation(lambda a: a.update(text=a.text.split
+                                                        ("=")[1]))
+                #fig.for_each_trace(lambda t: t.update(name=t.name.split("=")[1]))
 
-                                
-        #             fig3.add_trace(
-        #                         go.Scatter(x=weekly_avg_wt["Week Number"],
-        #                                 y=weekly_avg_wt["value"],
-        #                                 name='Average',line=dict(width=3,
-        #                                 color='blue')))
-        
-        #             fig3.add_trace(
-        #                         go.Scatter(x=weekly_avg_wt["Week Number"],
-        #                                 y=np.repeat(y_var_targ,g.sim_duration),
-        #                                 name='Target',line=dict(width=3,
-        #                                 color='green')))
-                    
-        #             # get rid of 'variable' prefix resulting from df.melt
-        #             fig3.for_each_annotation(lambda a: a.update(text=a.text.split(
-        #                                                                 "=")[1]))
-        #             #fig.for_each_trace(lambda t: t.update(name=t.name.split("=")[1]))
+                # fig.update_layout(
+                #     title=dict(text=f'ADHD {'variable'} Waiting Lists by Week, 
+                #               font=dict(size=20), automargin=True, yref='paper')
+                #     ))
+                fig.update_layout(title_x=0.3,font=dict(size=10))
+                #fig.
 
-        #             # fig.update_layout(
-        #             #     title=dict(text=f'ADHD {'variable'} Waiting Lists by Week,
-        #             #       font=dict(size=20), automargin=True, yref='paper')
-        #             #     ))
-        #             fig3.update_layout(title_x=0.3,font=dict(size=10))
+                st.plotly_chart(fig, use_container_width=True)
 
-        #             ##fig3.add_hline(y=y_var_targ, annotation_text="mean")
-                    
-        #             st.plotly_chart(fig3, use_container_width=True)
-
-        #             st.divider()
+                st.divider()
 
 
         #     # fig2 = px.line(
