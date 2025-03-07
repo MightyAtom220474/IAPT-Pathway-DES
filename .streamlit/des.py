@@ -31,7 +31,7 @@ with st.sidebar:
 
         # Referral Inputs
         st.markdown("#### Screening")
-        referral_input = st.slider("Number of Referrals Per Week", 1000, 1500, 1000)
+        referral_input = st.slider("Average Number of Referrals Per Week", 0, 1500, g.mean_referrals_pw)
         referral_reject_input = st.number_input("Referral Rejection Rate (%)",
                         min_value=0.0, max_value=20.0, step=0.25, value=4.25)
         referral_review_input = st.number_input("% of Referral sent for Review",
@@ -216,8 +216,8 @@ if button_run_pressed:
         my_trial = Trial()
         pd.set_option('display.max_rows', 1000)
         # Call the run_trial method of our Trial class object
+        step2_results_df, step2_sessions_df, step3_results_df, step3_sessions_df, asst_weekly_dfs, staff_weekly_dfs, caseload_weekly_dfs = my_trial.run_trial()
         
-        df_trial_results, asst_weekly_dfs, step2_weekly_dfs, step3_weekly_dfs, staff_weekly_dfs, caseload_weekly_dfs = my_trial.run_trial()
 
         st.subheader(f'Summary of all {g.number_of_runs} Simulation Runs over {g.sim_duration}'
                      f' Weeks with {cbt_add_input} additional CBT,'
@@ -246,98 +246,60 @@ if button_run_pressed:
                
         asst_weekly_summary = asst_weekly_summary[asst_weekly_summary["Week Number"] != 0]
         
-        step2_pwp_weekly_summary = step2_weekly_dfs[
-                                    step2_weekly_dfs["Route Name"]=='PwP']
+        step2_pwp_results_summary = step2_results_df[
+                                    step2_results_df["Route Name"]=='PwP']
         
-        step2_group_weekly_summary = step2_weekly_dfs[
-                                step2_weekly_dfs["Route Name"]=='Group']
+        step2_pwp_sessions_summary = step2_sessions_df[
+                                    step2_sessions_df["Route Name"]=='PwP']
         
-        step3_cbt_weekly_summary = step3_weekly_dfs[
-                                    step3_weekly_dfs["Route Name"]=='CBT']
+        step2_group_results_summary = step2_results_df[
+                                    step2_results_df["Route Name"]=='Group']
         
-        step3_couns_weekly_summary = step3_weekly_dfs[
-                                step3_weekly_dfs["Route Name"]=='Couns']
+        step2_group_sessions_summary = step2_sessions_df[
+                                    step2_sessions_df["Route Name"]=='Group']
+        
+        step3_cbt_results_summary = step3_results_df[
+                                    step3_results_df["Route Name"]=='CBT']
+        
+        step3_cbt_sessions_summary = step3_sessions_df[
+                                    step3_sessions_df["Route Name"]=='CBT']
+        
+        step3_couns_results_summary = step3_results_df[
+                                    step3_results_df["Route Name"]=='Couns']
+        
+        step3_couns_sessions_summary = step3_sessions_df[
+                                    step3_sessions_df["Route Name"]=='Couns']
+        
+        dataframes = {}
+
+        # Store melted & aggregated DataFrames in a dictionary
+        aggregated_dfs = {'step2_pwp_results_summary':step2_pwp_results_summary,'step2_pwp_sessions_summary':step2_pwp_sessions_summary
+                          ,'step2_group_results_summary':step2_group_results_summary,'step2_group_sessions_summary':step2_group_sessions_summary
+                          ,'step3_cbt_results_summary':step3_cbt_results_summary,'step3_cbt_sessions_summary':step3_cbt_sessions_summary
+                          ,'step3_couns_results_summary':step3_couns_results_summary,'step3_couns_sessions_summary':step3_couns_sessions_summary}
+
+        for name, df in dataframes.items():
+            # Melt the DataFrame
+            melted_df = pd.melt(df, id_vars=['Run Number','Week Number'], var_name='Variable', value_name='Value')
+
+            # Apply different aggregations based on column names
+            aggregated_df = melted_df.groupby(['Run Number','Week Number','Variable']).agg(
+                {'Value': lambda x: x.sum() if x.name in ['Session Time', 'Admin Time','IsDNA'] else x.count()}
+            ).reset_index()
+
+            # Store the result
+            aggregated_dfs[name] = aggregated_df
+
+            # # Access melted + aggregated DataFrames separately
+            # print(aggregated_dfs['df1'])  # Aggregated df1
+            # print(aggregated_dfs['df2'])  # Aggregated df2
     
-        # turn mins values from running total to weekly total and mins in hrs
-        ##### PwP #####
-        step2_pwp_weekly_summary['Step2 Clin Hrs'] = (step2_pwp_weekly_summary['Step2 Clin Mins']-step2_pwp_weekly_summary['Step2 Clin Mins'].shift(1))/60
-        step2_pwp_weekly_summary['Step2 Admin Hrs'] = (step2_pwp_weekly_summary['Step2 Admin Mins']-step2_pwp_weekly_summary['Step2 Admin Mins'].shift(1))/60
-        step2_pwp_weekly_summary['Step2 Sessions'] = step2_pwp_weekly_summary['Step2 Sessions']-step2_pwp_weekly_summary['Step2 Sessions'].shift(1)
-        step2_pwp_weekly_summary['Step2 DNAs'] = step2_pwp_weekly_summary['Step2 DNAs']-step2_pwp_weekly_summary['Step2 DNAs'].shift(1)
-        step2_pwp_weekly_summary['Step2 Completes'] = step2_pwp_weekly_summary['Step2 Complete']-step2_pwp_weekly_summary['Step2 Complete'].shift(1)
-        step2_pwp_weekly_summary['Step2 Dropouts'] = step2_pwp_weekly_summary['Step2 Dropout']-step2_pwp_weekly_summary['Step2 Dropout'].shift(1)
-        ##### Groups #####
-        step2_group_weekly_summary['Step2 Clin Hrs'] = (step2_group_weekly_summary['Step2 Clin Mins']-step2_group_weekly_summary['Step2 Clin Mins'].shift(1))/60
-        step2_group_weekly_summary['Step2 Admin Hrs'] = (step2_group_weekly_summary['Step2 Admin Mins']-step2_group_weekly_summary['Step2 Admin Mins'].shift(1))/60
-        step2_group_weekly_summary['Step2 Sessions'] = step2_group_weekly_summary['Step2 Sessions']-step2_group_weekly_summary['Step2 Sessions'].shift(1)
-        step2_group_weekly_summary['Step2 DNAs'] = step2_group_weekly_summary['Step2 DNAs']-step2_group_weekly_summary['Step2 DNAs'].shift(1)
-        step2_group_weekly_summary['Step2 Completes'] = step2_group_weekly_summary['Step2 Complete']-step2_group_weekly_summary['Step2 Complete'].shift(1)
-        step2_group_weekly_summary['Step2 Dropouts'] = step2_group_weekly_summary['Step2 Dropout']-step2_group_weekly_summary['Step2 Dropout'].shift(1)
-
-        ##### CBT #####
-        step3_cbt_weekly_summary['Step3 Clin Hrs'] = (step3_cbt_weekly_summary['Step3 Clin Mins']-step3_cbt_weekly_summary['Step3 Clin Mins'].shift(1))/60
-        step3_cbt_weekly_summary['Step3 Admin Hrs'] = (step3_cbt_weekly_summary['Step3 Admin Mins']-step3_cbt_weekly_summary['Step3 Admin Mins'].shift(1))/60
-        step3_cbt_weekly_summary['Step3 Sessions'] = step3_cbt_weekly_summary['Step3 Sessions']-step3_cbt_weekly_summary['Step3 Sessions'].shift(1)
-        step3_cbt_weekly_summary['Step3 DNAs'] = step3_cbt_weekly_summary['Step3 DNAs']-step3_cbt_weekly_summary['Step3 DNAs'].shift(1)
-        step3_cbt_weekly_summary['Step3 Completes'] = step3_cbt_weekly_summary['Step3 Complete']-step3_cbt_weekly_summary['Step3 Complete'].shift(1)
-        step3_cbt_weekly_summary['Step3 Dropouts'] = step3_cbt_weekly_summary['Step3 Dropout']-step3_cbt_weekly_summary['Step3 Dropout'].shift(1)
-        ##### counss #####
-        step3_couns_weekly_summary['Step3 Clin Hrs'] = (step3_couns_weekly_summary['Step3 Clin Mins']-step3_couns_weekly_summary['Step3 Clin Mins'].shift(1))/60
-        step3_couns_weekly_summary['Step3 Admin Hrs'] = (step3_couns_weekly_summary['Step3 Admin Mins']-step3_couns_weekly_summary['Step3 Admin Mins'].shift(1))/60
-        step3_couns_weekly_summary['Step3 Sessions'] = step3_couns_weekly_summary['Step3 Sessions']-step3_couns_weekly_summary['Step3 Sessions'].shift(1)
-        step3_couns_weekly_summary['Step3 DNAs'] = step3_couns_weekly_summary['Step3 DNAs']-step3_couns_weekly_summary['Step3 DNAs'].shift(1)
-        step3_couns_weekly_summary['Step3 Completes'] = step3_couns_weekly_summary['Step3 Complete']-step3_couns_weekly_summary['Step3 Complete'].shift(1)
-        step3_couns_weekly_summary['Step3 Dropouts'] = step3_couns_weekly_summary['Step3 Dropout']-step3_couns_weekly_summary['Step3 Dropout'].shift(1)
-
-
-       
-
-        num = step2_pwp_weekly_summary._get_numeric_data()
-
-        num[num < 0] = 0
-
-        num = step2_group_weekly_summary._get_numeric_data()
-
-        num[num < 0] = 0
-
-        num = step3_cbt_weekly_summary._get_numeric_data()
-
-        num[num < 0] = 0
-
-        num = step3_couns_weekly_summary._get_numeric_data()
-
-        num[num < 0] = 0
-        
-        # print data for testing
-        #st.write(asst_weekly_summary)
-
-        st.write(step2_pwp_weekly_summary)
-
-        # st.write(step2_group_weekly_summary)
-
-        # st.write(step3_cbt_weekly_summary)
-
-        # st.write(step3_couns_weekly_summary)
-                
-        # get rid of negative values
-        # num = asst_weekly_dfs._get_numeric_data()
-
-        # num[num < 0] = 0
-
-        # #st.write(df_weekly_stats)
-
-        # ########## Waiting List Tab ##########
-
-        # ##### get all data structured correctly #####
-
         with st.expander("See explanation"):
             st.write('This Simulation is designed to replicate the flow '
                      'of patients through the Talking Therapies Assessment and'
                      'Treatment Pathway.')
 
-        
-        # asst_weekly_wl = asst_weekly_summary[['Run Number','Week Number','Triage WL',
-        #                                 'MDT WL','Asst WL']]
+        ##### get all data structured correctly #####
 
         asst_referrals_col1_unpivot = pd.melt(asst_weekly_summary, value_vars=['Referrals Received',
                                                                  'TA Avg Wait'],
