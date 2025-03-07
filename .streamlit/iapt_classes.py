@@ -7,10 +7,10 @@ import math
 class g:
 
     # used for testing
-    debug_level = 2
+    debug_level = 0
 
     # Referrals
-    mean_referrals_pw = 100
+    mean_referrals_pw = 1000
 
     # Screening
     referral_rej_rate = 0.3 # % of referrals rejected, advised 30%
@@ -74,9 +74,9 @@ class g:
     cpd_time = 225 # half day per month CPD
     
     # Job Plans
-    number_staff_cbt = 3
-    number_staff_couns = 3
-    number_staff_pwp = 5
+    number_staff_cbt = 138
+    number_staff_couns = 40
+    number_staff_pwp = 125
     hours_avail_cbt = 22.0
     hours_avail_couns = 22.0
     hours_avail_pwp = 21.0
@@ -353,11 +353,13 @@ class Model:
         # run for however many times there are weeks in the sim
         while self.week_number < g.sim_duration:
 
-            print(f'''
-            #################################
-                    Week Number {self.week_number} 
-            #################################
-            ''')
+            if g.debug_level >= 2:
+
+                print(f'''
+                #################################
+                        Week Number {self.week_number} 
+                #################################
+                ''')
 
             if g.debug_level >= 2:
                     print(f"Topping Up Resources")
@@ -496,7 +498,7 @@ class Model:
                     self.step2_avg_wait = self.step2_results_df_filtered["Group Q Time"].mean()
                 self.step2_tot_clin = self.step2_results_df_filtered['Session Time'].sum()
                 self.step2_tot_admin = self.step2_results_df_filtered['Admin Time'].sum()
-                self.step2_tot_sess = self.step2_results_df_filtered['Session Number'].count()
+                self.step2_tot_sess = self.step2_results_df_filtered['Session Number'].sum()
                 self.step2_tot_dna = self.step2_results_df_filtered['IsDNA'].sum()
                 self.step2_tot_dropout = self.step2_results_df_filtered['IsDropout'].sum()
                 self.step2_tot_complete = self.step2_results_df_filtered['IsDropout'
@@ -736,7 +738,9 @@ class Model:
         #     print(f'resource used level was:{self.resources_used[r_id]}')
         
         if r_id not in self.resources_used:
-            print(f"Error: {r_id} not found in {r_type} resources.")
+            
+            if g.debug_level >= 2:
+                print(f"Error: {r_id} not found in {r_type} resources.")
             return
 
         # Ensure the week entry exists
@@ -843,7 +847,8 @@ class Model:
             return self.random_caseload_id, self.selected_resource # Return the ID and the container if available
             yield self.env.timeout(0)
         else:
-            print("No available caseload with spaces available!")
+            if g.debug_level >=2:
+                print("No available caseload with spaces available!")
             return None, None
             yield self.env.timeout(0)
                      
@@ -1039,7 +1044,7 @@ class Model:
         if self.requires_review > g.referral_review_rate:
 
             if g.debug_level >=2:
-                    print(f"Patient {p.id} Sent For Review")
+                print(f"Patient {p.id} Sent For Review")
             # patient requires review and was rejected
             if self.review_reject < g.review_rej_rate:
                 
@@ -1214,9 +1219,11 @@ class Model:
                     self.selected_step = random.choice(self.step_options)
 
                     if self.selected_step == "Step3":
-                        print(f"Selected step: **{self.selected_step}**")
+                        if g.debug_level >=2:
+                            print(f"Selected step: **{self.selected_step}**")
                     else:
-                        print(f"Selected step: {self.selected_step}")
+                        if g.debug_level >=2:
+                            print(f"Selected step: {self.selected_step}")
 
                     self.asst_results_df.at[p.id, 'Treatment Path'] = self.selected_step
                     p.initial_step = self.selected_step
@@ -1232,11 +1239,13 @@ class Model:
         p = patient
 
         if step_chosen == 'Step2':
-            print(f'PATHWAY RUNNER: Patient {p.id} sent down **{p.initial_step}** pathway')
+            if g.debug_level >=2:
+                print(f'PATHWAY RUNNER: Patient {p.id} sent down **{p.initial_step}** pathway')
             #yield self.env.timeout(0)
             yield self.env.process(self.patient_step2_pathway(p))
         else:
-            print(f'PATHWAY RUNNER: Patient {p.id} sent down {p.initial_step} pathway')
+            if g.debug_level >=2:
+                print(f'PATHWAY RUNNER: Patient {p.id} sent down {p.initial_step} pathway')
             #yield self.env.timeout(0)
             yield self.env.process(self.patient_step3_pathway(p))
 
@@ -1346,28 +1355,27 @@ class Model:
 
         if g.debug_level >=2:
             print(f'Patient sent down {p.step2_path_route}')
-        
-        # Check if there is a caseload slot available and return the resource
-        self.result = yield self.env.process(self.find_caseload_slot(p.step2_path_route))
 
-        if g.debug_level >=2:
-            print(self.result)
-
-        # Safeguard unpacking: Ensure result is not None and has two elements
-        if self.result:
-            self.pwp_caseload_id, self.pwp_caseload_res = self.result
-        else:
-            # Handle the case where no resource was available (shouldn't happen as function keeps checking)
-            print("No available resource found!")
-        
-        # assign the caseload to the patient
-        p.step2_resource_id = self.pwp_caseload_id
+        while True:
+            self.result = yield self.env.process(self.find_caseload_slot(p.step2_path_route))
             
-        if g.debug_level >=2:
-            print(f'Resource {self.pwp_caseload_id} with a caseload remaining of {self.pwp_caseload_res.level} allocated to patient {p.id}')
-        
+            if self.result and isinstance(self.result, tuple) and len(self.result) == 2:
+                self.pwp_caseload_id, self.pwp_caseload_res = self.result
+                if self.pwp_caseload_res is not None:  # Ensure the resource is valid
+                    break  # Exit the loop when a resource is found
+            else:
+                if g.debug_level >= 2:
+                    print("No available resource found, retrying...")
+            yield self.env.timeout(1)  # Wait a week and retry
+
         with self.pwp_caseload_res.get(1) as self.pwp_req:
             yield self.pwp_req
+
+        # assign the caseload to the patient
+        p.step3_resource_id = self.pwp_caseload_id
+
+        if g.debug_level >=2:
+            print(f'Resource {self.pwp_caseload_id} with a caseload remaining of {self.pwp_caseload_res.level} allocated to patient {p.id}')
 
         # # create a variable to store the current level of the caseload for this resource
         # self.pwp_caseload_posn = self.caseload_[f'{self.caseload_id}']
@@ -1463,10 +1471,10 @@ class Model:
             self.dna_pwp_session = random.uniform(0,1)
 
             if self.dna_pwp_session <= g.step2_pwp_dna_rate:
-                self.step2_results_df.at[p.id, 'IsDNA'] = 1
+                self.step2_results_df.at[p.id, 'IsDNA'] += 1
                 self.pwp_dna_counter += 1
                 # if session is DNA just record admin mins as clinical time will be used elsewhere
-                self.step2_results_df.at[p.id,'Admin Time'] = g.step2_session_admin
+                self.step2_results_df.at[p.id,'Admin Time'] += g.step2_session_admin
                 if g.debug_level >= 2:
                     print(f'Patient {p.id} on {p.step2_path_route} Session '
                            f'{self.pwp_session_counter} DNA number ' 
@@ -1476,12 +1484,12 @@ class Model:
                 self.step2_results_df.at[p.id, 'IsDNA'] = 0
                 if self.pwp_session_counter == 1:
                     # if it's the 1st session use 1st session time
-                    self.step2_results_df.at[p.id,'Session Time'] = g.step2_pwp_1st_mins
-                    self.step2_results_df.at[p.id,'Admin Time'] = g.step2_session_admin
+                    self.step2_results_df.at[p.id,'Session Time'] += g.step2_pwp_1st_mins
+                    self.step2_results_df.at[p.id,'Admin Time'] += g.step2_session_admin
                 else:
                     # otherwise use follow-up session time
-                    self.step2_results_df.at[p.id,'Session Time'] = g.step2_pwp_fup_mins
-                    self.step2_results_df.at[p.id,'Admin Time'] = g.step2_session_admin
+                    self.step2_results_df.at[p.id,'Session Time'] += g.step2_pwp_fup_mins
+                    self.step2_results_df.at[p.id,'Admin Time'] = +g.step2_session_admin
 
         # record whether patient dropped out before completing pwP
         if self.pwp_dna_counter >= self.dnas_allowed:
@@ -1638,23 +1646,27 @@ class Model:
                                             g.number_on_cbt_wl
 
         # Check if there is a caseload slot available and return the resource
-        self.result = yield self.env.process(self.find_caseload_slot(p.step3_path_route))
+        while True:
+            self.result = yield self.env.process(self.find_caseload_slot(p.step3_path_route))
+            
+            if self.result and isinstance(self.result, tuple) and len(self.result) == 2:
+                self.cbt_caseload_id, self.cbt_caseload_res = self.result
+                if self.cbt_caseload_res is not None:  # Ensure the resource is valid
+                    break  # Exit the loop when a resource is found
+            else:
+                if g.debug_level >= 2:
+                    print("No available resource found, retrying...")
 
-        # Safeguard unpacking: Ensure result is not None and has two elements
-        if self.result:
-            self.cbt_caseload_id, self.cbt_caseload_res = self.result
-        else:
-            # Handle the case where no resource was available (shouldn't happen as function keeps checking)
-            print("No available resource found!")
+            yield self.env.timeout(1)  # Wait a week and retry
+
+            # Wait before checking again to prevent excessive CPU usage
+            # yield self.env.timeout(0)  # Adjust the interval as needed
 
         # assign the caseload to the patient
         p.step3_resource_id = self.cbt_caseload_id
 
         if g.debug_level >=2:
             print(f'Resource {self.cbt_caseload_id} with a caseload remaining of {self.cbt_caseload_res.level} allocated to patient {p.id}')
-        
-        with self.cbt_caseload_res.get(1) as self.cbt_req:
-            yield self.cbt_req
 
         # # create a variable to store the current level of the caseload for this resource
         # self.pwp_caseload_posn = self.caseload_[f'{self.caseload_id}']
@@ -1841,23 +1853,38 @@ class Model:
                                             g.number_on_couns_wl
 
         # Check if there is a caseload slot available and return the resource
-        self.result = yield self.env.process(self.find_caseload_slot(p.step3_path_route))
+        while True:
+            self.result = yield self.env.process(self.find_caseload_slot(p.step3_path_route))
+            
+            if self.result and isinstance(self.result, tuple) and len(self.result) == 2:
+                self.couns_caseload_id, self.couns_caseload_res = self.result
+                if self.couns_caseload_res is not None:  # Ensure the resource is valid
+                    break  # Exit the loop when a resource is found
+            else:
+                if g.debug_level >= 2:
+                    print("No available resource found, retrying...")
 
-        # Safeguard unpacking: Ensure result is not None and has two elements
-        if self.result:
-            self.couns_caseload_id, self.couns_caseload_res = self.result
-        else:
-            # Handle the case where no resource was available (shouldn't happen as function keeps checking)
-            print("No available resource found!")
+            yield self.env.timeout(1)  # Wait a week and retry
+                
+        # # Check if there is a caseload slot available and return the resource
+        # self.result = yield self.env.process(self.find_caseload_slot(p.step3_path_route))
+
+        # # Safeguard unpacking: Ensure result is not None and has two elements
+        # if self.result:
+        #     self.couns_caseload_id, self.couns_caseload_res = self.result
+        # else:
+        #     # Handle the case where no resource was available (shouldn't happen as function keeps checking)
+        #     if g.debug_level >=2:
+        #         print("No available resource found!")
+
+        with self.couns_caseload_res.get(1) as self.couns_req:
+            yield self.couns_req
 
         # assign the caseload to the patient
         p.step3_resource_id = self.couns_caseload_id
 
         if g.debug_level >=2:
             print(f'Resource {self.couns_caseload_id} with a caseload remaining of {self.couns_caseload_res.level} allocated to patient {p.id}')
-        
-        with self.couns_caseload_res.get(1) as self.couns_req:
-            yield self.couns_req
 
         # # create a variable to store the current level of the caseload for this resource
         # self.pwp_caseload_posn = self.caseload_[f'{self.caseload_id}']
@@ -1924,7 +1951,8 @@ class Model:
         if self.couns_session_counter < len(self.couns_random_weeks):
             p.step3_end_week = p.step3_start_week + self.couns_random_weeks[self.couns_session_counter]
         else:
-            print(f"Warning: Index {self.couns_session_counter} out of range for couns_random_weeks.")
+            if g.debug_level >=2:
+                print(f"Warning: Index {self.couns_session_counter} out of range for couns_random_weeks.")
 
         if g.debug_level >=2:
             print(f'Random Session week {len(self.couns_random_weeks)} numbers are {self.couns_random_weeks}')
@@ -2002,7 +2030,8 @@ class Model:
             if self.couns_session_counter < len(self.couns_random_weeks):
                 p.step3_end_week = p.step3_start_week + self.couns_random_weeks[self.couns_session_counter-1]
             else:
-                print(f"Warning: Index {self.couns_session_counter} out of range for couns_random_weeks.")
+                if g.debug_level >=2:
+                    print(f"Warning: Index {self.couns_session_counter} out of range for couns_random_weeks.")
             if g.debug_level >= 2:
                 print(f'Patient {p.id} dropped out of {p.step3_path_route} treatment')
             p.step3_end_week = p.step3_start_week+self.couns_random_weeks[self.couns_session_counter-1]
@@ -2011,9 +2040,11 @@ class Model:
             if self.couns_session_counter < len(self.couns_random_weeks):
                 p.step3_end_week = p.step3_start_week + max(self.couns_random_weeks)
             else:
-                print(f"Warning: Index {self.couns_session_counter} out of range for couns_random_weeks.")
+                if g.debug_level >=2:
+                    print(f"Warning: Index {self.couns_session_counter} out of range for couns_random_weeks.")
             if g.debug_level >= 2:
-                print(f'Patient {p.id} completed {p.step3_path_route} treatment')
+                if g.debug_level >=2:
+                    print(f'Patient {p.id} completed {p.step3_path_route} treatment')
             p.step3_end_week = p.step3_start_week+max(self.couns_random_weeks)
 
         # remove from Step 3 Caseload as have either completed treatment or dropped out

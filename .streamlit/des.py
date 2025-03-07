@@ -31,7 +31,7 @@ with st.sidebar:
 
         # Referral Inputs
         st.markdown("#### Screening")
-        referral_input = st.slider("Number of Referrals Per Week", 1, 100, 50)
+        referral_input = st.slider("Number of Referrals Per Week", 1000, 1500, 1000)
         referral_reject_input = st.number_input("Referral Rejection Rate (%)",
                         min_value=0.0, max_value=20.0, step=0.25, value=4.25)
         referral_review_input = st.number_input("% of Referral sent for Review",
@@ -120,13 +120,13 @@ with st.sidebar:
         st.divider()
         st.markdown("#### Job Plans")
         cbt_avail_input = st.number_input(label="Starting Number of CBT Practitioners WTE",
-                                          min_value=1,max_value=20,
+                                          min_value=100,max_value=200,
                                           step=1,value = g.number_staff_cbt)
         couns_avail_input = st.number_input(label="Starting Number of Counselling Practitioners WTE",
-                                            min_value=1,max_value=20,
+                                            min_value=1,max_value=100,
                                             step=1,value = g.number_staff_couns)
         pwp_avail_input = st.number_input(label="Starting Number of PwP Practitioners WTE",
-                                          min_value=1,max_value=20,
+                                          min_value=100,max_value=200,
                                           step=1,value = g.number_staff_pwp)
         cbt_add_input = st.number_input("Additional Number of CBT Practitioners WTE",
                         min_value=0, max_value=20, step=1, value=0)
