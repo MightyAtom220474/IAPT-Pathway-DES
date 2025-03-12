@@ -454,6 +454,7 @@ class Model:
             self.asst_waiting_list = g.number_on_ta_wl
             self.asst_avg_wait = self.asst_results_df['TA Q Time'].mean()
             self.asst_tot_accept = self.asst_results_df['TA Outcome'].sum()
+            self.asst_time_total = self.asst_results_df['TA Mins'].sum()
 
             self.asst_weekly_stats.append(
                 {'Run Number': self.run_number,
@@ -469,7 +470,8 @@ class Model:
                  'Referrals Wait Opt-in':self.asst_optin_wait,
                  'TA Waiting List':self.asst_waiting_list,
                  'TA Avg Wait':self.asst_avg_wait,
-                 'TA Total Accept':self.asst_tot_accept
+                 'TA Total Accept':self.asst_tot_accept,
+                 'TA Mins':self.asst_time_total
                 }
                 )
             

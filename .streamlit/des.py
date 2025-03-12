@@ -236,7 +236,7 @@ if button_run_pressed:
         asst_weekly_dfs['Optin Total'] = (asst_weekly_dfs['Referrals Opted-in']-asst_weekly_dfs['Referrals Opted-in'].shift(1))
         #asst_weekly_dfs['TA Waiting List'] = (asst_weekly_dfs['TA Waiting List']-asst_weekly_dfs['TA Waiting List'].shift(1))
         asst_weekly_dfs['TA Accept'] = (asst_weekly_dfs['TA Total Accept']-asst_weekly_dfs['TA Total Accept'].shift(1))
-        asst_weekly_dfs['TA Hrs'] = (asst_weekly_dfs['TA Mins']-asst_weekly_dfs['TA Hrs'].shift(1))/60
+        asst_weekly_dfs['TA Hrs'] = (asst_weekly_dfs['TA Mins']-asst_weekly_dfs['TA Mins'].shift(1))/60
 
         # get rid of negative values
         num = asst_weekly_dfs._get_numeric_data()
