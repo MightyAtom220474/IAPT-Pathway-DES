@@ -122,7 +122,7 @@ with st.sidebar:
         cbt_avail_input = st.number_input(label="Starting Number of CBT Practitioners WTE",
                                           min_value=1,max_value=200,
                                           step=1,value = g.number_staff_cbt)
-        couns_avail_input = st.number_input(label="Starting Number of Counselling Practitioners WTE",
+        couns_avail_input = st.number_input(label="Starting Number of DepC Practitioners WTE",
                                             min_value=1,max_value=100,
                                             step=1,value = g.number_staff_couns)
         pwp_avail_input = st.number_input(label="Starting Number of PwP Practitioners WTE",
@@ -130,10 +130,16 @@ with st.sidebar:
                                           step=1,value = g.number_staff_pwp)
         cbt_add_input = st.number_input("Additional Number of CBT Practitioners WTE",
                         min_value=-20, max_value=20, step=1, value=0)
-        couns_add_input = st.number_input("Additional Number of Counselling Practitioners WTE",
+        couns_add_input = st.number_input("Additional Number of DepC Practitioners WTE",
                         min_value=-10, max_value=20, step=1, value=0)
         pwp_add_input = st.number_input("Additional Number of PwP Practitioners WTE",
                         min_value=-25, max_value=25, step=1, value=0)
+        cbt_caseload_input = st.slider("Number of Patients Allowed on CBT Caseload",
+                                            1, 50, g.cbt_caseload)
+        couns_caseload_input = st.slider("Number of Patients Allowed on DepC Caseload",
+                                            1, 50, g.couns_caseload)
+        pwp_caseload_input = st.slider("Number of Patients Allowed on PwP Caseload",
+                                            1, 50, g.pwp_caseload)
         cbt_hours_avail_input = st.number_input(label="Non-Clinical Hours p/w for CBT Pratitioners",
                                                 min_value=10.0,max_value=25.0,
                                                 step=0.5,value = g.hours_avail_cbt)
@@ -195,6 +201,9 @@ g.step3_session_admin = step3_admin_input
 g.cbt_avail = cbt_avail_input + cbt_add_input
 g.couns_avail = couns_avail_input + couns_add_input
 g.pwp_avail = pwp_avail_input + pwp_add_input
+g.cbt_caseload = cbt_caseload_input
+g.couns_caseload = couns_caseload_input
+g.pwp_caseload = pwp_caseload_input
 # calculate total hours for job plans
 total_cbt_hours = g.cbt_avail*37.5
 total_couns_hours = g.couns_avail*37.5
@@ -222,7 +231,7 @@ if button_run_pressed:
 
         st.subheader(f'Summary of all {g.number_of_runs} Simulation Runs over {g.sim_duration}'
                      f' Weeks with {cbt_add_input} additional CBT,'
-                      f' {couns_add_input} additional Counsellors and '
+                      f' {couns_add_input} additional Depression Counsellors and '
                       f'{pwp_add_input} additional PwP Practitioners')
         
         ##### get all data structured correctly #####
@@ -246,7 +255,7 @@ if button_run_pressed:
         asst_weekly_dfs['Accepted Referrals'] = asst_weekly_dfs['Referrals Received']-asst_weekly_dfs['Rejected Referrals']
         
         # filter dataframe to just return columns needed
-        asst_weekly_summary = asst_weekly_dfs[['Run Number','Week Number','Referrals Received','Referral Screen Hrs','Accepted Referrals','Rejected Referrals','Referral Reviews','Reviewed Rejected','Optin Total','TA Waiting List','TA Avg Wait','TA Accept']]
+        asst_weekly_summary = asst_weekly_dfs[['Run Number','Week Number','Referrals Received','Referral Screen Hrs','Accepted Referrals','Rejected Referrals','Referral Reviews','Reviewed Rejected','Optin Total','TA Waiting List','TA Avg Wait','TA Accept','TA Hrs']]
                
         asst_weekly_summary = asst_weekly_summary[asst_weekly_summary["Week Number"] != 0]
                               
@@ -472,37 +481,77 @@ if button_run_pressed:
         ##### PwP Practitoner #####
         
         # get time values from sessions dataframe and convert to hours - divide by 60 * sim duration to get average across all runs when summed up
+        # PwP
         pwp_sessions_weekly_summary = pwp_sessions_summary[pwp_sessions_summary['variable'].isin(['Session Time','Admin Time'])]
         pwp_sessions_weekly_summary.drop('Run Number', axis=1)
         pwp_sessions_weekly_summary[pwp_sessions_weekly_summary.select_dtypes(include="number").columns.difference(["Week Number"])] = \
                 pwp_sessions_weekly_summary[pwp_sessions_weekly_summary.select_dtypes(include="number").columns.difference(["Week Number"])].div(60*number_of_runs_input).round()
-        
+        # Group
         group_sessions_weekly_summary = group_sessions_summary[group_sessions_summary['variable'].isin(['Session Time','Admin Time'])]
         group_sessions_weekly_summary[group_sessions_weekly_summary.select_dtypes(include="number").columns.difference(["Week Number"])] = \
                 group_sessions_weekly_summary[group_sessions_weekly_summary.select_dtypes(include="number").columns.difference(["Week Number"])].div(60*number_of_runs_input).round()
-           
+        # CBT
+        cbt_sessions_weekly_summary = cbt_sessions_summary[cbt_sessions_summary['variable'].isin(['Session Time','Admin Time'])]
+        cbt_sessions_weekly_summary[cbt_sessions_weekly_summary.select_dtypes(include="number").columns.difference(["Week Number"])] = \
+                cbt_sessions_weekly_summary[cbt_sessions_weekly_summary.select_dtypes(include="number").columns.difference(["Week Number"])].div(60*number_of_runs_input).round()
+        # Couns
+        couns_sessions_weekly_summary = couns_sessions_summary[couns_sessions_summary['variable'].isin(['Session Time','Admin Time'])]
+        couns_sessions_weekly_summary[couns_sessions_weekly_summary.select_dtypes(include="number").columns.difference(["Week Number"])] = \
+                couns_sessions_weekly_summary[couns_sessions_weekly_summary.select_dtypes(include="number").columns.difference(["Week Number"])].div(60*number_of_runs_input).round()
+              
+        
+        
         # pwp_sessions_weekly_summary['variable'] = pwp_sessions_weekly_summary['variable'].replace({"Session Hrs": "PwP Sessions", "Admin Hrs": "PwP Admin"}, inplace=True)
         # group_sessions_weekly_summary['variable'] = group_sessions_weekly_summary['variable'].replace({"Session Hrs": "Group Sessions", "Admin Hrs": "Group Admin"}, inplace=True)
         # combine PwP and Group as all delivered by PwP
         pwp_group_sessions_combined = pd.concat([pwp_sessions_weekly_summary,group_sessions_weekly_summary], ignore_index=True)
         
         # get time value from asst dataframe
-        pwp_asst_weekly_summary = asst_weekly_dfs[['Week Number','Referral Screen Hrs']]
+        pwp_asst_weekly_summary = asst_weekly_dfs[['Week Number','Referral Screen Hrs','TA Hrs']]
         # get average across all runs
-        pwp_asst_weekly_summary['Referral Screen Hrs'] = pwp_asst_weekly_summary['Referral Screen Hrs']/number_of_runs_input
-        pwp_asst_weekly_summary = pwp_asst_weekly_summary.rename(columns={'Referral Screen Hrs': 'value'})
-        
-        # structure same as sessions data
-        pwp_asst_weekly_summary.insert(1, 'variable', 'Referral Screen Hrs')
+        pwp_asst_weekly_summary[['Referral Screen Hrs','TA Hrs']] = pwp_asst_weekly_summary[['Referral Screen Hrs','TA Hrs']]/number_of_runs_input
+        pwp_asst_weekly_summary[['Referral Screen Hrs','TA Hrs']] = pwp_asst_weekly_summary[['Referral Screen Hrs','TA Hrs']]*0.87 # 87% of TA's done by PwP
 
+        pwp_asst_weekly_summary = pd.melt(pwp_asst_weekly_summary, value_vars=['Referral Screen Hrs',
+                                                                 'TA Hrs'],
+                                                                 id_vars=[
+                                                                'Week Number'])
+
+        ##### CBT #####
+
+        cbt_asst_weekly_summary = asst_weekly_dfs[['Week Number','TA Hrs']]
+        # get average across all runs
+        cbt_asst_weekly_summary['TA Hrs'] = asst_weekly_dfs['TA Hrs']/number_of_runs_input
+        cbt_asst_weekly_summary['TA Hrs'] = cbt_asst_weekly_summary['TA Hrs']*0.11 # 11% of TA's done by CBT
+
+        cbt_asst_weekly_summary = pd.melt(cbt_asst_weekly_summary, value_vars=[
+                                                                 'TA Hrs'],
+                                                                 id_vars=[
+                                                                'Week Number'])
+        ##### CBT #####
+
+        couns_asst_weekly_summary = asst_weekly_dfs[['Week Number','TA Hrs']]
+        couns_asst_weekly_summary['TA Hrs'] = couns_asst_weekly_summary['TA Hrs']/number_of_runs_input
+        couns_asst_weekly_summary['TA Hrs'] = couns_asst_weekly_summary['TA Hrs']*0.02 # 2% of TA's done by Couns
+
+        couns_asst_weekly_summary = pd.melt(couns_asst_weekly_summary, value_vars=[
+                                                                 'TA Hrs'],
+                                                                 id_vars=[
+                                                                'Week Number'])
+      
+        ##### bring all the clinical and non-clinical activity data together
         pwp_hours_weekly_summary = pd.concat([pwp_sessions_weekly_summary,pwp_asst_weekly_summary,pwp_weekly_activity], ignore_index=True)
         # get rid of sessions that go beyond sim duration
         pwp_hours_weekly_summary = pwp_hours_weekly_summary[pwp_hours_weekly_summary["Week Number"] <=sim_duration_input]
            
-        cbt_asst_weekly_summary = asst_weekly_dfs[['Week Number','TA Hrs']]
-        # get average across all runs
-        cbt_asst_weekly_summary['TA Hrs'] = cbt_asst_weekly_summary['TA Hrs']/number_of_runs_input
-        cbt_asst_weekly_summary = cbt_asst_weekly_summary.rename(columns={'TA Hrs': 'value'})
+        cbt_hours_weekly_summary = pd.concat([cbt_sessions_weekly_summary,cbt_asst_weekly_summary,cbt_weekly_activity], ignore_index=True)
+        # get rid of sessions that go beyond sim duration
+        cbt_hours_weekly_summary = cbt_hours_weekly_summary[cbt_hours_weekly_summary["Week Number"] <=sim_duration_input]
+
+        couns_hours_weekly_summary = pd.concat([couns_sessions_weekly_summary,couns_asst_weekly_summary,couns_weekly_activity], ignore_index=True)
+        # get rid of sessions that go beyond sim duration
+        couns_hours_weekly_summary = couns_hours_weekly_summary[couns_hours_weekly_summary["Week Number"] <=sim_duration_input]
+        
         
         ## Structure data for plotting in dashboard ##
         ########## Referrals & Assessments ##########
@@ -1224,7 +1273,7 @@ if button_run_pressed:
 
             with col1:
 
-                st.subheader('Counselling')
+                st.subheader('Depression Counselling')
             
                 for i, list_name in enumerate(couns_combined_summary['variable']
                                             .unique()):
@@ -1385,11 +1434,6 @@ if button_run_pressed:
         ########## Job Plans ##########
         with tab4:
 
-            # st.write(staff_weekly_dfs)
-            # st.write(pwp_hours_weekly_summary)
-            st.write(pwp_hours_weekly_summary)
-            st.write(pwp_asst_weekly_summary)  
-
             st.header('Job Plans')
 
             ##### PwP Practitioner #####
@@ -1413,7 +1457,7 @@ if button_run_pressed:
             # add line for available PwP hours
             fig.add_trace(
                                 go.Scatter(x=pwp_hours_weekly_summary["Week Number"],
-                                        y=np.repeat(total_pwp_hours,g.sim_duration),
+                                        y=np.repeat(total_pwp_hours,sim_duration_input*2),
                                         name='Avail Hrs',line=dict(width=3,
                                         color='green')))
 
@@ -1425,7 +1469,7 @@ if button_run_pressed:
 
             st.subheader('Cognitive Behavioural Therapists')
 
-            fig = px.histogram(pwp_hours_weekly_summary, 
+            fig = px.histogram(cbt_hours_weekly_summary, 
                                 x='Week Number',
                                 y='value',
                                 nbins=sim_duration_input,
@@ -1433,7 +1477,7 @@ if button_run_pressed:
                                         ,'variable':'Time Alloc'},
                                 color='variable',
                                 color_discrete_sequence=px.colors.qualitative.Dark24,
-                                title=f'Psychological Wellbeing Practitioner Hours by Week')
+                                title=f'Cognitive Behavioural Therapist Hours by Week')
             
             fig.update_layout(title_x=0.4,font=dict(size=10),bargap=0.2,legend_traceorder="reversed")
             
@@ -1441,8 +1485,37 @@ if button_run_pressed:
 
             # add line for available PwP hours
             fig.add_trace(
-                                go.Scatter(x=pwp_hours_weekly_summary["Week Number"],
-                                        y=np.repeat(total_pwp_hours,g.sim_duration),
+                                go.Scatter(x=cbt_hours_weekly_summary["Week Number"],
+                                        y=np.repeat(total_cbt_hours,sim_duration_input*2),
+                                        name='Avail Hrs',line=dict(width=3,
+                                        color='green')))
+
+            st.plotly_chart(fig, use_container_width=True)
+
+            st.divider()   
+
+            ##### Couns Practitioner #####
+
+            st.subheader('Depression Counselling Therapists')
+
+            fig = px.histogram(couns_hours_weekly_summary, 
+                                x='Week Number',
+                                y='value',
+                                nbins=sim_duration_input,
+                                labels={'value': 'Hours'
+                                        ,'variable':'Time Alloc'},
+                                color='variable',
+                                color_discrete_sequence=px.colors.qualitative.Dark24,
+                                title=f'Depression Counselling Therapist Hours by Week')
+            
+            fig.update_layout(title_x=0.4,font=dict(size=10),bargap=0.2,legend_traceorder="reversed")
+            
+            fig.update_traces(marker_line_color='black', marker_line_width=1)
+
+            # add line for available PwP hours
+            fig.add_trace(
+                                go.Scatter(x=couns_hours_weekly_summary["Week Number"],
+                                        y=np.repeat(total_couns_hours,sim_duration_input*2),
                                         name='Avail Hrs',line=dict(width=3,
                                         color='green')))
 
