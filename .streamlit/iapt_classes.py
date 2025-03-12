@@ -74,9 +74,9 @@ class g:
     cpd_time = 225 # half day per month CPD
     
     # Job Plans
-    number_staff_cbt = 138
-    number_staff_couns = 40
-    number_staff_pwp = 125
+    number_staff_cbt = 14 #138
+    number_staff_couns = 4 #40
+    number_staff_pwp = 12 #125
     hours_avail_cbt = 22.0
     hours_avail_couns = 22.0
     hours_avail_pwp = 21.0
@@ -124,18 +124,7 @@ class g:
     #print(referral_rate_lookup)
 # function to vary the number of sessions
 def vary_number_sessions(lower, upper, lambda_val=0.1):
-        """
-        Generates a single random number from an exponential distribution, truncated to a given range.
-        This is used to vary the number of sessions for step 3 
-
-        Parameters:
-            lower (float): Minimum value of the range.
-            upper (float): Maximum value of the range.
-            lambda_param (float): The rate parameter (1/mean) of the exponential distribution.
-
-        Returns:
-            float: A random number within the specified range.
-        """
+        
         while True:
             # Generate a random number from the exponential distribution
             random_value = np.random.exponential(1 / lambda_val)
@@ -254,13 +243,10 @@ class Model:
         self.step2_results_df['Week Number'] = [0]
         self.step2_results_df['Run Number'] = [0]
         self.step2_results_df['Route Name'] = ['NA'] # which Step2 pathway the patient was sent down
-        self.step2_results_df['PwP WL Posn'] = [0] # place in queue for PwP
-        self.step2_results_df['PwP Q Time'] = [0.0] # time spent queueing for PwP
-        self.step2_results_df['Group WL Posn'] = [0] # place in queue for Group
-        self.step2_results_df['Group Q Time'] = [0.0] # time spent queueing for Group
+        self.step2_results_df['Q Time'] = [0.0] # time spent queueing
+        self.step2_results_df['WL Posn'] = [0] # place in queue 
         self.step2_results_df['IsDropout'] = [0]
-        self.step2_results_df['Caseload'] = [0]
-        self.step2_results_df['IsStepUp'] = [0] # was the patent stepped down
+        self.step2_results_df['IsStep'] = [0] # was the patent stepped down
 
         self.step2_sessions_df['Patient ID'] = [1]
         self.step2_sessions_df['Week Number'] = [0]
@@ -284,14 +270,11 @@ class Model:
         self.step3_results_df['Patient ID'] = [1]
         self.step3_results_df['Week Number'] = [0]
         self.step3_results_df['Run Number'] = [0]
-        self.step3_results_df['Route Name'] = ['NA'] # which Step2 pathway the patient was sent down
-        self.step3_results_df['CBT WL Posn'] = [0] # place in queue for CBT
-        self.step3_results_df['CBT Q Time'] = [0.0] # time spent queueing for CBT
-        self.step3_results_df['Couns WL Posn'] = [0] # place in queue for Couns
-        self.step3_results_df['Couns Q Time'] = [0.0] # time spent queueing for Couns
+        self.step3_results_df['Route Name'] = ['NA'] # which Step3 pathway the patient was sent down
+        self.step3_results_df['WL Posn'] = [0] # place in queue
+        self.step3_results_df['Q Time'] = [0.0] # time spent queueing 
         self.step3_results_df['IsDropout'] = [0]
-        self.step3_results_df['Caseload'] = [0]
-        self.step3_results_df['IsStepDown'] = [0] # was the patent stepped down
+        self.step3_results_df['IsStep'] = [0] # was the patent stepped down
 
         self.step3_sessions_df['Patient ID'] = [1]
         self.step3_sessions_df['Week Number'] = [0]
@@ -490,114 +473,18 @@ class Model:
                 }
                 )
             
-            # ## Step2
-            # self.step2_route_list = ['PwP','Group']
-            # # create summary stats for each of the Step2 routes
-            # for i, route_name in enumerate(self.step2_route_list):
-            #     # filter data for appropriate route
-            #     self.step2_results_df_filtered = self.step2_results_df[
-            #                             self.step2_results_df["Step2 Route"]==route_name]
-            #     # filter data to remove default rows
-            #     # self.step2_results_df_filtered = self.step2_results_df_filtered[
-            #     #                         self.step2_results_df_filtered["Step2 Route"]!='NA']
-                
-            #     ## Step2
-            #     self.step2_route = route_name
-            #     if route_name == 'PwP':
-            #         self.step2_max_wl = g.number_on_pwp_wl
-            #     else:
-            #         self.step2_max_wl = g.number_on_group_wl
-            #     if route_name == 'PwP':
-            #         self.step2_avg_wait = self.step2_results_df_filtered["PwP Q Time"].mean()
-            #     else:
-            #         self.step2_avg_wait = self.step2_results_df_filtered["Group Q Time"].mean()
-            #     self.step2_tot_clin = self.step2_results_df_filtered['Session Time'].sum()
-            #     self.step2_tot_admin = self.step2_results_df_filtered['Admin Time'].sum()
-            #     self.step2_tot_sess = self.step2_results_df_filtered['Session Number'].count()
-            #     self.step2_tot_dna = self.step2_results_df_filtered['IsDNA'].sum()
-            #     self.step2_tot_dropout = self.step2_results_df_filtered['IsDropout'].sum()
-            #     self.step2_tot_complete = self.step2_results_df_filtered['IsDropout'
-            #                                 ].count()-self.step2_results_df_filtered[
-            #                                 'IsDropout'].sum()
-            #     if route_name == 'PwP':
-            #         self.step2_tot_caseload = g.number_on_pwp_cl
-            #     else:
-            #         self.step2_tot_caseload = g.number_on_group_cl
-            #     # weekly Step2 Activity
-            #     self.step2_weekly_stats.append(
-            #         {'Run Number': self.run_number,
-            #         'Route Name':self.step2_route,
-            #         'Week Number':self.stats_week_number,
-            #         'Step2 WL':self.step2_max_wl,
-            #         'Step2 Q Time':self.step2_avg_wait,
-            #         'Step2 Clin Mins':self.step2_tot_clin,
-            #         'Step2 Admin Mins':self.step2_tot_admin,
-            #         'Step2 Sessions':self.step2_tot_sess,
-            #         'Step2 DNAs':self.step2_tot_dna,
-            #         'Step2 Dropout':self.step2_tot_dropout,
-            #         'Step2 Complete':self.step2_tot_complete,
-            #         'Step2 Caseload':self.step2_tot_caseload
-            #         }
-            #         )
             
-            # ## Step3
-            # self.step3_route_list = ['CBT','Couns']
-            # # create summary stats for each of the Step3 routes
-            # for i, route_name in enumerate(self.step3_route_list):
-            #     # filter data for appropriate route
-            #     self.step3_results_df_filtered = self.step3_results_df[
-            #                             self.step3_results_df["Step3 Route"]==route_name]
-
-            #     # filter data to remove default rows
-            #     self.step3_results_df_filtered = self.step3_results_df_filtered[
-            #                             self.step3_results_df_filtered["Step3 Route"]!='NA']
-                
-            #     ## Step3
-            #     self.step3_route = route_name
-            #     if route_name == 'CBT':
-            #         self.step3_max_wl = g.number_on_cbt_wl
-            #     else:
-            #         self.step3_max_wl = g.number_on_couns_wl
-            #     if route_name == 'CBT':
-            #         self.step3_avg_wait = self.step3_results_df_filtered["CBT Q Time"].mean()
-            #     else:
-            #         self.step3_avg_wait = self.step3_results_df_filtered["Couns Q Time"].mean()
-            #     self.step3_tot_clin = self.step3_results_df_filtered['Session Time'].sum()
-            #     self.step3_tot_admin = self.step3_results_df_filtered['Admin Time'].sum()
-            #     self.step3_tot_sess = self.step3_results_df_filtered['Session Number'].count()
-            #     self.step3_tot_dna = self.step3_results_df_filtered['IsDNA'].sum()
-            #     self.step3_tot_dropout = self.step3_results_df_filtered['IsDropout'].sum()
-            #     self.step3_tot_complete = self.step3_results_df_filtered['IsDropout'
-            #                                 ].count()-self.step3_results_df_filtered[
-            #                                 'IsDropout'].sum()
-            #     if route_name == 'CBT':
-            #         self.step3_tot_caseload = g.number_on_cbt_cl
-            #     else:
-            #         self.step3_tot_caseload = g.number_on_couns_cl
-            #     # weekly Step3 Activity
-            #     self.step3_weekly_stats.append(
-            #         {'Run Number': self.run_number,
-            #         'Route Name':self.step3_route,
-            #         'Week Number':self.stats_week_number,
-            #         'Step3 WL':self.step3_max_wl,
-            #         'Step3 Q Time':self.step3_avg_wait,
-            #         'Step3 Clin Mins':self.step3_tot_clin,
-            #         'Step3 Admin Mins':self.step3_tot_admin,
-            #         'Step3 Sessions':self.step3_tot_sess,
-            #         'Step3 DNAs':self.step3_tot_dna,
-            #         'Step3 Dropout':self.step3_tot_dropout,
-            #         'Step3 Complete':self.step3_tot_complete,
-            #         'Step3 Caseload':self.step3_tot_caseload
-            #         }
-            #         )
             
             ## Staff
             self.job_role_list = ['PwP','CBT','Couns']
             # create summary stats for each of the job roles
             for i, job_role in enumerate(self.job_role_list):
-                # filter data for appropriate route
+                # filter data for appropriate role
                 self.staff_results_df_filtered = self.staff_results_df[
-                                        self.staff_results_df["Job Role"]==job_role]
+                (self.staff_results_df["Job Role"] == job_role) & 
+                (self.staff_results_df["Week Number"] == self.stats_week_number)
+                ]
+
             
                 self.job_role_name = job_role
                 
@@ -852,20 +739,23 @@ class Model:
 
         self.available_caseloads = {k: v for k, v in self.resources.items() if v.level > 0}
 
-        if self.available_caseloads:
-            # Randomly select from the non-empty resources
-            self.random_caseload_id = random.choice(list(self.available_caseloads.keys()))
-            self.selected_resource = self.available_caseloads[self.random_caseload_id]
+        # keep going as long as the simulation is still running
+        while self.env.now < g.sim_duration:
+            if self.available_caseloads:
+                # Randomly select from the non-empty resources
+                self.random_caseload_id = random.choice(list(self.available_caseloads.keys()))
+                self.selected_resource = self.available_caseloads[self.random_caseload_id]
 
-            if g.debug_level >= 2:
-                print(f'Resource {self.random_caseload_id} with a remaining caseload of {self.selected_resource.level} selected')
-            return self.random_caseload_id, self.selected_resource # Return the ID and the container if available
-            yield self.env.timeout(0)
-        else:
-            if g.debug_level >=2:
-                print("No available caseload with spaces available!")
-            return None, None
-            yield self.env.timeout(0)
+                if g.debug_level >= 2:
+                    print(f'Resource {self.random_caseload_id} with a remaining caseload of {self.selected_resource.level} selected')
+                return self.random_caseload_id, self.selected_resource # Return the ID and the container if available
+                yield self.env.timeout(0)
+            else:
+                if g.debug_level >=2:
+                    print("No available caseload with spaces available!")
+                return None, None
+            
+            yield self.env.timeout(1)
                      
     ###### generator for staff to record non-clinical activity #####
     def staff_entity_generator(self, week_number):
@@ -1277,7 +1167,7 @@ class Model:
         
         p.step2_path_route = self.selected_step2_pathway
 
-        self.step2_results_df.at[p.id, 'Step2 Route'
+        self.step2_results_df.at[p.id, 'Route Name'
                                             ] = p.step2_path_route
 
         # push the patient down the chosen step2 route
@@ -1330,7 +1220,7 @@ class Model:
 
         p.step3_path_route = self.selected_step3_pathway
 
-        self.step3_results_df.at[p.id, 'Step3 Route'
+        self.step3_results_df.at[p.id, 'Route Name'
                                             ] = p.step3_path_route
 
         # push the patient down the chosen step2 route
@@ -1362,10 +1252,10 @@ class Model:
         if g.debug_level >=2:
             print(f'{p.step2_path_route} RUNNER: Patient {p.id} added to {p.step2_path_route} waiting list')
 
-        start_q_pwp = self.env.now
+        self.start_q_pwp = self.env.now
 
         # Record where the patient is on the TA WL
-        self.step2_results_df.at[p.id, 'PwP WL Posn'] = \
+        self.step2_results_df.at[p.id, 'WL Posn'] = \
                                             g.number_on_pwp_wl
 
         if g.debug_level >=2:
@@ -1380,8 +1270,12 @@ class Model:
                     break  # Exit the loop when a resource is found
             else:
                 if g.debug_level >= 2:
-                    print("No available resource found, retrying...")
+                    print("No available resource found for PwP, retrying...")
             yield self.env.timeout(1)  # Wait a week and retry
+
+            if self.result == (None, None):
+                print(f"Stopping retry as no resources are available. Time: {self.env.now}")
+                return  # **Exit function entirely**
 
         with self.pwp_caseload_res.get(1) as self.pwp_req:
             yield self.pwp_req
@@ -1412,14 +1306,17 @@ class Model:
         if g.debug_level >= 2:
             print(f'FUNC PROCESS step2_pwp_process: Week {self.env.now}: Patient {p.id} (added week {p.week_added}) put through {p.step2_path_route}')
 
-        end_q_pwp = self.env.now
+        self.end_q_pwp = self.env.now
 
         p.step2_start_week = self.week_number
+       
+        self.q_time_pwp = self.end_q_pwp - self.start_q_pwp
 
-        # Calculate how long patient queued for TA
-        self.q_time_pwp = end_q_pwp - start_q_pwp
-        # Record how long patient queued for TA
-        self.asst_results_df.at[p.id, 'PwP Q Time'] = self.q_time_pwp
+        self.step2_results_df.at[p.id, 'Route Name'] = p.step2_path_route
+        self.step2_results_df.at[p.id, 'Run Number'] = self.run_number
+        self.step2_results_df.at[p.id, 'Week Number'] = self.week_number
+        # Calculate how long patient queued for PwP
+        self.step2_results_df.at[p.id, 'Q Time'] = self.q_time_pwp
 
         # Generate a list of week numbers the patient is going to attend
         self.pwp_random_weeks = random.sample(range(self.week_number+1, self.week_number+g.step2_pwp_period), g.step2_pwp_sessions)
@@ -1466,17 +1363,22 @@ class Model:
             # Determine if the patient is stepped up
             self.step_patient_up = random.uniform(0, 1)
             is_step_up = 1 if self.pwp_session_counter >= g.step2_pwp_sessions - 1 and self.step_patient_up <= g.step_up_rate else 0
+            if is_step_up == 1:
+                self.step2_results_df.at[p.id, 'IsStep'] = 1
+            else:
+                self.step2_results_df.at[p.id, 'IsStep'] = 0
             # Determine if the patient dropped out
             is_dropout = 1 if self.pwp_dna_counter >= self.dnas_allowed else 0
             if is_dropout == 1:
                 self.step2_results_df.at[p.id, 'IsDropOut'] = 1
-
+            else:
+                self.step2_results_df.at[p.id, 'IsDropOut'] = 0
             # Store session results as a dictionary
             new_row = {
                         'Patient ID': p.id,
                         'Week Number': p.step3_start_week + self.pwp_random_weeks[self.pwp_session_counter],
                         'Run Number': self.run_number,
-                        'Step2 Route': p.step2_path_route,
+                        'Route Name': p.step2_path_route,
                         'Session Number': self.pwp_session_counter,
                         'Session Time': session_time,
                         'Admin Time': admin_time,
@@ -1488,7 +1390,7 @@ class Model:
 
             # Handle step-up logic
             if is_step_up:
-                self.step2_results_df.at[p.id, 'IsStepUp'] = 1
+                self.step2_results_df.at[p.id, 'IsStep'] = 1
                 self.pwp_session_counter = 0
                 self.pwp_dna_counter = 0  # Reset counters for the next step
                 if g.debug_level >= 2:
@@ -1505,9 +1407,6 @@ class Model:
 
             # Move to the next session
             self.pwp_session_counter += 1
-
-        # # remove from this specific caseload
-        # self.pwp_caseload_posn -=1
 
         if self.pwp_dna_counter >= self.dnas_allowed:
 
@@ -1536,7 +1435,7 @@ class Model:
         self.group_dna_counter = 0
 
         # Record where the patient is on the TA WL
-        self.step2_results_df.at[p.id, 'Group WL Posn'] = \
+        self.step2_results_df.at[p.id, 'WL Posn'] = \
                                             g.number_on_group_wl
 
         # Request a Group resource from the container
@@ -1558,8 +1457,11 @@ class Model:
 
         # Calculate how long patient queued for groups
         self.q_time_group = self.end_q_group - self.start_q_group
-        # Record how long patient queued for groups
-        self.asst_results_df.at[p.id, 'Group Q Time'] = self.q_time_group
+        self.step2_results_df.at[p.id, 'Route Name'] = p.step2_path_route
+        self.step2_results_df.at[p.id, 'Run Number'] = self.run_number
+        self.step2_results_df.at[p.id, 'Week Number'] = self.week_number
+        # Calculate how long patient queued for PwP
+        self.step2_results_df.at[p.id, 'Q Time'] = self.q_time_pwp
 
          # Generate a list of week numbers the patient is going to attend
         self.group_random_weeks = random.sample(range(self.week_number+1, self.week_number+10), g.step2_group_sessions)
@@ -1605,18 +1507,24 @@ class Model:
 
             # Determine if the patient is stepped up
             self.step_patient_up = random.uniform(0, 1)
-            is_step_up = 1 if self.group_session_counter >= g.step2_group_sessions - 1 and self.step_patient_up <= g.step_up_rate else 0
+            is_step_up = 1 if self.group_session_counter >= g.step2_pwp_sessions - 1 and self.step_patient_up <= g.step_up_rate else 0
+            if is_step_up == 1:
+                self.step2_results_df.at[p.id, 'IsStep'] = 1
+            else:
+                self.step2_results_df.at[p.id, 'IsStep'] = 0
             # Determine if the patient dropped out
             is_dropout = 1 if self.group_dna_counter >= self.dnas_allowed else 0
             if is_dropout == 1:
                 self.step2_results_df.at[p.id, 'IsDropOut'] = 1
+            else:
+                self.step2_results_df.at[p.id, 'IsDropOut'] = 0
 
             # Store session results as a dictionary
             new_row = {
                         'Patient ID': p.id,
                         'Week Number': p.step3_start_week + self.group_random_weeks[self.group_session_counter],
                         'Run Number': self.run_number,
-                        'Step2 Route': p.step2_path_route,
+                        'Route Name': p.step2_path_route,
                         'Session Number': self.group_session_counter,
                         'Session Time': session_time,
                         'Admin Time': admin_time,
@@ -1628,7 +1536,7 @@ class Model:
 
             # Handle step-up logic
             if is_step_up:
-                self.step2_results_df.at[p.id, 'IsStepUp'] = 1
+                self.step2_results_df.at[p.id, 'IsStep'] = 1
                 self.group_session_counter = 0
                 self.group_dna_counter = 0  # Reset counters for the next step
                 if g.debug_level >= 2:
@@ -1670,7 +1578,7 @@ class Model:
         start_q_cbt = self.env.now
 
         # Record where the patient is on the cbt WL
-        self.step3_results_df.at[p.id, 'CBT WL Posn'] = \
+        self.step3_results_df.at[p.id, 'WL Posn'] = \
                                             g.number_on_cbt_wl
 
         # Check if there is a caseload slot available and return the resource
@@ -1683,23 +1591,19 @@ class Model:
                     break  # Exit the loop when a resource is found
             else:
                 if g.debug_level >= 2:
-                    print("No available resource found, retrying...")
+                    print("No available resource found for CBT, retrying...")
+
+            if self.result == (None, None):
+                print(f"Stopping retry as no resources are available. Time: {self.env.now}")
+                return  # **Exit function entirely**
 
             yield self.env.timeout(1)  # Wait a week and retry
-
-            # Wait before checking again to prevent excessive CPU usage
-            # yield self.env.timeout(0)  # Adjust the interval as needed
 
         # assign the caseload to the patient
         p.step3_resource_id = self.cbt_caseload_id
 
         if g.debug_level >=2:
             print(f'Resource {self.cbt_caseload_id} with a caseload remaining of {self.cbt_caseload_res.level} allocated to patient {p.id}')
-
-        # # create a variable to store the current level of the caseload for this resource
-        # self.pwp_caseload_posn = self.caseload_[f'{self.caseload_id}']
-        # # add to this specific caseload
-        # self.pwp_caseload_posn +=1
 
         if g.debug_level >=2:
             print(f'Patient {p.id} added to caseload {p.step3_resource_id}, {self.cbt_resources[p.step3_resource_id].level} spaces left')
@@ -1724,8 +1628,11 @@ class Model:
 
         # Calculate how long patient queued for CBT
         self.q_time_cbt = end_q_cbt - start_q_cbt
-        # Record how long patient queued for CBT
-        self.asst_results_df.at[p.id, 'CBT Q Time'] = self.q_time_cbt
+        self.step3_results_df.at[p.id, 'Route Name'] = p.step3_path_route
+        self.step3_results_df.at[p.id, 'Run Number'] = self.run_number
+        self.step3_results_df.at[p.id, 'Week Number'] = self.week_number
+        # Calculate how long patient queued for PwP
+        self.step3_results_df.at[p.id, 'Q Time'] = self.q_time_cbt
         
         # decide whether the DNA policy had been followed or not
         self.vary_dna_policy = random.uniform(0,1)
@@ -1785,18 +1692,25 @@ class Model:
                 admin_time = g.step3_session_admin
 
             # Determine if the patient is stepped up
-            self.step_patient_up = random.uniform(0, 1)
-            is_step_up = 1 if self.cbt_session_counter >= g.step3_cbt_sessions - 1 and self.step_patient_up <= g.step_up_rate else 0
-
+            self.step_patient_down = random.uniform(0, 1)
+            is_step_down = 1 if self.cbt_session_counter >= g.step3_cbt_sessions - 1 and self.step_patient_down <= g.step_down_rate else 0
+            if is_step_down == 1:
+                self.step3_results_df.at[p.id, 'IsStep'] = 1
+            else:
+                self.step3_results_df.at[p.id, 'IsStep'] = 0
             # Determine if the patient dropped out
             is_dropout = 1 if self.cbt_dna_counter >= self.dnas_allowed else 0
+            if is_dropout == 1:
+                self.step3_results_df.at[p.id, 'IsDropOut'] = 1
+            else:
+                self.step3_results_df.at[p.id, 'IsDropOut'] = 0
 
             # Store session results as a dictionary
             new_row = {
                         'Patient ID': p.id,
                         'Week Number': p.step3_start_week + self.cbt_random_weeks[self.cbt_session_counter],
                         'Run Number': self.run_number,
-                        'Step3 Route': p.step3_path_route,
+                        'Route Name': p.step3_path_route,
                         'Session Number': self.cbt_session_counter,
                         'Session Time': session_time,
                         'Admin Time': admin_time,
@@ -1807,8 +1721,8 @@ class Model:
             self.step3_sessions_df = pd.concat([self.step3_sessions_df, pd.DataFrame([new_row])], ignore_index=True)
 
             # Handle step-up logic
-            if is_step_up:
-                self.step2_results_df.at[p.id, 'IsStepUp'] = 1
+            if is_step_down:
+                self.step2_results_df.at[p.id, 'IsStep'] = 1
                 self.cbt_session_counter = 0
                 self.cbt_dna_counter = 0  # Reset counters for the next step
                 if g.debug_level >= 2:
@@ -1861,7 +1775,7 @@ class Model:
         start_q_couns = self.env.now
 
         # Record where the patient is on the couns WL
-        self.step3_results_df.at[p.id, 'Couns WL Posn'] = \
+        self.step3_results_df.at[p.id, 'WL Posn'] = \
                                             g.number_on_couns_wl
 
         # Check if there is a caseload slot available and return the resource
@@ -1874,20 +1788,13 @@ class Model:
                     break  # Exit the loop when a resource is found
             else:
                 if g.debug_level >= 2:
-                    print("No available resource found, retrying...")
+                    print("No available resource found for Couns, retrying...")
+
+            if self.result == (None, None):
+                print(f"Stopping retry as no resources are available. Time: {self.env.now}")
+                return  # **Exit function entirely**
 
             yield self.env.timeout(1)  # Wait a week and retry
-                
-        # # Check if there is a caseload slot available and return the resource
-        # self.result = yield self.env.process(self.find_caseload_slot(p.step3_path_route))
-
-        # # Safeguard unpacking: Ensure result is not None and has two elements
-        # if self.result:
-        #     self.couns_caseload_id, self.couns_caseload_res = self.result
-        # else:
-        #     # Handle the case where no resource was available (shouldn't happen as function keeps checking)
-        #     if g.debug_level >=2:
-        #         print("No available resource found!")
 
         with self.couns_caseload_res.get(1) as self.couns_req:
             yield self.couns_req
@@ -1926,8 +1833,11 @@ class Model:
 
         # Calculate how long patient queued for couns
         self.q_time_couns = end_q_couns - start_q_couns
-        # Record how long patient queued for couns
-        self.asst_results_df.at[p.id, 'Couns Q Time'] = self.q_time_couns
+        self.step3_results_df.at[p.id, 'Route Name'] = p.step3_path_route
+        self.step3_results_df.at[p.id, 'Run Number'] = self.run_number
+        self.step3_results_df.at[p.id, 'Week Number'] = self.week_number
+        # Calculate how long patient queued for PwP
+        self.step3_results_df.at[p.id, 'Q Time'] = self.q_time_couns
         
         # decide whether the DNA policy had been followed or not
         self.vary_dna_policy = random.uniform(0,1)
@@ -1994,18 +1904,25 @@ class Model:
                 admin_time = g.step3_session_admin
 
             # Determine if the patient is stepped up
-            self.step_patient_up = random.uniform(0, 1)
-            is_step_up = 1 if self.couns_session_counter >= g.step3_couns_sessions - 1 and self.step_patient_up <= g.step_up_rate else 0
-
+            self.step_patient_down = random.uniform(0, 1)
+            is_step_down = 1 if self.couns_session_counter >= g.step3_couns_sessions - 1 and self.step_patient_down <= g.step_down_rate else 0
+            if is_step_down == 1:
+                self.step3_results_df.at[p.id, 'IsStep'] = 1
+            else:
+                self.step3_results_df.at[p.id, 'IsStep'] = 0
             # Determine if the patient dropped out
             is_dropout = 1 if self.couns_dna_counter >= self.dnas_allowed else 0
+            if is_dropout == 1:
+                self.step3_results_df.at[p.id, 'IsDropOut'] = 1
+            else:
+                self.step3_results_df.at[p.id, 'IsDropOut'] = 0
 
             # Store session results as a dictionary
             new_row = {
                         'Patient ID': p.id,
                         'Week Number': p.step3_start_week + self.couns_random_weeks[self.couns_session_counter],
                         'Run Number': self.run_number,
-                        'Step3 Route': p.step3_path_route,
+                        'Route Name': p.step3_path_route,
                         'Session Number': self.couns_session_counter,
                         'Session Time': session_time,
                         'Admin Time': admin_time,
@@ -2016,8 +1933,8 @@ class Model:
             self.step3_sessions_df = pd.concat([self.step3_sessions_df, pd.DataFrame([new_row])], ignore_index=True)
 
             # Handle step-up logic
-            if is_step_up:
-                self.step2_results_df.at[p.id, 'IsStepUp'] = 1
+            if is_step_down:
+                self.step3_results_df.at[p.id, 'IsStep'] = 1
                 self.couns_session_counter = 0
                 self.couns_dna_counter = 0  # Reset counters for the next step
                 if g.debug_level >= 2:
@@ -2026,11 +1943,12 @@ class Model:
 
             # Handle dropout logic
             if is_dropout:
-                self.step2_results_df.at[p.id, 'IsDropOut'] = 1
+                self.step3_results_df.at[p.id, 'IsDropOut'] = 1
                 if g.debug_level >= 2:
                     print(f'Patient {p.id} dropped out of {p.step3_path_route} treatment')
                 p.step3_end_week = p.step3_start_week + self.couns_random_weeks[self.couns_session_counter]
                 break  # Stop the loop if patient drops out
+
 
             # Move to the next session
             self.couns_session_counter += 1
@@ -2145,7 +2063,7 @@ class Trial:
             my_model.step2_results_df = pd.DataFrame(my_model.step2_results_df)
             my_model.step2_sessions_df = pd.DataFrame(my_model.step2_sessions_df)
             my_model.step3_results_df = pd.DataFrame(my_model.step3_results_df)
-            my_model.step3_sessions_df = pd.DataFrame(my_model.step2_sessions_df)
+            my_model.step3_sessions_df = pd.DataFrame(my_model.step3_sessions_df)
 
             if run == 0:
                 self.step2_results_df = my_model.step2_results_df.copy()
@@ -2155,6 +2073,9 @@ class Trial:
             else:
                 self.step2_results_df = pd.concat([self.step2_results_df, my_model.step2_results_df])
                 self.step3_results_df = pd.concat([self.step3_results_df, my_model.step3_results_df])
+                self.step2_sessions_df = pd.concat([self.step2_sessions_df, my_model.step2_sessions_df])
+                self.step3_sessions_df = pd.concat([self.step3_sessions_df, my_model.step3_sessions_df])
+
 
             my_model.asst_weekly_stats = pd.DataFrame(my_model.asst_weekly_stats)
             my_model.step2_weekly_stats = pd.DataFrame(my_model.step2_weekly_stats)
@@ -2197,9 +2118,10 @@ if __name__ == "__main__":
     step2_results_df, step2_sessions_df, step3_results_df, step3_sessions_df, asst_weekly_dfs, staff_weekly_dfs, caseload_weekly_dfs  = my_trial.run_trial()
 
     # print(df_trial_results)
-    step2_sessions_df.to_csv("step2_sessions.csv", index=True)
-    step3_sessions_df.to_csv("step3_sessions.csv", index=True)
-
+    # step2_sessions_df.to_csv("step2_sessions.csv", index=True)
+    # step3_sessions_df.to_csv("step3_sessions.csv", index=True)
+    # step2_results_df.to_csv("step2_results.csv", index=True)
+    # caseload_weekly_dfs.to_csv("caseloads.csv", index=True)
     #step2_results_df, step3_results_df, df_trial_results, asst_weekly_dfs, step2_weekly_dfs, step3_weekly_dfs, staff_weekly_dfs, caseload_weekly_dfs  = my_trial.run_trial()
 
 #df_trial_results, print(asst_weekly_dfs.to_string()), print(step2_weekly_dfs.to_string()), print(step3_weekly_dfs.to_string()), staff_weekly_dfs, print(caseload_weekly_dfs.to_string())
