@@ -226,7 +226,7 @@ if button_run_pressed:
         my_trial = Trial()
         pd.set_option('display.max_rows', 1000)
         # Call the run_trial method of our Trial class object
-        step2_results_df, step2_sessions_df, step3_results_df, step3_sessions_df, asst_weekly_dfs, staff_weekly_dfs, caseload_weekly_dfs = my_trial.run_trial()
+        step2_results_df, step2_sessions_df, step3_results_df, step3_sessions_df, asst_weekly_dfs, step2_waiting_dfs, step3_waiting_dfs, staff_weekly_dfs, caseload_weekly_dfs = my_trial.run_trial()
         
 
         st.subheader(f'Summary of all {g.number_of_runs} Simulation Runs over {g.sim_duration}'
@@ -300,6 +300,8 @@ if button_run_pressed:
                                       'Admin Time','IsDNA']]
         
         # Define correct aggregation mapping based on the variable name
+        aggregated_sessions = {}
+        
         agg_mapping = {
             'Session Number': 'count',
             'Session Time': 'sum',
@@ -315,34 +317,54 @@ if button_run_pressed:
             'step3_couns_sessions_summary': step3_couns_sessions_summary
         }
 
-        aggregated_sessions = {}
+        
 
         for name, df in aggregated_sessions_dfs.items():
             # Melt the DataFrame
             melted_df = pd.melt(df, id_vars=['Run Number', 'Week Number'], var_name='variable', value_name='value')
-            
+            #st.write(melted_df)
             # Debug: Check melted output
             # print(f"Checking {name} melted_df:")
             # print(melted_df.head())
 
-            # Aggregating using the correct aggregation function based on variable
-            def agg_func(x):
-                # Get the correct aggregation function based on the variable
-                variable = x.name  # This refers to the 'variable' column name
-                if agg_mapping.get(variable) == 'sum':
-                    return x.sum()
-                elif agg_mapping.get(variable) == 'count':
-                    return x.count()
-                else:
-                    return x.sum()  # Default sum if not found in the mapping
-
             # Apply the aggregation function based on variable
-            aggregated_sessions_df = melted_df.groupby(['Run Number', 'Week Number', 'variable']).agg(
-                {'value': agg_func}
+            aggregated_sessions_df = melted_df.groupby(['Run Number', 'Week Number', 'variable'])['value'].agg(
+                lambda x: x.sum() if agg_mapping.get(x.name, 'sum') == 'sum' else x.count()
             ).reset_index()
 
             # Store the result
             aggregated_sessions[name] = aggregated_sessions_df
+        
+        # aggregated_sessions = {}
+
+        # # Aggregating using the correct aggregation function based on variable
+        # def agg_func(x):
+        #     # Get the correct aggregation function based on the variable
+        #     variable = x.name  # This refers to the 'variable' column name
+        #     if agg_mapping.get(variable) == 'sum':
+        #         return x.sum()
+        #     elif agg_mapping.get(variable) == 'count':
+        #         return x.count()
+        #     else:
+        #         return x.sum()  # Default sum if not found in the mapping
+
+        # for name, df in aggregated_sessions_dfs.items():
+        #     # Melt the DataFrame
+        #     melted_df = pd.melt(df, id_vars=['Run Number', 'Week Number'], var_name='variable', value_name='value')
+            
+        #     # Debug: Check melted output
+        #     # print(f"Checking {name} melted_df:")
+        #     # print(melted_df.head())
+
+            
+
+        #     # Apply the aggregation function based on variable
+        #     aggregated_sessions_df = melted_df.groupby(['Run Number', 'Week Number', 'variable']).agg(
+        #         {'value': agg_func}
+        #     ).reset_index()
+
+        #     # Store the result
+        #     aggregated_sessions[name] = aggregated_sessions_df
 
         ########## repeat above but for results dfs ##########
         # Define correct aggregation mapping based on the variable name
@@ -1434,6 +1456,10 @@ if button_run_pressed:
         ########## Job Plans ##########
         with tab4:
 
+            # st.write(cbt_sessions_weekly_summary)
+            # st.write(cbt_sessions_summary)
+            st.write(cbt_hours_weekly_summary)
+            #st.write(couns_sessions_weekly_summary)
             st.header('Job Plans')
 
             ##### PwP Practitioner #####
