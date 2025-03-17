@@ -16,7 +16,7 @@ st.set_page_config(layout="wide")
 
 @st.cache_data
 def load_referral_rates(): # thanks to Sammi Rosser :-)
-    return pd.read_csv("https://raw.githubusercontent.com/MightyAtom220474/IAPT-Pathway-DES/refs/heads/main/.streamlit/talking_therapies_referral_rates.csv")  # Ensure the file is in the app directory
+    return pd.read_csv("https://raw.githubusercontent.com/MightyAtom220474/IAPT-Pathway-DES/refs/heads/main/.streamlit/talking_therapies_referral_rates.csv",index_col=0)  # Ensure the file is in the app directory
 
 st.write(load_referral_rates())
 
