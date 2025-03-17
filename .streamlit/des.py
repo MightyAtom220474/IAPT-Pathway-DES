@@ -15,7 +15,7 @@ from iapt_classes import g, Trial
 st.set_page_config(layout="wide")
 
 @st.cache_data
-def load_referral_rates():
+def load_referral_rates(): # thanks to Sammi Rosser :-)
     return pd.read_csv("https://raw.githubusercontent.com/MightyAtom220474/IAPT-Pathway-DES/refs/heads/main/.streamlit/talking_therapies_referral_rates.csv")  # Ensure the file is in the app directory
 
 #st.logo("https://lancsvp.org.uk/wp-content/uploads/2021/08/nhs-logo-300x189.png")
