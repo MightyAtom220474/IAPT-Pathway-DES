@@ -119,6 +119,7 @@ class g:
     number_on_couns_cl = 0 # used to keep track of Couns caseload
 
     # bring in past referral data
+    
     referral_rate_lookup = pd.read_csv('talking_therapies_referral_rates.csv'
                                                                 ,index_col=0)
     #print(referral_rate_lookup)
