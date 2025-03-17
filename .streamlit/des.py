@@ -18,7 +18,7 @@ st.set_page_config(layout="wide")
 def load_referral_rates(): # thanks to Sammi Rosser :-)
     return pd.read_csv("https://raw.githubusercontent.com/MightyAtom220474/IAPT-Pathway-DES/refs/heads/main/.streamlit/talking_therapies_referral_rates.csv",index_col=0)  # Ensure the file is in the app directory
 
-st.write(load_referral_rates())
+#st.write(load_referral_rates())
 
 #st.logo("https://lancsvp.org.uk/wp-content/uploads/2021/08/nhs-logo-300x189.png")
 
@@ -1436,7 +1436,7 @@ if button_run_pressed:
 
             # st.write(cbt_sessions_weekly_summary)
             # st.write(cbt_sessions_summary)
-            st.write(cbt_hours_weekly_summary)
+            # st.write(cbt_hours_weekly_summary)
             #st.write(couns_sessions_weekly_summary)
             st.header('Job Plans')
 
