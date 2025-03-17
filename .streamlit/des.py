@@ -12,9 +12,9 @@ from iapt_classes import g, Trial
 
 ########## Streamlit App ##########
 
-uploaded_file = st.file_uploader("talking_therapies_referral_rates.csv", type="csv")
-
 st.set_page_config(layout="wide")
+
+uploaded_file = st.file_uploader("talking_therapies_referral_rates.csv", type="csv")
 
 #  # bring in past referral data
 #     referral_rate_lookup = pd.read_csv('talking_therapies_referral_rates.csv'
