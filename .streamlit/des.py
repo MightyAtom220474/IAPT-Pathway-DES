@@ -16,18 +16,9 @@ st.set_page_config(layout="wide")
 
 @st.cache_data
 def load_referral_rates():
-    return pd.read_csv("talking_therapies_referral_rates.csv")  # Ensure the file is in the app directory
+    return pd.read_csv("https://raw.githubusercontent.com/MightyAtom220474/IAPT-Pathway-DES/refs/heads/main/.streamlit/talking_therapies_referral_rates.csv")  # Ensure the file is in the app directory
 
-# Load automatically
-g.referral_rate_lookup = load_referral_rates()
-
-#uploaded_file = st.file_uploader("talking_therapies_referral_rates.csv", type="csv")
-
-#  # bring in past referral data
-#     referral_rate_lookup = pd.read_csv('talking_therapies_referral_rates.csv'
-#                                                                 ,index_col=0)
-
-st.logo("https://lancsvp.org.uk/wp-content/uploads/2021/08/nhs-logo-300x189.png")
+#st.logo("https://lancsvp.org.uk/wp-content/uploads/2021/08/nhs-logo-300x189.png")
 
 # Import custom css for using a Google font
 # with open("style.css") as css:
@@ -177,10 +168,8 @@ with st.sidebar:
         number_of_runs_input = st.slider("Number of Simulation Runs", 1, 20, 2)
         #st.toggle(label='Test Run?', value=False)
 
-# if uploaded_file is not None:
-#     g.referral_rate_lookup = pd.read_csv(uploaded_file)
+g.referral_rate_lookup = load_referral_rates()
 
-#g.referral_rate_lookup = uploaded_file
 ##### Screening
 g.mean_referrals_pw = referral_input
 #g.base_waiting_list = 2741
@@ -352,38 +341,7 @@ if button_run_pressed:
 
             # Store the result
             aggregated_sessions[name] = aggregated_sessions_df
-        
-        # aggregated_sessions = {}
-
-        # # Aggregating using the correct aggregation function based on variable
-        # def agg_func(x):
-        #     # Get the correct aggregation function based on the variable
-        #     variable = x.name  # This refers to the 'variable' column name
-        #     if agg_mapping.get(variable) == 'sum':
-        #         return x.sum()
-        #     elif agg_mapping.get(variable) == 'count':
-        #         return x.count()
-        #     else:
-        #         return x.sum()  # Default sum if not found in the mapping
-
-        # for name, df in aggregated_sessions_dfs.items():
-        #     # Melt the DataFrame
-        #     melted_df = pd.melt(df, id_vars=['Run Number', 'Week Number'], var_name='variable', value_name='value')
-            
-        #     # Debug: Check melted output
-        #     # print(f"Checking {name} melted_df:")
-        #     # print(melted_df.head())
-
-            
-
-        #     # Apply the aggregation function based on variable
-        #     aggregated_sessions_df = melted_df.groupby(['Run Number', 'Week Number', 'variable']).agg(
-        #         {'value': agg_func}
-        #     ).reset_index()
-
-        #     # Store the result
-        #     aggregated_sessions[name] = aggregated_sessions_df
-
+ 
         ########## repeat above but for results dfs ##########
         # Define correct aggregation mapping based on the variable name
         agg_mapping = {

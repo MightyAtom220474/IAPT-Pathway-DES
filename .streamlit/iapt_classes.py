@@ -120,8 +120,8 @@ class g:
 
     # bring in past referral data
     
-    # referral_rate_lookup = pd.read_csv('talking_therapies_referral_rates.csv'
-    #                                                            ,index_col=0)
+    referral_rate_lookup = pd.read_csv('talking_therapies_referral_rates.csv'
+                                                               ,index_col=0)
     #print(referral_rate_lookup)
 # function to vary the number of sessions
 def vary_number_sessions(lower, upper, lambda_val=0.1):
@@ -431,13 +431,14 @@ class Model:
             if g.debug_level >= 2:
                     print(f"Weekly Stats have been collected")
 
-            
-
+        
             # increment the week number by one now everything has been run for this week
             self.week_number += 1
 
-            if g.debug_level >= 2:
+            if g.debug_level >= 2 and self.week_number<g.sim_duration:
                     print(f"Week {self.week_number-1} complete, moving on to Week {self.week_number}")
+            elif g.debug_level >= 2 and self.week_number == g.sim_duration-1:
+                print(f"Week {self.week_number-1} complete, simulation has now finished")
 
             # wait a week before moving onto the next week
             yield self.env.timeout(1)
