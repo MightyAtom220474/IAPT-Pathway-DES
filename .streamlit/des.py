@@ -170,6 +170,8 @@ with st.sidebar:
         number_of_runs_input = st.slider("Number of Simulation Runs", 1, 20, 2)
         #st.toggle(label='Test Run?', value=False)
 
+
+g.referral_rate_lookup = uploaded_file
 ##### Screening
 g.mean_referrals_pw = referral_input
 #g.base_waiting_list = 2741
