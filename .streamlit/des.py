@@ -177,8 +177,8 @@ with st.sidebar:
         number_of_runs_input = st.slider("Number of Simulation Runs", 1, 20, 2)
         #st.toggle(label='Test Run?', value=False)
 
-if uploaded_file is not None:
-    g.referral_rate_lookup = pd.read_csv(uploaded_file)
+# if uploaded_file is not None:
+#     g.referral_rate_lookup = pd.read_csv(uploaded_file)
 
 #g.referral_rate_lookup = uploaded_file
 ##### Screening
