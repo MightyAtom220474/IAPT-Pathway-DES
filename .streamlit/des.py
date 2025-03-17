@@ -11,7 +11,13 @@ from iapt_classes import g, Trial
 #from app_style import global_page_style
 
 ########## Streamlit App ##########
+
+uploaded_file = st.file_uploader("talking_therapies_referral_rates.csv", type="csv")
 st.set_page_config(layout="wide")
+
+#  # bring in past referral data
+#     referral_rate_lookup = pd.read_csv('talking_therapies_referral_rates.csv'
+#                                                                 ,index_col=0)
 
 st.logo("https://lancsvp.org.uk/wp-content/uploads/2021/08/nhs-logo-300x189.png")
 
