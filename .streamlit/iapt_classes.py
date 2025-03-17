@@ -118,9 +118,9 @@ class g:
     number_on_cbt_cl = 0 # used to keep track of CBT caseload
     number_on_couns_cl = 0 # used to keep track of Couns caseload
 
-    # # bring in past referral data
-    # referral_rate_lookup = pd.read_csv('talking_therapies_referral_rates.csv'
-    #                                                             ,index_col=0)
+    # bring in past referral data
+    referral_rate_lookup = pd.read_csv('talking_therapies_referral_rates.csv'
+                                                                ,index_col=0)
     #print(referral_rate_lookup)
 # function to vary the number of sessions
 def vary_number_sessions(lower, upper, lambda_val=0.1):
