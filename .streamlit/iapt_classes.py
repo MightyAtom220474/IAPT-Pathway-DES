@@ -626,19 +626,20 @@ class Model:
     ##### generator function that represents the DES generator for referrals
     def generator_patient_referrals(self,ref_week_number):
 
-        self.ref_week_number = ref_week_number
+        while ref_week_number < g.sim_duration:
+            self.ref_week_number = ref_week_number
 
-        # get the number of referrals that week based on the mean + seasonal variance
-        self.referrals_this_week = round(g.mean_referrals_pw +
-                                    (g.mean_referrals_pw *
-                                    g.referral_rate_lookup.at[
-                                    self.ref_week_number+1,'PCVar'])) # weeks start at 1
+            # get the number of referrals that week based on the mean + seasonal variance
+            self.referrals_this_week = round(g.mean_referrals_pw +
+                                        (g.mean_referrals_pw *
+                                        g.referral_rate_lookup.at[
+                                        self.ref_week_number+1,'PCVar'])) # weeks start at 1
 
-        if g.debug_level >= 1:
-            print(f'Week {self.week_number}: {self.referrals_this_week}'
-                                                    ' referrals generated')
-        
-        yield self.env.timeout(0)   
+            if g.debug_level >= 1:
+                print(f'Week {self.week_number}: {self.referrals_this_week}'
+                                                        ' referrals generated')
+            
+            yield self.env.timeout(0)   
         
     # this function builds staff resources containing the number of slots on the caseload
     # or the number of weekly appointment slots available
