@@ -14,7 +14,14 @@ from iapt_classes import g, Trial
 
 st.set_page_config(layout="wide")
 
-uploaded_file = st.file_uploader("talking_therapies_referral_rates.csv", type="csv")
+@st.cache_data
+def load_referral_rates():
+    return pd.read_csv("talking_therapies_referral_rates.csv")  # Ensure the file is in the app directory
+
+# Load automatically
+g.referral_rate_lookup = load_referral_rates()
+
+#uploaded_file = st.file_uploader("talking_therapies_referral_rates.csv", type="csv")
 
 #  # bring in past referral data
 #     referral_rate_lookup = pd.read_csv('talking_therapies_referral_rates.csv'
