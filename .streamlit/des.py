@@ -13,6 +13,7 @@ from iapt_classes import g, Trial
 ########## Streamlit App ##########
 
 uploaded_file = st.file_uploader("talking_therapies_referral_rates.csv", type="csv")
+
 st.set_page_config(layout="wide")
 
 #  # bring in past referral data
