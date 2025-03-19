@@ -244,34 +244,23 @@ if button_run_pressed:
                       f'{pwp_add_input} additional PwP Practitioners')
         
         ##### get all data structured correctly #####
-                
-        # turn asst values from running total to weekly total
-        #asst_weekly_dfs['Referrals Recvd'] = (asst_weekly_dfs['Referrals Received']-asst_weekly_dfs['Referrals Received'].shift(1))
-        asst_weekly_dfs['Referral Screen Hrs'] = (asst_weekly_dfs['Referral Screen Mins']-asst_weekly_dfs['Referral Screen Mins'].shift(1))/60
-        asst_weekly_dfs['Rejected Referrals'] = (asst_weekly_dfs['Referrals Rejected']-asst_weekly_dfs['Referrals Rejected'].shift(1))
-        asst_weekly_dfs['Referral Reviews'] = asst_weekly_dfs['Referrals Reviewed']#-asst_weekly_dfs['Referrals Reviewed'].shift(1))
-        asst_weekly_dfs['Reviewed Rejected'] = asst_weekly_dfs['Reviews Rejected']#-asst_weekly_dfs['Reviews Rejected'].shift(1))
-        asst_weekly_dfs['Optin Total'] = (asst_weekly_dfs['Referrals Opted-in']-asst_weekly_dfs['Referrals Opted-in'].shift(1))
-        #asst_weekly_dfs['TA Waiting List'] = (asst_weekly_dfs['TA Waiting List']-asst_weekly_dfs['TA Waiting List'].shift(1))
-        asst_weekly_dfs['TA Accept'] = (asst_weekly_dfs['TA Total Accept']-asst_weekly_dfs['TA Total Accept'].shift(1))
-        asst_weekly_dfs['TA Hrs'] = (asst_weekly_dfs['TA Mins']-asst_weekly_dfs['TA Mins'].shift(1))/60
-
-        # get rid of negative values
-        num = asst_weekly_dfs._get_numeric_data()
-
-        num[num < 0] = 0
-
-        asst_weekly_dfs['Accepted Referrals'] = asst_weekly_dfs['Referrals Received']-asst_weekly_dfs['Rejected Referrals']
+              
+        asst_weekly_dfs['Referral Screen Hrs'] = asst_weekly_dfs['Referral Screen Mins']/60
+        asst_weekly_dfs['TA Hrs'] = asst_weekly_dfs['TA Mins']/60
+        asst_weekly_dfs['Accepted Referrals'] = asst_weekly_dfs['Referrals Received']-asst_weekly_dfs['Referrals Rejected']
         
         # filter dataframe to just return columns needed
-        asst_weekly_summary = asst_weekly_dfs[['Run Number','Week Number','Referrals Received','Referral Screen Hrs','Accepted Referrals','Rejected Referrals','Referral Reviews','Reviewed Rejected','Optin Total','TA Waiting List','TA Avg Wait','TA Accept','TA Hrs']]
+        asst_weekly_summary = asst_weekly_dfs[['Run Number','Week Number','Referrals Received','Referral Screen Hrs','Accepted Referrals','Referrals Rejected','Referrals Reviewed','Reviews Rejected','Referrals Opted-in','TA Waiting List','TA Avg Wait','TA Total Accept','TA Hrs']]
                
         asst_weekly_summary = asst_weekly_summary[asst_weekly_summary["Week Number"] != 0]
                               
         step2_pwp_results_summary = step2_results_df.loc[step2_results_df[
-                'Route Name'] == 'PwP', ['Run Number', 'Week Number', 
-                                      'WL Posn','Q Time',
-                                      'IsStep','IsDropout']]
+                'Route Name'] == 'PwP',['Run Number', 'Week Number', 
+                                        'IsStep','IsDropout']]
+        
+        step2_pwp_waiting_summary = step2_waiting_dfs.loc[step2_waiting_dfs[
+                'Route Name'] == 'PwP',['Run Number', 'Week Number', 
+                                      'Num Waiting','Avg Wait']]
 
         step2_pwp_sessions_summary = step2_sessions_df.loc[step2_sessions_df[
                 'Route Name'] == 'PwP', ['Run Number', 'Week Number', 
@@ -279,9 +268,12 @@ if button_run_pressed:
                                       'Admin Time','IsDNA']]
         
         step2_group_results_summary = step2_results_df.loc[step2_results_df[
-                'Route Name'] == 'Group', ['Run Number', 'Week Number', 
-                                      'WL Posn','Q Time',
-                                      'IsStep','IsDropout']]
+                'Route Name'] == 'Group',['Run Number', 'Week Number', 
+                                        'IsStep','IsDropout']]
+        
+        step2_group_waiting_summary = step2_waiting_dfs.loc[step2_waiting_dfs[
+                'Route Name'] == 'Group',['Run Number', 'Week Number', 
+                                      'Num Waiting','Avg Wait']]
         
         step2_group_sessions_summary = step2_sessions_df.loc[step2_sessions_df[
                 'Route Name'] == 'Group', ['Run Number', 'Week Number', 
@@ -290,8 +282,11 @@ if button_run_pressed:
         
         step3_cbt_results_summary = step3_results_df.loc[step3_results_df[
                 'Route Name'] == 'CBT', ['Run Number', 'Week Number', 
-                                      'WL Posn','Q Time',
                                       'IsStep','IsDropout']]
+        
+        step3_cbt_waiting_summary = step3_waiting_dfs.loc[step3_waiting_dfs[
+                'Route Name'] == 'CBT',['Run Number', 'Week Number', 
+                                      'Num Waiting','Avg Wait']]
         
         step3_cbt_sessions_summary = step3_sessions_df.loc[step3_sessions_df[
                 'Route Name'] == 'CBT', ['Run Number', 'Week Number', 
@@ -302,6 +297,10 @@ if button_run_pressed:
                 'Route Name'] == 'Couns', ['Run Number', 'Week Number', 
                                       'WL Posn','Q Time',
                                       'IsStep','IsDropout']]
+        
+        step3_couns_waiting_summary = step3_waiting_dfs.loc[step3_waiting_dfs[
+                'Route Name'] == 'Couns',['Run Number', 'Week Number', 
+                                      'Num Waiting','Avg Wait']]
         
         step3_couns_sessions_summary = step3_sessions_df.loc[step3_sessions_df[
                 'Route Name'] == 'Couns', ['Run Number', 'Week Number', 
@@ -326,8 +325,6 @@ if button_run_pressed:
             'step3_couns_sessions_summary': step3_couns_sessions_summary
         }
 
-        
-
         for name, df in aggregated_sessions_dfs.items():
             # Melt the DataFrame
             melted_df = pd.melt(df, id_vars=['Run Number', 'Week Number'], var_name='variable', value_name='value')
@@ -347,8 +344,6 @@ if button_run_pressed:
         ########## repeat above but for results dfs ##########
         # Define correct aggregation mapping based on the variable name
         agg_mapping = {
-            'WL Posn': 'max',
-            'Q Time': 'mean',
             'IsStep': 'sum',
             'IsDropout': 'sum'
         }
@@ -390,6 +385,50 @@ if button_run_pressed:
             # Store the result
             aggregated_results[name] = aggregated_results_df
 
+        ########## repeat above but for waiting dfs ##########
+        # Define correct aggregation mapping based on the variable name
+        agg_mapping = {
+            'Num Waiting': 'max',
+            'Avg Wait': 'mean'
+        }
+
+        # Dictionary of DataFrames to process
+        aggregated_waiting_dfs = {
+            'step2_pwp_waiting_summary': step2_pwp_waiting_summary,
+            'step2_group_waiting_summary': step2_group_waiting_summary,
+            'step3_cbt_waiting_summary': step3_cbt_waiting_summary,
+            'step3_couns_waiting_summary': step3_couns_waiting_summary
+        }
+
+        aggregated_waiting = {}
+
+        for name, df in aggregated_waiting_dfs.items():
+            # Melt the DataFrame
+            melted_df = pd.melt(df, id_vars=['Run Number', 'Week Number'], var_name='variable', value_name='value')
+            
+            # Debug: Check melted output
+            # print(f"Checking {name} melted_df:")
+            # print(melted_df.head())
+
+            # Aggregating using the correct aggregation function based on variable
+            def agg_func(x):
+                # Get the correct aggregation function based on the variable
+                variable = x.name  # This refers to the 'variable' column name
+                if agg_mapping.get(variable) == 'mean':
+                    return x.mean()
+                elif agg_mapping.get(variable) == 'max':
+                    return x.max()
+                else:
+                    return x.sum()  # Default sum if not found in the mapping
+
+            # Apply the aggregation function based on variable
+            aggregated_waiting_df = melted_df.groupby(['Run Number', 'Week Number', 'variable']).agg(
+                {'value': agg_func}
+            ).reset_index()
+
+            # Store the result
+            aggregated_waiting[name] = aggregated_waiting_df
+
         # Extract final DataFrames
 
         pwp_sessions_summary = aggregated_sessions['step2_pwp_sessions_summary']
@@ -401,12 +440,17 @@ if button_run_pressed:
         group_results_summary = aggregated_results['step2_group_results_summary']
         cbt_results_summary = aggregated_results['step3_cbt_results_summary']
         couns_results_summary = aggregated_results['step3_couns_results_summary']
+
+        pwp_waiting_summary = aggregated_waiting['step2_pwp_waiting_summary']
+        group_waiting_summary = aggregated_waiting['step2_group_waiting_summary']
+        cbt_waiting_summary = aggregated_waiting['step3_cbt_waiting_summary']
+        couns_waiting_summary = aggregated_waiting['step3_couns_waiting_summary']
  
         ##### merge results and sessions #####
-        pwp_combined_summary = pd.concat([pwp_sessions_summary,pwp_results_summary], ignore_index=True)
-        group_combined_summary = pd.concat([group_sessions_summary,group_results_summary], ignore_index=True)
-        cbt_combined_summary = pd.concat([cbt_sessions_summary,cbt_results_summary], ignore_index=True)
-        couns_combined_summary = pd.concat([couns_sessions_summary,couns_results_summary], ignore_index=True)
+        pwp_combined_summary = pd.concat([pwp_sessions_summary,pwp_results_summary,pwp_waiting_summary], ignore_index=True)
+        group_combined_summary = pd.concat([group_sessions_summary,group_results_summary,group_waiting_summary], ignore_index=True)
+        cbt_combined_summary = pd.concat([cbt_sessions_summary,cbt_results_summary,cbt_waiting_summary], ignore_index=True)
+        couns_combined_summary = pd.concat([couns_sessions_summary,couns_results_summary,couns_waiting_summary], ignore_index=True)
         # get rid of any sessions recorded beyond the simulation period
         pwp_combined_summary = pwp_combined_summary[pwp_combined_summary["Week Number"] <= sim_duration_input]
         group_combined_summary = group_combined_summary[group_combined_summary["Week Number"] <= sim_duration_input]
@@ -555,19 +599,19 @@ if button_run_pressed:
         
         ## Structure data for plotting in dashboard ##
         ########## Referrals & Assessments ##########
-
+        
         asst_referrals_col1_unpivot = pd.melt(asst_weekly_summary, value_vars=['Referrals Received',
                                                                  'TA Avg Wait'],
                                                                  id_vars=['Run Number',
                                                                 'Week Number'])
         
-        asst_referrals_col2_unpivot = pd.melt(asst_weekly_summary, value_vars=['Rejected Referrals',
+        asst_referrals_col2_unpivot = pd.melt(asst_weekly_summary, value_vars=['Referrals Rejected',
                                                                  'TA Waiting List'],
                                                                  id_vars=['Run Number',
                                                                 'Week Number'])
         
         asst_referrals_col3_unpivot = pd.melt(asst_weekly_summary, value_vars=['Accepted Referrals',
-                                                                 'TA Accept'],
+                                                                 'TA Total Accept'],
                                                                  id_vars=['Run Number',
                                                                 'Week Number'])
         ###########################
@@ -584,7 +628,7 @@ if button_run_pressed:
 
             with col1:
             
-                for i, list_name in enumerate(asst_referrals_col1_unpivot['variable']
+                for a, list_name in enumerate(asst_referrals_col1_unpivot['variable']
                                             .unique()):
 
                     if list_name == 'Referrals Received':
@@ -602,7 +646,7 @@ if button_run_pressed:
                     asst_referrals_col1_filtered = asst_referrals_col1_unpivot[
                                         asst_referrals_col1_unpivot["variable"]==list_name]
                     
-                    fig = px.line(
+                    fig_asst_1 = px.line(
                                 asst_referrals_col1_filtered,
                                 x="Week Number",
                                 color="Run Number",
@@ -616,21 +660,21 @@ if button_run_pressed:
                                 title=f'{list_name} by Week'
                                 )
                     
-                    fig.update_traces(line=dict(dash='dot'))
+                    fig_asst_1.update_traces(line=dict(dash='dot'))
                     
                     # get the average waiting list across all the runs
                     weekly_avg_col1 = asst_referrals_col1_filtered.groupby(['Week Number',
                                                     'variable'])['value'].mean(
                                                     ).reset_index()
                     
-                    fig.add_trace(
+                    fig_asst_1.add_trace(
                                 go.Scatter(x=weekly_avg_col1["Week Number"],
                                         y=weekly_avg_col1["value"], name='Average',
                                         line=dict(width=3,color='blue')))
         
                     
                     # get rid of 'variable' prefix resulting from df.melt
-                    fig.for_each_annotation(lambda a: a.update(text=a.text.split
+                    fig_asst_1.for_each_annotation(lambda a: a.update(text=a.text.split
                                                             ("=")[1]))
                     #fig.for_each_trace(lambda t: t.update(name=t.name.split("=")[1]))
 
@@ -638,16 +682,16 @@ if button_run_pressed:
                     #     title=dict(text=f'ADHD {'variable'} Waiting Lists by Week, 
                     #               font=dict(size=20), automargin=True, yref='paper')
                     #     ))
-                    fig.update_layout(title_x=0.3,font=dict(size=10))
+                    fig_asst_1.update_layout(title_x=0.3,font=dict(size=10))
                     #fig.
 
-                    st.plotly_chart(fig, use_container_width=True)
+                    st.plotly_chart(fig_asst_1, key=f"chart_{list_name}_{a}", use_container_width=True)
 
                     st.divider()
 
             with col2:
                            
-                for i, list_name in enumerate(asst_referrals_col2_unpivot['variable']
+                for b, list_name in enumerate(asst_referrals_col2_unpivot['variable']
                                             .unique()):
 
                     asst_referrals_col2_filtered = asst_referrals_col2_unpivot[
@@ -660,7 +704,7 @@ if button_run_pressed:
                     
                     st.subheader('') 
 
-                    fig = px.line(
+                    fig_asst_2 = px.line(
                                 asst_referrals_col2_filtered,
                                 x="Week Number",
                                 color="Run Number",
@@ -676,21 +720,21 @@ if button_run_pressed:
                                     title=f'{list_name} by Week'
                                     )
                         
-                    fig.update_traces(line=dict(dash='dot'))
+                    fig_asst_2.update_traces(line=dict(dash='dot'))
                     
                     # get the average waiting list across all the runs
                     weekly_avg_col2 = asst_referrals_col2_filtered.groupby(['Week Number',
                                                     'variable'])['value'].mean(
                                                     ).reset_index()
                     
-                    fig.add_trace(
+                    fig_asst_2.add_trace(
                                 go.Scatter(x=weekly_avg_col2["Week Number"],
                                         y=weekly_avg_col2["value"], name='Average',
                                         line=dict(width=3,color='blue')))
         
                     
                     # get rid of 'variable' prefix resulting from df.melt
-                    fig.for_each_annotation(lambda a: a.update(text=a.text.split
+                    fig_asst_2.for_each_annotation(lambda a: a.update(text=a.text.split
                                                             ("=")[1]))
                     #fig.for_each_trace(lambda t: t.update(name=t.name.split("=")[1]))
 
@@ -698,10 +742,10 @@ if button_run_pressed:
                     #     title=dict(text=f'ADHD {'variable'} Waiting Lists by Week, 
                     #               font=dict(size=20), automargin=True, yref='paper')
                     #     ))
-                    fig.update_layout(title_x=0.3,font=dict(size=10))
+                    fig_asst_2.update_layout(title_x=0.3,font=dict(size=10))
                     #fig.
 
-                    st.plotly_chart(fig, use_container_width=True)
+                    st.plotly_chart(fig_asst_2, key=f"chart_{list_name}_{b}", use_container_width=True)
 
                     st.divider()
 
@@ -720,7 +764,7 @@ if button_run_pressed:
 
                 st.subheader('') 
                 
-                fig = px.line(
+                fig_asst_3 = px.line(
                             asst_referrals_col3_filtered,
                             x="Week Number",
                             color="Run Number",
@@ -736,21 +780,21 @@ if button_run_pressed:
                                 title=f'{list_name} by Week'
                                 )
                     
-                fig.update_traces(line=dict(dash='dot'))
+                fig_asst_3.update_traces(line=dict(dash='dot'))
                 
                 # get the average waiting list across all the runs
                 weekly_avg_col3 = asst_referrals_col3_filtered.groupby(['Week Number',
                                                 'variable'])['value'].mean(
                                                 ).reset_index()
                 
-                fig.add_trace(
+                fig_asst_3.add_trace(
                             go.Scatter(x=weekly_avg_col3["Week Number"],
                                     y=weekly_avg_col3["value"], name='Average',
                                     line=dict(width=3,color='blue')))
     
                 
                 # get rid of 'variable' prefix resulting from df.melt
-                fig.for_each_annotation(lambda a: a.update(text=a.text.split
+                fig_asst_3.for_each_annotation(lambda a: a.update(text=a.text.split
                                                         ("=")[1]))
                 #fig.for_each_trace(lambda t: t.update(name=t.name.split("=")[1]))
 
@@ -758,16 +802,16 @@ if button_run_pressed:
                 #     title=dict(text=f'ADHD {'variable'} Waiting Lists by Week, 
                 #               font=dict(size=20), automargin=True, yref='paper')
                 #     ))
-                fig.update_layout(title_x=0.3,font=dict(size=10))
+                fig_asst_3.update_layout(title_x=0.3,font=dict(size=10))
                 #fig.
 
-                st.plotly_chart(fig, use_container_width=True)
+                st.plotly_chart(fig_asst_3, key=f"chart_{list_name}_{a}",use_container_width=True)
 
                 st.divider()
 
         # ########## Step2 Tab ##########
 
-        ########## CBT ##########
+        ########## PwP ##########
         with tab2:
 
             st.header('Step 2')
@@ -778,17 +822,17 @@ if button_run_pressed:
 
                 st.subheader('Psychological Wellbeing Practitioner - 1:1')
             
-                for i, list_name in enumerate(pwp_combined_summary['variable']
+                for c, list_name in enumerate(pwp_combined_summary['variable']
                                             .unique()):
                   
                     if list_name == 'Session Number':
                         section_title = 'Sessions'
-                    elif list_name == 'WL Posn':
+                    elif list_name == 'Num Waiting':
                         section_title = 'Waiting List'
 
                     if list_name == 'Session Number':
                         axis_title = 'Sessions'
-                    elif list_name == 'WL Posn':
+                    elif list_name == 'Num Waiting':
                         axis_title = 'Patients'
 
                     pwp_combined_col1_filtered = pwp_combined_summary[
@@ -797,7 +841,7 @@ if button_run_pressed:
                     if list_name == 'Session Number':
                         section_title = 'Sessions'
                     
-                        fig = px.histogram(pwp_combined_col1_filtered, 
+                        fig1 = px.histogram(pwp_combined_col1_filtered, 
                                             x='Week Number',
                                             y='value',
                                             nbins=sim_duration_input,
@@ -805,20 +849,20 @@ if button_run_pressed:
                                             color_discrete_sequence=['green'],
                                             title=f'Number of Sessions per Week')
                         
-                        fig.update_layout(title_x=0.4,font=dict(size=10),bargap=0.2)
+                        fig1.update_layout(title_x=0.4,font=dict(size=10),bargap=0.2)
                         
-                        fig.update_traces(marker_line_color='black', marker_line_width=1)
+                        fig1.update_traces(marker_line_color='black', marker_line_width=1)
 
-                        fig.update_yaxes(title_text="Sessions")
+                        fig1.update_yaxes(title_text="Sessions")
 
-                        st.plotly_chart(fig, use_container_width=True)
+                        st.plotly_chart(fig1, key=f"pwp_chart_{list_name}_{c}",use_container_width=True)
 
                         st.divider()
 
-                    elif list_name == 'WL Posn':
+                    elif list_name == 'Num Waiting':
                         section_title = 'Waiting List'
 
-                        fig = px.line(
+                        fig2 = px.line(
                                     pwp_combined_col1_filtered,
                                     x="Week Number",
                                     color="Run Number",
@@ -832,27 +876,27 @@ if button_run_pressed:
                                     title='Number of Patients Waiting by Week'
                                     )
                         
-                        fig.update_traces(line=dict(dash='dot'))
+                        fig2.update_traces(line=dict(dash='dot'))
                         
                         # get the average waiting list across all the runs
                         weekly_avg_col1 = pwp_combined_col1_filtered.groupby(['Week Number',
                                                         'variable'])['value'].mean(
                                                         ).reset_index()
                         
-                        fig.add_trace(
+                        fig2.add_trace(
                                     go.Scatter(x=weekly_avg_col1["Week Number"],
                                             y=weekly_avg_col1["value"], name='Average',
                                             line=dict(width=3,color='blue')))
             
                         
                         # get rid of 'variable' prefix resulting from df.melt
-                        fig.for_each_annotation(lambda a: a.update(text=a.text.split
+                        fig2.for_each_annotation(lambda a: a.update(text=a.text.split
                                                                 ("=")[1]))
                        
-                        fig.update_layout(title_x=0.3,font=dict(size=10))
+                        fig2.update_layout(title_x=0.3,font=dict(size=10))
                         #fig.
 
-                        st.plotly_chart(fig, use_container_width=True)
+                        st.plotly_chart(fig2, key=f"pwp_chart_{list_name}_{c}",use_container_width=True)
 
                         st.divider()
 
@@ -860,12 +904,12 @@ if button_run_pressed:
                               
                 if list_name == 'IsDNA':
                     axis_title = 'DNAs'
-                elif list_name == 'Q Time':
+                elif list_name == 'Avg Wait':
                     axis_title = 'Weeks'
 
                 st.subheader('')
 
-                for i, list_name in enumerate(pwp_combined_summary['variable']
+                for d, list_name in enumerate(pwp_combined_summary['variable']
                                             .unique()):
 
                     pwp_combined_col2_filtered = pwp_combined_summary[
@@ -875,7 +919,7 @@ if button_run_pressed:
                         
                         section_title = ''
                     
-                        fig = px.histogram(pwp_combined_col2_filtered, 
+                        fig3 = px.histogram(pwp_combined_col2_filtered, 
                                             x='Week Number',
                                             y='value',
                                             nbins=sim_duration_input,
@@ -883,21 +927,21 @@ if button_run_pressed:
                                             color_discrete_sequence=['red'],
                                             title=f'Number of DNAs per Week')
                         
-                        fig.update_layout(title_x=0.4,font=dict(size=10),bargap=0.2)
+                        fig3.update_layout(title_x=0.4,font=dict(size=10),bargap=0.2)
                         
-                        fig.update_traces(marker_line_color='black', marker_line_width=1)
+                        fig3.update_traces(marker_line_color='black', marker_line_width=1)
 
-                        fig.update_yaxes(title_text="Sessions")
+                        fig3.update_yaxes(title_text="Sessions")
 
-                        st.plotly_chart(fig, use_container_width=True)
+                        st.plotly_chart(fig3, key=f"pwp_chart_{list_name}_{d}",use_container_width=True)
 
                         st.divider()
 
-                    elif list_name == 'Q Time':
+                    elif list_name == 'Avg Wait':
 
                         section_title = ''
 
-                        fig = px.line(
+                        fig4 = px.line(
                                     pwp_combined_col2_filtered,
                                     x="Week Number",
                                     color="Run Number",
@@ -911,26 +955,26 @@ if button_run_pressed:
                                     title='Average Waiting Time by Week'
                                     )
                         
-                        fig.update_traces(line=dict(dash='dot'))
+                        fig4.update_traces(line=dict(dash='dot'))
                         
                         # get the average waiting time across all the runs
                         weekly_avg_col2 = pwp_combined_col2_filtered.groupby(['Week Number',
                                                         'variable'])['value'].mean(
                                                         ).reset_index()
                         
-                        fig.add_trace(
+                        fig4.add_trace(
                                     go.Scatter(x=weekly_avg_col2["Week Number"],
                                             y=weekly_avg_col2["value"], name='Average',
                                             line=dict(width=3,color='blue')))
             
                         
                         # get rid of 'variable' prefix resulting from df.melt
-                        fig.for_each_annotation(lambda a: a.update(text=a.text.split
+                        fig4.for_each_annotation(lambda a: a.update(text=a.text.split
                                                                 ("=")[1]))
                         
-                        fig.update_layout(title_x=0.3,font=dict(size=10))
+                        fig4.update_layout(title_x=0.3,font=dict(size=10))
 
-                        st.plotly_chart(fig, use_container_width=True)
+                        st.plotly_chart(fig4, key=f"pwp_chart_{list_name}_{d}",use_container_width=True)
 
                         st.divider()
 
@@ -942,17 +986,17 @@ if button_run_pressed:
 
                 st.subheader('Psychological Wellbeing Practitioner - Groups')
             
-                for i, list_name in enumerate(group_combined_summary['variable']
+                for e, list_name in enumerate(group_combined_summary['variable']
                                             .unique()):
                   
                     if list_name == 'Session Number':
                         section_title = 'Sessions'
-                    elif list_name == 'WL Posn':
+                    elif list_name == 'Num Waiting':
                         section_title = 'Waiting List'
 
                     if list_name == 'Session Number':
                         axis_title = 'Sessions'
-                    elif list_name == 'WL Posn':
+                    elif list_name == 'Num Waiting':
                         axis_title = 'Patients'
 
                     group_combined_col1_filtered = group_combined_summary[
@@ -961,7 +1005,7 @@ if button_run_pressed:
                     if list_name == 'Session Number':
                         section_title = 'Sessions'
                     
-                        fig = px.histogram(group_combined_col1_filtered, 
+                        fig5 = px.histogram(group_combined_col1_filtered, 
                                             x='Week Number',
                                             y='value',
                                             nbins=sim_duration_input,
@@ -969,20 +1013,20 @@ if button_run_pressed:
                                             color_discrete_sequence=['green'],
                                             title=f'Number of Sessions per Week')
                         
-                        fig.update_layout(title_x=0.4,font=dict(size=10),bargap=0.2)
+                        fig5.update_layout(title_x=0.4,font=dict(size=10),bargap=0.2)
                         
-                        fig.update_traces(marker_line_color='black', marker_line_width=1)
+                        fig5.update_traces(marker_line_color='black', marker_line_width=1)
 
-                        fig.update_yaxes(title_text="Sessions")
+                        fig5.update_yaxes(title_text="Sessions")
 
-                        st.plotly_chart(fig, use_container_width=True)
+                        st.plotly_chart(fig5, key=f"group_chart_{list_name}_{e}",use_container_width=True)
 
                         st.divider()
 
-                    elif list_name == 'WL Posn':
+                    elif list_name == 'Num Waiting':
                         section_title = 'Waiting List'
 
-                        fig = px.line(
+                        fig6 = px.line(
                                     group_combined_col1_filtered,
                                     x="Week Number",
                                     color="Run Number",
@@ -996,27 +1040,27 @@ if button_run_pressed:
                                     title='Number of Patients Waiting by Week'
                                     )
                         
-                        fig.update_traces(line=dict(dash='dot'))
+                        fig6.update_traces(line=dict(dash='dot'))
                         
                         # get the average waiting list across all the runs
                         weekly_avg_col1 = group_combined_col1_filtered.groupby(['Week Number',
                                                         'variable'])['value'].mean(
                                                         ).reset_index()
                         
-                        fig.add_trace(
+                        fig6.add_trace(
                                     go.Scatter(x=weekly_avg_col1["Week Number"],
                                             y=weekly_avg_col1["value"], name='Average',
                                             line=dict(width=3,color='blue')))
             
                         
                         # get rid of 'variable' prefix resulting from df.melt
-                        fig.for_each_annotation(lambda a: a.update(text=a.text.split
+                        fig6.for_each_annotation(lambda a: a.update(text=a.text.split
                                                                 ("=")[1]))
                        
-                        fig.update_layout(title_x=0.3,font=dict(size=10))
+                        fig6.update_layout(title_x=0.3,font=dict(size=10))
                         #fig.
 
-                        st.plotly_chart(fig, use_container_width=True)
+                        st.plotly_chart(fig6, key=f"group_chart_{list_name}_{e}",use_container_width=True)
 
                         st.divider()
 
@@ -1024,12 +1068,12 @@ if button_run_pressed:
                               
                 if list_name == 'IsDNA':
                     axis_title = 'DNAs'
-                elif list_name == 'Q Time':
+                elif list_name == 'Avg Wait':
                     axis_title = 'Weeks'
 
                 st.subheader('')
 
-                for i, list_name in enumerate(group_combined_summary['variable']
+                for f, list_name in enumerate(group_combined_summary['variable']
                                             .unique()):
 
                     group_combined_col2_filtered = group_combined_summary[
@@ -1039,7 +1083,7 @@ if button_run_pressed:
                         
                         section_title = ''
                     
-                        fig = px.histogram(group_combined_col2_filtered, 
+                        fig7 = px.histogram(group_combined_col2_filtered, 
                                             x='Week Number',
                                             y='value',
                                             nbins=sim_duration_input,
@@ -1047,21 +1091,21 @@ if button_run_pressed:
                                             color_discrete_sequence=['red'],
                                             title=f'Number of DNAs per Week')
                         
-                        fig.update_layout(title_x=0.4,font=dict(size=10),bargap=0.2)
+                        fig7.update_layout(title_x=0.4,font=dict(size=10),bargap=0.2)
                         
-                        fig.update_traces(marker_line_color='black', marker_line_width=1)
+                        fig7.update_traces(marker_line_color='black', marker_line_width=1)
 
-                        fig.update_yaxes(title_text="Sessions")
+                        fig7.update_yaxes(title_text="Sessions")
 
-                        st.plotly_chart(fig, use_container_width=True)
+                        st.plotly_chart(fig7, key=f"group_chart_{list_name}_{f}",use_container_width=True)
 
                         st.divider()
 
-                    elif list_name == 'Q Time':
+                    elif list_name == 'Avg Wait':
 
                         section_title = ''
 
-                        fig = px.line(
+                        fig8 = px.line(
                                     group_combined_col2_filtered,
                                     x="Week Number",
                                     color="Run Number",
@@ -1075,26 +1119,26 @@ if button_run_pressed:
                                     title='Average Waiting Time by Week'
                                     )
                         
-                        fig.update_traces(line=dict(dash='dot'))
+                        fig8.update_traces(line=dict(dash='dot'))
                         
                         # get the average waiting time across all the runs
                         weekly_avg_col2 = group_combined_col2_filtered.groupby(['Week Number',
                                                         'variable'])['value'].mean(
                                                         ).reset_index()
                         
-                        fig.add_trace(
+                        fig8.add_trace(
                                     go.Scatter(x=weekly_avg_col2["Week Number"],
                                             y=weekly_avg_col2["value"], name='Average',
                                             line=dict(width=3,color='blue')))
             
                         
                         # get rid of 'variable' prefix resulting from df.melt
-                        fig.for_each_annotation(lambda a: a.update(text=a.text.split
+                        fig8.for_each_annotation(lambda a: a.update(text=a.text.split
                                                                 ("=")[1]))
                         
-                        fig.update_layout(title_x=0.3,font=dict(size=10))
+                        fig8.update_layout(title_x=0.3,font=dict(size=10))
 
-                        st.plotly_chart(fig, use_container_width=True)
+                        st.plotly_chart(fig8, key=f"group_chart_{list_name}_{f}",use_container_width=True)
 
                         st.divider()
         
@@ -1111,17 +1155,17 @@ if button_run_pressed:
 
                 st.subheader('Cognitive Behavioural Therapy')
             
-                for i, list_name in enumerate(cbt_combined_summary['variable']
+                for g, list_name in enumerate(cbt_combined_summary['variable']
                                             .unique()):
                   
                     if list_name == 'Session Number':
                         section_title = 'Sessions'
-                    elif list_name == 'WL Posn':
+                    elif list_name == 'Num Waiting':
                         section_title = 'Waiting List'
 
                     if list_name == 'Session Number':
                         axis_title = 'Sessions'
-                    elif list_name == 'WL Posn':
+                    elif list_name == 'Num Waiting':
                         axis_title = 'Patients'
 
                     cbt_combined_col1_filtered = cbt_combined_summary[
@@ -1130,7 +1174,7 @@ if button_run_pressed:
                     if list_name == 'Session Number':
                         section_title = 'Sessions'
                     
-                        fig = px.histogram(cbt_combined_col1_filtered, 
+                        fig9 = px.histogram(cbt_combined_col1_filtered, 
                                             x='Week Number',
                                             y='value',
                                             nbins=sim_duration_input,
@@ -1138,20 +1182,20 @@ if button_run_pressed:
                                             color_discrete_sequence=['green'],
                                             title=f'Number of Sessions per Week')
                         
-                        fig.update_layout(title_x=0.4,font=dict(size=10),bargap=0.2)
+                        fig9.update_layout(title_x=0.4,font=dict(size=10),bargap=0.2)
                         
-                        fig.update_traces(marker_line_color='black', marker_line_width=1)
+                        fig9.update_traces(marker_line_color='black', marker_line_width=1)
 
-                        fig.update_yaxes(title_text="Sessions")
+                        fig9.update_yaxes(title_text="Sessions")
 
-                        st.plotly_chart(fig, use_container_width=True)
+                        st.plotly_chart(fig9, key=f"cbt_chart_{list_name}_{g}",use_container_width=True)
 
                         st.divider()
 
-                    elif list_name == 'WL Posn':
+                    elif list_name == 'Num Waiting':
                         section_title = 'Waiting List'
 
-                        fig = px.line(
+                        fig10 = px.line(
                                     cbt_combined_col1_filtered,
                                     x="Week Number",
                                     color="Run Number",
@@ -1165,27 +1209,27 @@ if button_run_pressed:
                                     title='Number of Patients Waiting by Week'
                                     )
                         
-                        fig.update_traces(line=dict(dash='dot'))
+                        fig10.update_traces(line=dict(dash='dot'))
                         
                         # get the average waiting list across all the runs
                         weekly_avg_col1 = cbt_combined_col1_filtered.groupby(['Week Number',
                                                         'variable'])['value'].mean(
                                                         ).reset_index()
                         
-                        fig.add_trace(
+                        fig10.add_trace(
                                     go.Scatter(x=weekly_avg_col1["Week Number"],
                                             y=weekly_avg_col1["value"], name='Average',
                                             line=dict(width=3,color='blue')))
             
                         
                         # get rid of 'variable' prefix resulting from df.melt
-                        fig.for_each_annotation(lambda a: a.update(text=a.text.split
+                        fig10.for_each_annotation(lambda a: a.update(text=a.text.split
                                                                 ("=")[1]))
                        
-                        fig.update_layout(title_x=0.3,font=dict(size=10))
+                        fig10.update_layout(title_x=0.3,font=dict(size=10))
                         #fig.
 
-                        st.plotly_chart(fig, use_container_width=True)
+                        st.plotly_chart(fig10, key=f"cbt_chart_{list_name}_{g}",use_container_width=True)
 
                         st.divider()
 
@@ -1193,12 +1237,12 @@ if button_run_pressed:
                               
                 if list_name == 'IsDNA':
                     axis_title = 'DNAs'
-                elif list_name == 'Q Time':
+                elif list_name == 'Avg Wait':
                     axis_title = 'Weeks'
 
                 st.subheader('')
 
-                for i, list_name in enumerate(cbt_combined_summary['variable']
+                for h, list_name in enumerate(cbt_combined_summary['variable']
                                             .unique()):
 
                     cbt_combined_col2_filtered = cbt_combined_summary[
@@ -1208,7 +1252,7 @@ if button_run_pressed:
                         
                         section_title = ''
                     
-                        fig = px.histogram(cbt_combined_col2_filtered, 
+                        fig11 = px.histogram(cbt_combined_col2_filtered, 
                                             x='Week Number',
                                             y='value',
                                             nbins=sim_duration_input,
@@ -1216,21 +1260,21 @@ if button_run_pressed:
                                             color_discrete_sequence=['red'],
                                             title=f'Number of DNAs per Week')
                         
-                        fig.update_layout(title_x=0.4,font=dict(size=10),bargap=0.2)
+                        fig11.update_layout(title_x=0.4,font=dict(size=10),bargap=0.2)
                         
-                        fig.update_traces(marker_line_color='black', marker_line_width=1)
+                        fig11.update_traces(marker_line_color='black', marker_line_width=1)
 
-                        fig.update_yaxes(title_text="Sessions")
+                        fig11.update_yaxes(title_text="Sessions")
 
-                        st.plotly_chart(fig, use_container_width=True)
+                        st.plotly_chart(fig11, key=f"cbt_chart_{list_name}_{h}",use_container_width=True)
 
                         st.divider()
 
-                    elif list_name == 'Q Time':
+                    elif list_name == 'Avg Wait':
 
                         section_title = ''
 
-                        fig = px.line(
+                        fig12 = px.line(
                                     cbt_combined_col2_filtered,
                                     x="Week Number",
                                     color="Run Number",
@@ -1244,26 +1288,26 @@ if button_run_pressed:
                                     title='Average Waiting Time by Week'
                                     )
                         
-                        fig.update_traces(line=dict(dash='dot'))
+                        fig12.update_traces(line=dict(dash='dot'))
                         
                         # get the average waiting time across all the runs
                         weekly_avg_col2 = cbt_combined_col2_filtered.groupby(['Week Number',
                                                         'variable'])['value'].mean(
                                                         ).reset_index()
                         
-                        fig.add_trace(
+                        fig12.add_trace(
                                     go.Scatter(x=weekly_avg_col2["Week Number"],
                                             y=weekly_avg_col2["value"], name='Average',
                                             line=dict(width=3,color='blue')))
             
                         
                         # get rid of 'variable' prefix resulting from df.melt
-                        fig.for_each_annotation(lambda a: a.update(text=a.text.split
+                        fig12.for_each_annotation(lambda a: a.update(text=a.text.split
                                                                 ("=")[1]))
                         
-                        fig.update_layout(title_x=0.3,font=dict(size=10))
+                        fig12.update_layout(title_x=0.3,font=dict(size=10))
 
-                        st.plotly_chart(fig, use_container_width=True)
+                        st.plotly_chart(fig12, key=f"cbt_chart_{list_name}_{h}",use_container_width=True)
 
                         st.divider()
 
@@ -1280,12 +1324,12 @@ if button_run_pressed:
                   
                     if list_name == 'Session Number':
                         section_title = 'Sessions'
-                    elif list_name == 'WL Posn':
+                    elif list_name == 'Num Waiting':
                         section_title = 'Waiting List'
 
                     if list_name == 'Session Number':
                         axis_title = 'Sessions'
-                    elif list_name == 'WL Posn':
+                    elif list_name == 'Num Waiting':
                         axis_title = 'Patients'
 
                     couns_combined_col1_filtered = couns_combined_summary[
@@ -1294,7 +1338,7 @@ if button_run_pressed:
                     if list_name == 'Session Number':
                         section_title = 'Sessions'
                     
-                        fig = px.histogram(couns_combined_col1_filtered, 
+                        fig13 = px.histogram(couns_combined_col1_filtered, 
                                             x='Week Number',
                                             y='value',
                                             nbins=sim_duration_input,
@@ -1302,20 +1346,20 @@ if button_run_pressed:
                                             color_discrete_sequence=['green'],
                                             title=f'Number of Sessions per Week')
                         
-                        fig.update_layout(title_x=0.4,font=dict(size=10),bargap=0.2)
+                        fig13.update_layout(title_x=0.4,font=dict(size=10),bargap=0.2)
                         
-                        fig.update_traces(marker_line_color='black', marker_line_width=1)
+                        fig13.update_traces(marker_line_color='black', marker_line_width=1)
 
-                        fig.update_yaxes(title_text="Sessions")
+                        fig13.update_yaxes(title_text="Sessions")
 
-                        st.plotly_chart(fig, use_container_width=True)
+                        st.plotly_chart(fig13, key=f"couns_chart_{list_name}_{i}",use_container_width=True)
 
                         st.divider()
 
-                    elif list_name == 'WL Posn':
+                    elif list_name == 'Num Waiting':
                         section_title = 'Waiting List'
 
-                        fig = px.line(
+                        fig14 = px.line(
                                     couns_combined_col1_filtered,
                                     x="Week Number",
                                     color="Run Number",
@@ -1329,27 +1373,27 @@ if button_run_pressed:
                                     title='Number of Patients Waiting by Week'
                                     )
                         
-                        fig.update_traces(line=dict(dash='dot'))
+                        fig14.update_traces(line=dict(dash='dot'))
                         
                         # get the average waiting list across all the runs
                         weekly_avg_col1 = couns_combined_col1_filtered.groupby(['Week Number',
                                                         'variable'])['value'].mean(
                                                         ).reset_index()
                         
-                        fig.add_trace(
+                        fig14.add_trace(
                                     go.Scatter(x=weekly_avg_col1["Week Number"],
                                             y=weekly_avg_col1["value"], name='Average',
                                             line=dict(width=3,color='blue')))
             
                         
                         # get rid of 'variable' prefix resulting from df.melt
-                        fig.for_each_annotation(lambda a: a.update(text=a.text.split
+                        fig14.for_each_annotation(lambda a: a.update(text=a.text.split
                                                                 ("=")[1]))
                        
-                        fig.update_layout(title_x=0.3,font=dict(size=10))
+                        fig14.update_layout(title_x=0.3,font=dict(size=10))
                         #fig.
 
-                        st.plotly_chart(fig, use_container_width=True)
+                        st.plotly_chart(fig14, key=f"couns_chart_{list_name}_{i}",use_container_width=True)
 
                         st.divider()
 
@@ -1357,12 +1401,12 @@ if button_run_pressed:
                               
                 if list_name == 'IsDNA':
                     axis_title = 'DNAs'
-                elif list_name == 'Q Time':
+                elif list_name == 'Avg Wait':
                     axis_title = 'Weeks'
 
                 st.subheader('')
 
-                for i, list_name in enumerate(couns_combined_summary['variable']
+                for j, list_name in enumerate(couns_combined_summary['variable']
                                             .unique()):
 
                     couns_combined_col2_filtered = couns_combined_summary[
@@ -1372,7 +1416,7 @@ if button_run_pressed:
                         
                         section_title = ''
                     
-                        fig = px.histogram(couns_combined_col2_filtered, 
+                        fig15 = px.histogram(couns_combined_col2_filtered, 
                                             x='Week Number',
                                             y='value',
                                             nbins=sim_duration_input,
@@ -1380,21 +1424,21 @@ if button_run_pressed:
                                             color_discrete_sequence=['red'],
                                             title=f'Number of DNAs per Week')
                         
-                        fig.update_layout(title_x=0.4,font=dict(size=10),bargap=0.2)
+                        fig15.update_layout(title_x=0.4,font=dict(size=10),bargap=0.2)
                         
-                        fig.update_traces(marker_line_color='black', marker_line_width=1)
+                        fig15.update_traces(marker_line_color='black', marker_line_width=1)
 
-                        fig.update_yaxes(title_text="Sessions")
+                        fig15.update_yaxes(title_text="Sessions")
 
-                        st.plotly_chart(fig, use_container_width=True)
+                        st.plotly_chart(fig15, key=f"couns_chart_{list_name}_{j}",use_container_width=True)
 
                         st.divider()
 
-                    elif list_name == 'Q Time':
+                    elif list_name == 'Avg Wait':
 
                         section_title = ''
 
-                        fig = px.line(
+                        fig16 = px.line(
                                     couns_combined_col2_filtered,
                                     x="Week Number",
                                     color="Run Number",
@@ -1408,26 +1452,26 @@ if button_run_pressed:
                                     title='Average Waiting Time by Week'
                                     )
                         
-                        fig.update_traces(line=dict(dash='dot'))
+                        fig16.update_traces(line=dict(dash='dot'))
                         
                         # get the average waiting time across all the runs
                         weekly_avg_col2 = couns_combined_col2_filtered.groupby(['Week Number',
                                                         'variable'])['value'].mean(
                                                         ).reset_index()
                         
-                        fig.add_trace(
+                        fig16.add_trace(
                                     go.Scatter(x=weekly_avg_col2["Week Number"],
                                             y=weekly_avg_col2["value"], name='Average',
                                             line=dict(width=3,color='blue')))
             
                         
                         # get rid of 'variable' prefix resulting from df.melt
-                        fig.for_each_annotation(lambda a: a.update(text=a.text.split
+                        fig16.for_each_annotation(lambda a: a.update(text=a.text.split
                                                                 ("=")[1]))
                         
-                        fig.update_layout(title_x=0.3,font=dict(size=10))
+                        fig16.update_layout(title_x=0.3,font=dict(size=10))
 
-                        st.plotly_chart(fig, use_container_width=True)
+                        st.plotly_chart(fig16, key=f"couns_chart_{list_name}_{j}",use_container_width=True)
 
                         st.divider()
 
@@ -1444,7 +1488,7 @@ if button_run_pressed:
 
             st.subheader('Psychological Wellbeing Practitioners')
 
-            fig = px.histogram(pwp_hours_weekly_summary, 
+            fig17 = px.histogram(pwp_hours_weekly_summary, 
                                 x='Week Number',
                                 y='value',
                                 nbins=sim_duration_input,
@@ -1454,18 +1498,18 @@ if button_run_pressed:
                                 color_discrete_sequence=px.colors.qualitative.Dark24,
                                 title=f'Psychological Wellbeing Practitioner Hours by Week')
             
-            fig.update_layout(title_x=0.4,font=dict(size=10),bargap=0.2,legend_traceorder="reversed")
+            fig17.update_layout(title_x=0.4,font=dict(size=10),bargap=0.2,legend_traceorder="reversed")
             
-            fig.update_traces(marker_line_color='black', marker_line_width=1)
+            fig17.update_traces(marker_line_color='black', marker_line_width=1)
 
             # add line for available PwP hours
-            fig.add_trace(
+            fig17.add_trace(
                                 go.Scatter(x=pwp_hours_weekly_summary["Week Number"],
                                         y=np.repeat(total_pwp_hours,sim_duration_input*2),
                                         name='Avail Hrs',line=dict(width=3,
                                         color='green')))
 
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig17, use_container_width=True)
 
             st.divider() 
 
@@ -1473,7 +1517,7 @@ if button_run_pressed:
 
             st.subheader('Cognitive Behavioural Therapists')
 
-            fig = px.histogram(cbt_hours_weekly_summary, 
+            fig18 = px.histogram(cbt_hours_weekly_summary, 
                                 x='Week Number',
                                 y='value',
                                 nbins=sim_duration_input,
@@ -1483,18 +1527,18 @@ if button_run_pressed:
                                 color_discrete_sequence=px.colors.qualitative.Dark24,
                                 title=f'Cognitive Behavioural Therapist Hours by Week')
             
-            fig.update_layout(title_x=0.4,font=dict(size=10),bargap=0.2,legend_traceorder="reversed")
+            fig18.update_layout(title_x=0.4,font=dict(size=10),bargap=0.2,legend_traceorder="reversed")
             
-            fig.update_traces(marker_line_color='black', marker_line_width=1)
+            fig18.update_traces(marker_line_color='black', marker_line_width=1)
 
             # add line for available PwP hours
-            fig.add_trace(
+            fig18.add_trace(
                                 go.Scatter(x=cbt_hours_weekly_summary["Week Number"],
                                         y=np.repeat(total_cbt_hours,sim_duration_input*2),
                                         name='Avail Hrs',line=dict(width=3,
                                         color='green')))
 
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig18, use_container_width=True)
 
             st.divider()   
 
@@ -1502,7 +1546,7 @@ if button_run_pressed:
 
             st.subheader('Depression Counselling Therapists')
 
-            fig = px.histogram(couns_hours_weekly_summary, 
+            fig19 = px.histogram(couns_hours_weekly_summary, 
                                 x='Week Number',
                                 y='value',
                                 nbins=sim_duration_input,
@@ -1512,18 +1556,18 @@ if button_run_pressed:
                                 color_discrete_sequence=px.colors.qualitative.Dark24,
                                 title=f'Depression Counselling Therapist Hours by Week')
             
-            fig.update_layout(title_x=0.4,font=dict(size=10),bargap=0.2,legend_traceorder="reversed")
+            fig19.update_layout(title_x=0.4,font=dict(size=10),bargap=0.2,legend_traceorder="reversed")
             
-            fig.update_traces(marker_line_color='black', marker_line_width=1)
+            fig19.update_traces(marker_line_color='black', marker_line_width=1)
 
             # add line for available PwP hours
-            fig.add_trace(
+            fig19.add_trace(
                                 go.Scatter(x=couns_hours_weekly_summary["Week Number"],
                                         y=np.repeat(total_couns_hours,sim_duration_input*2),
                                         name='Avail Hrs',line=dict(width=3,
                                         color='green')))
 
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig19, use_container_width=True)
 
             st.divider()   
 
