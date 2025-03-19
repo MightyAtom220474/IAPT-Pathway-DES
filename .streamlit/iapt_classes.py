@@ -1527,7 +1527,7 @@ class Model:
                 self.step2_results_df.at[p.id, 'IsStep'] = 1
                 self.pwp_session_counter = 0
                 self.pwp_dna_counter = 0  # Reset counters for the next step
-                p.treat_wait_week = max(self.pwp_random_weeks)
+                p.treat_wait_week = self.env.now
             
                 if g.debug_level >= 2:
                     print(f'### STEPPED UP ###: Patient {p.id} has been stepped up, running Step3 route selector')
@@ -1684,7 +1684,7 @@ class Model:
                 self.group_session_counter = 0
                 self.group_dna_counter = 0  # Reset counters for the next step
                 # record when they statted waiting i.e. at point of step up
-                p.treat_wait_week = max(self.group_random_weeks)
+                p.treat_wait_week = self.env.now
                 if g.debug_level >= 2:
                     print(f'### STEPPED UP ###: Patient {p.id} has been stepped up, running Step3 route selector')
                 yield self.env.process(self.patient_step3_pathway(p))
@@ -1879,10 +1879,16 @@ class Model:
                 self.step3_results_df.at[p.id, 'IsStep'] = 1
                 self.cbt_session_counter = 0
                 self.cbt_dna_counter = 0  # Reset counters for the next step
-                p.treat_wait_week = max(self.cbt_random_weeks)
+                p.treat_wait_week = self.env.now
+                # add them to the step2 waiting list
+                self.step2_waiting_list.at[p.id, 'Run Number'] = self.run_number
+                self.step2_waiting_list.at[p.id, 'Week Number'] = self.week_number
+                self.step2_waiting_list.at[p.id, 'IsWaiting'] = 1
+                self.step2_waiting_list.at[p.id, 'WL Position'] = g.number_on_pwp_wl
+                self.step2_waiting_list.at[p.id, 'Start Week'] = p.treat_wait_week
                 if g.debug_level >= 2:
                     print(f'### STEPPED UP ###: Patient {p.id} has been stepped up, running Step3 route selector')
-                yield self.env.process(self.patient_step3_pathway(p))
+                yield self.env.process(self.patient_step2_pathway(p))
 
             # Handle dropout logic
             if is_dropout:
@@ -2098,7 +2104,7 @@ class Model:
                 self.step3_results_df.at[p.id, 'IsStep'] = 1
                 self.couns_session_counter = 0
                 self.couns_dna_counter = 0  # Reset counters for the next step
-                p.treat_wait_week = max(self.couns_random_weeks)
+                p.treat_wait_week = self.env.now
                 if g.debug_level >= 2:
                     print(f'### STEPPED UP ###: Patient {p.id} has been stepped up, running Step3 route selector')
                 yield self.env.process(self.patient_step2_pathway(p))
