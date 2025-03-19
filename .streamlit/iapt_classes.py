@@ -10,7 +10,7 @@ class g:
     debug_level = 2
 
     # Referrals
-    mean_referrals_pw = 200
+    mean_referrals_pw = 100
 
     # Screening
     referral_rej_rate = 0.3 # % of referrals rejected, advised 30%
@@ -575,26 +575,27 @@ class Model:
             self.step2_weekly_waiting_stats = self.step2_waiting_list[self.step2_waiting_list['IsWaiting'] == 1].copy()
             self.step2_weekly_waiting_stats['Weeks Waited'] = self.stats_week_number - self.step2_weekly_waiting_stats['Start Week']
             
-            self.waiting_list_path = ['PwP','Group']
-            # create summary stats for each of the routes
-            for y, pathway in enumerate(self.waiting_list_path):
+            self.waiting_list_path_step2 = list(self.step2_weekly_waiting_stats['Route Name'].unique())
 
-                self.step2_weekly_waiting_filtered = self.step2_weekly_waiting_stats[self.step2_weekly_waiting_stats['Route Name'] == pathway]
+            # Create summary stats for each of the routes
+            for pathway in self.waiting_list_path_step2:
 
-                self.step2_waiting_count = self.step2_weekly_waiting_filtered['IsWaiting'].sum()
-                self.step2_waiting_time = self.step2_weekly_waiting_filtered['Weeks Waited'].mean()
+                step2_weekly_waiting_filtered = self.step2_weekly_waiting_stats[self.step2_weekly_waiting_stats['Route Name'] == pathway]
 
-                if pd.isna(self.step2_waiting_time):
-                    self.step2_waiting_time = 0
-                
-                self.step2_waiting_stats.append(
-                    {'Run Number': self.run_number,
-                    'Week Number':self.stats_week_number,
-                    'Route Name':pathway,
-                    'Num Waiting':self.step2_waiting_count,
-                    'Avg Wait':self.step2_waiting_time
-                    }
-                    )
+                # Use local variables to avoid cross-iteration conflicts
+                step2_waiting_count = step2_weekly_waiting_filtered['IsWaiting'].sum()
+                step2_waiting_time = step2_weekly_waiting_filtered['Weeks Waited'].mean()
+
+                if pd.isna(step2_waiting_time):
+                    step2_waiting_time = 0
+
+                self.step2_waiting_stats.append({
+                    'Run Number': self.run_number,
+                    'Week Number': self.stats_week_number,
+                    'Route Name': pathway,
+                    'Num Waiting': step2_waiting_count,
+                    'Avg Wait': step2_waiting_time
+                })
                 # if g.debug_level == 1:
                 #     print(self.step2_waiting_list)
                 ##### Step 3 ##### 
@@ -602,28 +603,29 @@ class Model:
             self.step3_weekly_waiting_stats = self.step3_waiting_list[self.step3_waiting_list['IsWaiting'] == 1].copy()
             self.step3_weekly_waiting_stats['Weeks Waited'] = self.stats_week_number - self.step3_weekly_waiting_stats['Start Week']
             
-            self.waiting_list_path = ['Couns','CBT']
+            self.waiting_list_path_step3 = list(self.step3_weekly_waiting_stats['Route Name'].unique())
             # create summary stats for each of the routes
-            for z, pathway in enumerate(self.waiting_list_path):
+            # Create summary stats for each of the routes
+            for pathway in self.waiting_list_path_step3:
 
-                self.step3_weekly_waiting_filtered = self.step3_weekly_waiting_stats[self.step3_weekly_waiting_stats['Route Name'] == pathway]
+                step3_weekly_waiting_filtered = self.step3_weekly_waiting_stats[self.step3_weekly_waiting_stats['Route Name'] == pathway]
 
-                self.step3_waiting_count = self.step3_weekly_waiting_filtered['IsWaiting'].sum()
-                self.step3_waiting_time = self.step3_weekly_waiting_filtered['Weeks Waited'].mean()
+                # Use local variables to avoid cross-iteration conflicts
+                step3_waiting_count = step3_weekly_waiting_filtered['IsWaiting'].sum()
+                step3_waiting_time = step3_weekly_waiting_filtered['Weeks Waited'].mean()
 
-                if pd.isna(self.step3_waiting_time):
-                    self.step3_waiting_time = 0
-                
-                self.step3_waiting_stats.append(
-                    {'Run Number': self.run_number,
-                    'Week Number':self.stats_week_number,
-                    'Route Name':pathway,
-                    'Num Waiting':self.step3_waiting_count,
-                    'Avg Wait':self.step3_waiting_time
-                    }
-                    )
-                if g.debug_level == 1:
-                    print(self.step3_waiting_list)
+                if pd.isna(step2_waiting_time):
+                    step3_waiting_time = 0
+
+                self.step3_waiting_stats.append({
+                    'Run Number': self.run_number,
+                    'Week Number': self.stats_week_number,
+                    'Route Name': pathway,
+                    'Num Waiting': step3_waiting_count,
+                    'Avg Wait': step3_waiting_time
+                })
+                # if g.debug_level == 1:
+                #     print(self.step3_waiting_list)
             # hand control back to the governor function
             yield self.env.timeout(0)
 
@@ -1258,7 +1260,7 @@ class Model:
                                             ] = p.step2_path_route
 
         # push the patient down the chosen step2 route
-        if p.step2_path_route == 'PwP':
+        if self.selected_step2_pathway == 'PwP':
             # add to PwP WL
             g.number_on_pwp_wl += 1
             if g.debug_level >=2:

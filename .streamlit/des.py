@@ -41,8 +41,8 @@ with st.sidebar:
         referral_input = st.slider("Average Number of Referrals Per Week", 0, 1500, g.mean_referrals_pw)
         referral_reject_input = st.number_input("Referral Rejection Rate (%)",
                         min_value=0.0, max_value=20.0, step=0.25, value=4.25)
-        referral_review_input = st.number_input("% of Referral sent for Review",
-                        min_value=0.0, max_value=50.0, step=0.25, value=40.0)
+        referral_review_input = st.number_input("% of Referral sent for Screening",
+                        min_value=0.0, max_value=100.0, step=0.5, value=60.0)
         referral_screen_input = st.slider("Number of Mins to Screen Referral",
                                           1, 20, 25)
         opt_in_input = st.number_input("% of Referrals that Opt-in",
