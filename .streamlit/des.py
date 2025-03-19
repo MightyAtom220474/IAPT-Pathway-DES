@@ -52,7 +52,7 @@ with st.sidebar:
                         min_value=50.0, max_value=100.0, step=0.5, value=70.0)
         ta_time_input = st.slider("Number of Mins to Perform TA", 1, 90, 60)
         step2_step3_rate_input = st.number_input("% of Patients Assigned to Step 2 vs Step 3",
-                        min_value=50.0, max_value=100.0, step=0.5, value=85.0)
+                        min_value=0.0, max_value=100.0, step=0.5, value=47.0)
            
     with st.expander("Step 2"):
         
@@ -62,7 +62,7 @@ with st.sidebar:
         
         step2_path_ratio = st.number_input("% of Step 2 Allocated to PwP vs Group",
                                            min_value=0.0, max_value=100.0, 
-                                           step=1.0, value=85.0)
+                                           step=1.0, value=47.0)
         step2_first_input = st.slider("Number of Mins for First PwP Appointment",
                                             1, 60, 45)
         step2_fup_input = st.slider("Number of Mins for Follow-up PwP Appointment",

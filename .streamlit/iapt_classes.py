@@ -29,7 +29,7 @@ class g:
     ta_accept_rate = 0.7 ##### assume 70% of TA's accepted, need to check this #####
 
     # Step 2
-    step2_ratio = 0.85 # proportion of patients that go onto Step2 vs Step3
+    step2_ratio = 0.47 # proportion of patients that go onto Step2 vs Step3
     step2_routes = ['PwP','Group'] # possible Step2 routes
     step2_path_ratios = [0.8,0.2] #[0.94,0.06] # Step2 proportion for each route
     step2_pwp_sessions = 6 # number of PwP sessions at Step2
@@ -89,8 +89,8 @@ class g:
     dna_policy_var = 0.05 # % of cases where the DNA policy is varied
 
     # Simulation
-    sim_duration = 104
-    number_of_runs = 2
+    sim_duration = 52
+    number_of_runs = 5
     std_dev = 3 # used for randomising activity times
     #event_week_tracker = {} # used to track the latest events week for each patient
 
@@ -584,6 +584,9 @@ class Model:
                 self.step2_waiting_count = self.step2_weekly_waiting_filtered['IsWaiting'].sum()
                 self.step2_waiting_time = self.step2_weekly_waiting_filtered['Weeks Waited'].mean()
 
+                if pd.isna(self.step2_waiting_time):
+                    self.step2_waiting_time = 0
+                
                 self.step2_waiting_stats.append(
                     {'Run Number': self.run_number,
                     'Week Number':self.stats_week_number,
@@ -592,13 +595,14 @@ class Model:
                     'Avg Wait':self.step2_waiting_time
                     }
                     )
-                
+                # if g.debug_level == 1:
+                #     print(self.step2_waiting_list)
                 ##### Step 3 ##### 
                 # record weekly waiting list stats
             self.step3_weekly_waiting_stats = self.step3_waiting_list[self.step3_waiting_list['IsWaiting'] == 1].copy()
             self.step3_weekly_waiting_stats['Weeks Waited'] = self.stats_week_number - self.step3_weekly_waiting_stats['Start Week']
             
-            self.waiting_list_path = ['CBT','Couns']
+            self.waiting_list_path = ['Couns','CBT']
             # create summary stats for each of the routes
             for z, pathway in enumerate(self.waiting_list_path):
 
@@ -607,6 +611,9 @@ class Model:
                 self.step3_waiting_count = self.step3_weekly_waiting_filtered['IsWaiting'].sum()
                 self.step3_waiting_time = self.step3_weekly_waiting_filtered['Weeks Waited'].mean()
 
+                if pd.isna(self.step3_waiting_time):
+                    self.step3_waiting_time = 0
+                
                 self.step3_waiting_stats.append(
                     {'Run Number': self.run_number,
                     'Week Number':self.stats_week_number,
@@ -615,7 +622,8 @@ class Model:
                     'Avg Wait':self.step3_waiting_time
                     }
                     )
-            
+                if g.debug_level == 1:
+                    print(self.step3_waiting_list)
             # hand control back to the governor function
             yield self.env.timeout(0)
 
@@ -1329,7 +1337,7 @@ class Model:
                                             ] = p.step3_path_route
 
         # push the patient down the chosen step3 route
-        if p.step3_path_route == 'CBT':
+        if self.selected_step3_pathway == 'CBT':
             # add to CBT WL
             g.number_on_cbt_wl += 1
 
@@ -1337,7 +1345,7 @@ class Model:
                 print(f"Week Number {self.env.now}. Currently there are {g.number_on_cbt_wl} on the {p.step3_path_route} waiting list")
 
             # now we know which route they are taking, record waiting list data
-            self.step3_waiting_list.at[p.id, 'Route Name'] = p.step3_path_route
+            self.step3_waiting_list.at[p.id, 'Route Name'] = self.selected_step3_pathway
             self.step3_waiting_list.at[p.id, 'Run Number'] = self.run_number
             self.step3_waiting_list.at[p.id, 'Week Number'] = self.week_number
             self.step3_waiting_list.at[p.id, 'IsWaiting'] = 1
@@ -1584,7 +1592,7 @@ class Model:
         # add to caseload
         g.number_on_group_cl +=1
 
-        # print(f'Patient {p} started PwP')
+        # print(f'Patient {p} started Group')
 
         # as each patient reaches this stage take them off Group wl
         g.number_on_group_wl -= 1
@@ -1607,7 +1615,7 @@ class Model:
         self.step2_results_df.at[p.id, 'Route Name'] = p.step2_path_route
         self.step2_results_df.at[p.id, 'Run Number'] = self.run_number
         self.step2_results_df.at[p.id, 'Week Number'] = self.week_number
-        # Calculate how long patient queued for PwP
+        # Calculate how long patient queued for Group
         self.step2_results_df.at[p.id, 'Q Time'] = self.q_time_group
 
          # Generate a list of week numbers the patient is going to attend
@@ -1620,10 +1628,10 @@ class Model:
         self.group_random_weeks.sort()
 
         if g.debug_level >=2:
-            print(f'Random Session week {len(self.pwp_random_weeks)} numbers are {self.pwp_random_weeks}')
+            print(f'Random Session week {len(self.group_random_weeks)} numbers are {self.group_random_weeks}')
 
         if g.debug_level >=2:
-            print(f'Number of sessions is {g.step2_pwp_sessions}')
+            print(f'Number of sessions is {g.step2_group_sessions}')
 
         # decide whether the DNA policy had been followed or not
         self.vary_dna_policy = random.uniform(0,1)
@@ -1654,7 +1662,7 @@ class Model:
 
             # Determine if the patient is stepped up
             self.step_patient_up = random.uniform(0, 1)
-            is_step_up = 1 if self.group_session_counter >= g.step2_pwp_sessions - 1 and self.step_patient_up <= g.step_up_rate else 0
+            is_step_up = 1 if self.group_session_counter >= g.step2_group_sessions - 1 and self.step_patient_up <= g.step_up_rate else 0
             if is_step_up == 1:
                 self.step2_results_df.at[p.id, 'IsStep'] = 1
             else:
@@ -1703,7 +1711,7 @@ class Model:
             # Move to the next session
             self.group_session_counter += 1
 
-        # reset counters for pwp sessions
+        # reset counters for group sessions
         self.group_session_counter = 0
         self.group_dna_counter = 0
         
@@ -1729,7 +1737,7 @@ class Model:
         # Record where the patient is on the couns WL
         self.step3_results_df.at[p.id, 'WL Posn'] = \
                                             g.number_on_cbt_wl
-        self.step2_waiting_list.at[p.id, 'WL Position'] = g.number_on_cbt_wl
+        self.step3_waiting_list.at[p.id, 'WL Position'] = g.number_on_cbt_wl
 
         # Check if there is a caseload slot available and return the resource
         while True:
@@ -1780,7 +1788,7 @@ class Model:
         if g.debug_level >= 2:
             print(f'FUNC PROCESS step3_cbt_process: Week {self.env.now}: Patient {p.id} (added week {p.week_added}) put through {p.step3_path_route}')
 
-        end_q_couns = self.env.now
+        end_q_cbt = self.env.now
 
         p.step3_start_week = self.week_number
 
@@ -1788,15 +1796,15 @@ class Model:
         self.step3_waiting_list.at[p.id, 'End Week'] = self.env.now
 
         # Calculate how long patient queued for couns
-        self.q_time_couns = p.step3_start_week - p.treat_wait_week
+        self.q_time_cbt = p.step3_start_week - p.treat_wait_week
 
         if g.debug_level >=2:
-            print(f'Patient {p.id} WEEK NUMBER {self.env.now} waited {self.q_time_couns} weeks from {p.treat_wait_week} weeks to {p.step3_start_week} to enter {p.step3_path_route} treatment')
+            print(f'Patient {p.id} WEEK NUMBER {self.env.now} waited {self.q_time_cbt} weeks from {p.treat_wait_week} weeks to {p.step3_start_week} to enter {p.step3_path_route} treatment')
         self.step3_results_df.at[p.id, 'Route Name'] = p.step3_path_route
         self.step3_results_df.at[p.id, 'Run Number'] = self.run_number
         self.step3_results_df.at[p.id, 'Week Number'] = self.week_number
         # Calculate how long patient queued for PwP
-        self.step3_results_df.at[p.id, 'Q Time'] = self.q_time_couns
+        self.step3_results_df.at[p.id, 'Q Time'] = self.q_time_cbt
         
         # decide whether the DNA policy had been followed or not
         self.vary_dna_policy = random.uniform(0,1)
