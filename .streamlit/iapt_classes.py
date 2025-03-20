@@ -114,8 +114,8 @@ class g:
 
     # bring in past referral data
     
-    referral_rate_lookup = pd.read_csv('talking_therapies_referral_rates.csv'
-                                                               ,index_col=0)
+    # referral_rate_lookup = pd.read_csv('talking_therapies_referral_rates.csv'
+    #                                                            ,index_col=0)
     #print(referral_rate_lookup)
 # function to vary the number of sessions
 def vary_number_sessions(lower, upper, lambda_val=0.1):
