@@ -7,7 +7,7 @@ import math
 class g:
 
     # used for testing
-    debug_level = 2
+    debug_level = 0
 
     # Referrals
     mean_referrals_pw = 100
