@@ -1443,7 +1443,8 @@ class Model:
             yield self.env.timeout(1)  # Wait a week and retry
 
             if self.result == (None, None):
-                print(f"Stopping retry as no resources are available. Time: {self.env.now}")
+                if g.debug_level >= 2:
+                    print(f"Stopping retry as no resources are available. Time: {self.env.now}")
                 return  # **Exit function entirely**
 
         with self.pwp_caseload_res.get(1) as self.pwp_req:
@@ -1783,7 +1784,8 @@ class Model:
                     print("No available resource found for couns, retrying...")
 
             if self.result == (None, None):
-                print(f"Stopping retry as no resources are available. Time: {self.env.now}")
+                if g.debug_level >= 2:
+                    print(f"Stopping retry as no resources are available. Time: {self.env.now}")
                 return  # **Exit function entirely**
 
             yield self.env.timeout(1)  # Wait a week and retry
@@ -2003,7 +2005,8 @@ class Model:
                     print("No available resource found for couns, retrying...")
 
             if self.result == (None, None):
-                print(f"Stopping retry as no resources are available. Time: {self.env.now}")
+                if g.debug_level >= 2:
+                    print(f"Stopping retry as no resources are available. Time: {self.env.now}")
                 return  # **Exit function entirely**
 
             yield self.env.timeout(1)  # Wait a week and retry

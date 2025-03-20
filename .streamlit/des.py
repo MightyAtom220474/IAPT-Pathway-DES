@@ -62,27 +62,27 @@ with st.sidebar:
         st.divider()
         st.markdown("#### Step 2")
         
-        step2_path_ratio = st.number_input("% of Step 2 Allocated to pwp vs group",
+        step2_path_ratio = st.number_input("% of Step 2 Allocated to PwP vs Group",
                                            min_value=0.0, max_value=100.0, 
                                            step=1.0, value=47.0)
-        step2_first_input = st.slider("Number of Mins for First pwp Appointment",
+        step2_first_input = st.slider("Number of Mins for First PwP Appointment",
                                             1, 60, 45)
-        step2_fup_input = st.slider("Number of Mins for Follow-up pwp Appointment",
+        step2_fup_input = st.slider("Number of Mins for Follow-up PwP Appointment",
                                     1, 60, 30)
-        step2_admin_input = st.slider("Number of Mins for Writing up step2 Appointment",
+        step2_admin_input = st.slider("Number of Mins for Writing up Step2 Appointment",
                                     1, 20, 15)
         step_up_input = st.number_input("% of Patients Stepped Up", 
                                         min_value=0.0, max_value=10.0,
                                         step=0.25, value=1.0)
-        step2_pwp_dna_input = st.number_input("% DNA's for pwp Appointments",
+        step2_pwp_dna_input = st.number_input("% DNA's for PwP Appointments",
                                             min_value=0.0, max_value=30.0,
                                             step=0.5, value=15.0)
-        step2_group_dna_input = st.number_input("% DNA's for group Sessions",
+        step2_group_dna_input = st.number_input("% DNA's for Group Sessions",
                                                min_value=0.0, max_value=30.0,
                                                step=0.25, value=22.0)
-        step2_group_sessions_input = st.slider("Number of step2 group Sessions",
+        step2_group_sessions_input = st.slider("Number of Step2 Group Sessions",
                                               1, 10, 7)
-        step2_group_size_input = st.slider("Maximum step2 group Size", 1, 12, 7)
+        step2_group_size_input = st.slider("Maximum Step2 Group Size", 1, 12, 7)
         step2_group_duration_input = st.number_input("Length of group Sessions (mins)",
                                                 min_value=180, max_value=300,
                                                 step=30, value=240)
@@ -93,26 +93,26 @@ with st.sidebar:
         st.divider()
         st.markdown("#### Step 3")
         
-        step3_path_ratio = st.number_input("% of Step 3 Allocated to couns vs cbt",
+        step3_path_ratio = st.number_input("% of Step 3 Allocated to DepC vs CBT",
                                            min_value=0.0, max_value=100.0,
                                            step=0.5, value=37.0)
         step_down_input = st.number_input("% of Patients Stepped Down",
                                           min_value=0.0, max_value=20.0,
                                           step=0.5, value=12.0)
-        step3_cbt_first_input = st.slider("Number of Mins for First cbt Appointment",
+        step3_cbt_first_input = st.slider("Number of Mins for First CBT Appointment",
                                           1, 60, 45)
-        step3_cbt_fup_input = st.slider("Number of Mins for Follow-up cbt Appointment",
+        step3_cbt_fup_input = st.slider("Number of Mins for Follow-up CBT Appointment",
                                         1, 60, 30)
-        step3_cbt_dna_input = st.number_input("% DNA's for cbt Appointments",
+        step3_cbt_dna_input = st.number_input("% DNA's for CBT Appointments",
                                               min_value=0.0, max_value=30.0,
                                               step=0.5, value=20.0)
-        step3_couns_first_input = st.slider("Number of Mins for First couns Appointment",
+        step3_couns_first_input = st.slider("Number of Mins for First DepC Appointment",
                                             1, 60, 45)
-        step3_couns_fup_input = st.slider("Number of Mins for Follow-up couns Appointment",
+        step3_couns_fup_input = st.slider("Number of Mins for Follow-up DepC Appointment",
                                           1, 60, 30)
-        step3_admin_input = st.slider("Number of Mins for Writing up step3 Appointment",
+        step3_admin_input = st.slider("Number of Mins for Writing up Step3 Appointment",
                                     1, 20, 15)
-        step3_couns_dna_input = st.number_input("% DNA's for counselling Sessions",
+        step3_couns_dna_input = st.number_input("% DNA's for DepC Sessions",
                                                 min_value=0.0, max_value=30.0,
                                                 step=0.25, value=20.0)
         step3_session_var_input = st.number_input("% of Instances where Patients Receive Additional Sessions ",
@@ -128,34 +128,34 @@ with st.sidebar:
 
         st.divider()
         st.markdown("#### Job Plans")
-        cbt_avail_input = st.number_input(label="Starting Number of cbt Practitioners WTE",
+        cbt_avail_input = st.number_input(label="Starting Number of CBT Practitioners WTE",
                                           min_value=1,max_value=200,
                                           step=1,value = g.number_staff_cbt)
         couns_avail_input = st.number_input(label="Starting Number of DepC Practitioners WTE",
                                             min_value=1,max_value=100,
                                             step=1,value = g.number_staff_couns)
-        pwp_avail_input = st.number_input(label="Starting Number of pwp Practitioners WTE",
+        pwp_avail_input = st.number_input(label="Starting Number of PwP Practitioners WTE",
                                           min_value=1,max_value=200,
                                           step=1,value = g.number_staff_pwp)
-        cbt_add_input = st.number_input("Additional Number of cbt Practitioners WTE",
+        cbt_add_input = st.number_input("Additional Number of CBT Practitioners WTE",
                         min_value=-20, max_value=20, step=1, value=0)
         couns_add_input = st.number_input("Additional Number of DepC Practitioners WTE",
                         min_value=-10, max_value=20, step=1, value=0)
-        pwp_add_input = st.number_input("Additional Number of pwp Practitioners WTE",
+        pwp_add_input = st.number_input("Additional Number of PwP Practitioners WTE",
                         min_value=-25, max_value=25, step=1, value=0)
-        cbt_caseload_input = st.slider("Number of Patients Allowed on cbt Caseload",
+        cbt_caseload_input = st.slider("Number of Patients Allowed on CBT Caseload",
                                             1, 50, g.cbt_caseload)
         couns_caseload_input = st.slider("Number of Patients Allowed on DepC Caseload",
                                             1, 50, g.couns_caseload)
-        pwp_caseload_input = st.slider("Number of Patients Allowed on pwp Caseload",
+        pwp_caseload_input = st.slider("Number of Patients Allowed on PwP Caseload",
                                             1, 50, g.pwp_caseload)
-        cbt_hours_avail_input = st.number_input(label="Non-Clinical Hours p/w for cbt Pratitioners",
+        cbt_hours_avail_input = st.number_input(label="Non-Clinical Hours p/w for CBT Pratitioners",
                                                 min_value=10.0,max_value=25.0,
                                                 step=0.5,value = g.hours_avail_cbt)
-        couns_hours_avail_input = st.number_input(label="Non-Clinical Hours p/w for counselling Pratitioners",
+        couns_hours_avail_input = st.number_input(label="Non-Clinical Hours p/w for DepC Pratitioners",
                                                   min_value=10.0,max_value=25.0,
                                                   step=0.5,value = g.hours_avail_couns)
-        pwp_hours_avail_input = st.number_input(label="Non-Clinical Hours p/w for pwp Pratitioners",
+        pwp_hours_avail_input = st.number_input(label="Non-Clinical Hours p/w for PwP Pratitioners",
                                                 min_value=10.0,max_value=25.0,
                                                 step=0.5,value = g.hours_avail_pwp)
         weeks_lost_input = st.number_input("Weeks Lost to Leave/Sickness etc.",
@@ -232,13 +232,30 @@ button_run_pressed = st.button("Run simulation")
 
 if button_run_pressed:
     with st.spinner('Simulating the system...'):
-
-# Create an instance of the Trial class
+        # Create an instance of the Trial class
         my_trial = Trial()
         pd.set_option('display.max_rows', 1000)
-        # Call the run_trial method of our Trial class object
-        step2_results_df, step2_sessions_df, step3_results_df, step3_sessions_df, asst_weekly_dfs, step2_waiting_dfs, step3_waiting_dfs, staff_weekly_dfs, caseload_weekly_dfs = my_trial.run_trial()
-        
+
+        # Run the simulation
+        step2_results_df, step2_sessions_df, step3_results_df, step3_sessions_df, \
+        asst_weekly_dfs, step2_waiting_dfs, step3_waiting_dfs, staff_weekly_dfs, \
+        caseload_weekly_dfs = my_trial.run_trial()
+
+        # Store the results in session state
+        st.session_state.sim_data = {
+            "step2_results_df": step2_results_df,
+            "step2_sessions_df": step2_sessions_df,
+            "step3_results_df": step3_results_df,
+            "step3_sessions_df": step3_sessions_df,
+            "asst_weekly_dfs": asst_weekly_dfs,
+            "step2_waiting_dfs": step2_waiting_dfs,
+            "step3_waiting_dfs": step3_waiting_dfs,
+            "staff_weekly_dfs": staff_weekly_dfs,
+            "caseload_weekly_dfs": caseload_weekly_dfs
+        }
+
+        for name, df in st.session_state.sim_data.items():
+            pd.DataFrame(df)
 
         st.subheader(f'Summary of all {g.number_of_runs} Simulation Runs over {g.sim_duration}'
                      f' Weeks with {cbt_add_input} additional cbt,'
@@ -1007,9 +1024,9 @@ if button_run_pressed:
 
             ########## groups ##########
 
-            col1, col2 = st.columns(2)
+            col3, col4 = st.columns(2)
 
-            with col1:
+            with col3:
 
                 st.subheader('Psychological Wellbeing Practitioner - groups')
             
@@ -1091,7 +1108,7 @@ if button_run_pressed:
 
                         st.divider()
 
-            with col2:            
+            with col4:            
                               
                 if list_name == 'IsDNA':
                     axis_title = 'DNAs'
