@@ -29,15 +29,15 @@ class g:
     ta_accept_rate = 0.7 ##### assume 70% of TA's accepted, need to check this #####
 
     # Step 2
-    step2_ratio = 0.47 # proportion of patients that go onto Step2 vs Step3
-    step2_routes = ['PwP','Group'] # possible Step2 routes
-    step2_path_ratios = [0.8,0.2] #[0.94,0.06] # Step2 proportion for each route
-    step2_pwp_sessions = 6 # number of PwP sessions at Step2
-    step2_pwp_dna_rate = 0.15 # ##### assume 15% DNA rate for PwP
+    step2_ratio = 0.47 # proportion of patients that go onto step2 vs step3
+    step2_routes = ['pwp','group'] # possible step2 routes
+    step2_path_ratios = [0.8,0.2] #[0.94,0.06] # step2 proportion for each route
+    step2_pwp_sessions = 6 # number of pwp sessions at step2
+    step2_pwp_dna_rate = 0.15 # ##### assume 15% DNA rate for pwp
     step2_pwp_1st_mins = 45 # minutes allocated for 1st pwp session
     step2_pwp_fup_mins = 30 # minutes allocated for pwp follow-up session
     step2_session_admin = 15 # number of mins of clinical admin per session
-    step2_pwp_period = 16 # max number of weeks PwP delivered over
+    step2_pwp_period = 16 # max number of weeks pwp delivered over
     step2_group_sessions = 7 # number of group sessions
     step2_group_size = 7 # size a group needs to be before it can be run
     step2_group_session_mins = 240 # minutes allocated to pwp group session
@@ -45,15 +45,15 @@ class g:
 
     # Step Moves
     step2_step3_ratio = [0.85,0.15]
-    step_routes = ['Step2','Step3']
-    step_up_rate = 0.01 # proportion of Step2 that get stepped up = 0.3% but rounded up to 1%
-    step_down_rate = 0.12 # proportion of Step3 that get stepped down = 11.86%
+    step_routes = ['step2','step3']
+    step_up_rate = 0.01 # proportion of step2 that get stepped up = 0.3% but rounded up to 1%
+    step_down_rate = 0.12 # proportion of step3 that get stepped down = 11.86%
     
     # Step 3
-    step3_ratio = 0.15 # proportion of patients that go onto Step3 vs Step2
-    step3_routes =['CBT','Couns'] # full pathway options = ['PfCBT','Group','CBT','EMDR','DepC','DIT','IPT','CDEP']
-    step3_path_ratios = [0.368,0.632]# [0.1,0.25,0.25,0.05,0.05,0.1,0.1,0.1] # Step3 proportion for each route ##### Need to clarify exact split
-    step3_cbt_sessions = 12 # number of PwP sessions at Step2
+    step3_ratio = 0.15 # proportion of patients that go onto step3 vs step2
+    step3_routes =['cbt','couns'] # full pathway options = ['Pfcbt','group','cbt','EMDR','DepC','DIT','IPT','CDEP']
+    step3_path_ratios = [0.368,0.632]# [0.1,0.25,0.25,0.05,0.05,0.1,0.1,0.1] # step3 proportion for each route ##### Need to clarify exact split
+    step3_cbt_sessions = 12 # number of pwp sessions at step2
     step3_cbt_1st_mins = 45 # minutes allocated for 1st cbt session
     step3_cbt_fup_mins = 30 # minutes allocated for cbt follow-up session
     step3_cbt_dna_rate = 0.216 # Wellbeing Workshop attendance 78.6%
@@ -77,14 +77,17 @@ class g:
     number_staff_cbt = 14 #138
     number_staff_couns = 4 #40
     number_staff_pwp = 12 #125
+    pwp_avail = number_staff_pwp
+    cbt_avail = number_staff_cbt
+    couns_avail = number_staff_couns
     hours_avail_cbt = 22.0
     hours_avail_couns = 22.0
     hours_avail_pwp = 21.0
-    ta_resource = number_staff_pwp * 3 # job plan = 3 TA per week per PwP
-    pwp_caseload = 20
-    group_resource = number_staff_pwp #  job plan = 1 group per week per PwP, assume 12 per group
-    cbt_caseload = 5
-    couns_caseload = 5
+    ta_resource = number_staff_pwp * 9 # job plan = 3 TA per week per pwp
+    pwp_caseload = 50
+    group_resource = number_staff_pwp #  job plan = 1 group per week per pwp, assume 12 per group
+    cbt_caseload = 25
+    couns_caseload = 25
     dna_policy = 2 # number of DNA's allowed before discharged
     dna_policy_var = 0.05 # % of cases where the DNA policy is varied
 
@@ -98,16 +101,16 @@ class g:
     weekly_wl_posn = pd.DataFrame() # container to hold w/l position at end of week
     caseload_weekly_stats = [] # list to hold weekly Caseload statistics
     number_on_ta_wl = 0 # used to keep track of TA WL position
-    number_on_pwp_wl = 0 # used to keep track of PwP WL position
+    number_on_pwp_wl = 0 # used to keep track of pwp WL position
     number_on_group_wl = 0 # used to keep track of groups WL position
-    number_on_cbt_wl = 0 # used to keep track of CBT WL position
-    number_on_couns_wl = 0 # used to keep track of Couns WL position
+    number_on_cbt_wl = 0 # used to keep track of cbt WL position
+    number_on_couns_wl = 0 # used to keep track of couns WL position
 
     # Caseload
-    number_on_pwp_cl = 0 # used to keep track of PwP caseload
+    number_on_pwp_cl = 0 # used to keep track of pwp caseload
     number_on_group_cl = 0 # used to keep track of groups caseload
-    number_on_cbt_cl = 0 # used to keep track of CBT caseload
-    number_on_couns_cl = 0 # used to keep track of Couns caseload
+    number_on_cbt_cl = 0 # used to keep track of cbt caseload
+    number_on_couns_cl = 0 # used to keep track of couns caseload
 
     # bring in past referral data
     
@@ -152,25 +155,25 @@ class Patient:
 
         self.initial_step = [] # string, whether they were step 2 or step 3
 
-        # Step2
+        # step2
         self.step2_resource_id = [] # identifier for the staff member allocated to their treatment
-        self.step2_path_route = [] # string, which Step2 path they took
-        self.step2_place_on_wl = 0 # position they are on Step2 waiting list
+        self.step2_path_route = [] # string, which step2 path they took
+        self.step2_place_on_wl = 0 # position they are on step2 waiting list
         self.step2_wait_week = 0 # week they started waiting to enter treatment
         self.step2_start_week = 0 # the week number they started treatment
         self.step2_session_count = 0 # counter for no. of sessions have had
-        self.step2_drop_out = 0 # did they drop out during Step2
+        self.step2_drop_out = 0 # did they drop out during step2
         self.step2_week_number = 0 # counter for which week number they are on
         self.step2_end_week = 0 # the week number when they completed treatment
 
-        # Step3
+        # step3
         self.step3_resource_id = [] # identifier for the staff member allocated to their treatment
-        self.step3_path_route = [] # string, which Step2 path they took
-        self.step3_place_on_wl = 0 # position they are on Step2 waiting list
+        self.step3_path_route = [] # string, which step2 path they took
+        self.step3_place_on_wl = 0 # position they are on step2 waiting list
         self.step2_wait_week = 0 # week they started waiting to enter treatment
         self.step3_start_week = 0
         self.step3_session_count = 0 # counter for no. of sessions have had
-        self.step3_drop_out = 0 # did they drop out during Step2
+        self.step3_drop_out = 0 # did they drop out during step2
         self.step3_week_number = 0 # counter for which week number they are on
         self.step3_end_week = 0
 
@@ -181,7 +184,7 @@ class Staff:
         # Staff attributes
         self.id = s_id
         self.week_number = 0 # the week number the staff activity is being recorded for
-        self.staff_type = [] # what type of staff i.e. CBT, PwP, Couns
+        self.staff_type = [] # what type of staff i.e. cbt, pwp, couns
         self.staff_hours_avail = 0 # how many hours p/w they work
         self.staff_band = 0 # what staff band
 
@@ -241,7 +244,7 @@ class Model:
 
         self.step2_waiting_list.set_index("Patient ID", inplace=True)
 
-        # Step2
+        # step2
         # Create a new DataFrame that will store opt-in results against the patient ID
         self.step2_results_df = pd.DataFrame()
 
@@ -250,7 +253,7 @@ class Model:
         self.step2_results_df['Patient ID'] = [1]
         self.step2_results_df['Week Number'] = [0]
         self.step2_results_df['Run Number'] = [0]
-        self.step2_results_df['Route Name'] = ['NA'] # which Step2 pathway the patient was sent down
+        self.step2_results_df['Route Name'] = ['NA'] # which step2 pathway the patient was sent down
         self.step2_results_df['Q Time'] = [0.0] # time spent queueing
         self.step2_results_df['WL Posn'] = [0] # place in queue 
         self.step2_results_df['IsDropout'] = [0]
@@ -259,7 +262,7 @@ class Model:
         self.step2_sessions_df['Patient ID'] = [1]
         self.step2_sessions_df['Week Number'] = [0]
         self.step2_sessions_df['Run Number'] = [0]
-        self.step2_sessions_df['Route Name'] = ['NA'] # which Step2 pathway the patient was sent down
+        self.step2_sessions_df['Route Name'] = ['NA'] # which step2 pathway the patient was sent down
         self.step2_sessions_df['Session Number'] = [0]
         self.step2_sessions_df['Session Time'] = [0] # clinical session time in mins
         self.step2_sessions_df['Admin Time'] = [0] # admin session time in mins
@@ -269,8 +272,8 @@ class Model:
         self.step2_results_df.set_index("Patient ID", inplace=True)
         self.step2_sessions_df.set_index("Patient ID", inplace=True)
 
-        # Step3
-        # Create DataFrames that will store Step3 results against the patient ID
+        # step3
+        # Create DataFrames that will store step3 results against the patient ID
         
         self.step3_waiting_list = pd.DataFrame()
         self.step3_waiting_list['Patient ID'] = [1]
@@ -291,7 +294,7 @@ class Model:
         self.step3_results_df['Patient ID'] = [1]
         self.step3_results_df['Week Number'] = [0]
         self.step3_results_df['Run Number'] = [0]
-        self.step3_results_df['Route Name'] = ['NA'] # which Step3 pathway the patient was sent down
+        self.step3_results_df['Route Name'] = ['NA'] # which step3 pathway the patient was sent down
         self.step3_results_df['WL Posn'] = [0] # place in queue
         self.step3_results_df['Q Time'] = [0.0] # time spent queueing 
         self.step3_results_df['IsDropout'] = [0]
@@ -300,7 +303,7 @@ class Model:
         self.step3_sessions_df['Patient ID'] = [1]
         self.step3_sessions_df['Week Number'] = [0]
         self.step3_sessions_df['Run Number'] = [0]
-        self.step3_sessions_df['Route Name'] = ['NA'] # which Step2 pathway the patient was sent down
+        self.step3_sessions_df['Route Name'] = ['NA'] # which step2 pathway the patient was sent down
         self.step3_sessions_df['Session Number'] = [0]
         self.step3_sessions_df['Session Time'] = [0] # clinical session time in mins
         self.step3_sessions_df['Admin Time'] = [0] # admin session time in mins
@@ -313,7 +316,7 @@ class Model:
         # Staff
         # staff counters separated by 100 to ensure no overlap in staff ID's when recording
         self.pwp_staff_counter = 100
-        #self.group_staff_counter = 200 # not needed as covered by PwP
+        #self.group_staff_counter = 200 # not needed as covered by pwp
         self.cbt_staff_counter = 200
         self.couns_staff_counter = 300
 
@@ -362,15 +365,15 @@ class Model:
 
         # list to hold weekly asst statistics
         self.asst_weekly_stats = []
-        # list to hold weekly Step2 statistics
+        # list to hold weekly step2 statistics
         self.step2_weekly_stats = []
-        # list to hold weekly Step3 statistics
+        # list to hold weekly step3 statistics
         self.step3_weekly_stats = []
         # list to hold weekly Staff statistics
         self.staff_weekly_stats = []
-        # list to hold Step2 waiting list
+        # list to hold step2 waiting list
         self.step2_waiting_stats = []
-        # list to hold Step3 waiting list
+        # list to hold step3 waiting list
         self.step3_waiting_stats = []
 
         # run for however many times there are weeks in the sim
@@ -481,6 +484,7 @@ class Model:
             self.asst_optin_wait = self.asst_results_weekly_stats['Opt-in Q Time'].mean()
             self.asst_waiting_list = g.number_on_ta_wl
             self.asst_avg_wait = self.asst_results_df['TA Q Time'].mean()
+            self.asst_max_wait = self.asst_results_df['TA Q Time'].max()
             self.asst_tot_accept = self.asst_results_df['TA Outcome'].sum()
             self.asst_time_total = self.asst_results_weekly_stats['TA Mins'].sum()
 
@@ -498,13 +502,14 @@ class Model:
                  'Referrals Wait Opt-in':self.asst_optin_wait,
                  'TA Waiting List':self.asst_waiting_list,
                  'TA Avg Wait':self.asst_avg_wait,
+                 'TA Max Wait':self.asst_max_wait,
                  'TA Total Accept':self.asst_tot_accept,
                  'TA Mins':self.asst_time_total
                 }
                 )
     
             ## Staff
-            self.job_role_list = ['PwP','CBT','Couns']
+            self.job_role_list = ['pwp','cbt','couns']
             # create summary stats for each of the job roles
             for i, job_role in enumerate(self.job_role_list):
                 # filter data for appropriate role
@@ -543,8 +548,9 @@ class Model:
             
             for pwp_caseload_id, pwp_level in self.pwp_resources.items():
                 self.weekly_pwp_snapshot['Data'].append({
-                                            'Caseload ID':pwp_caseload_id
-                                            ,'Caseload Level':pwp_level.level})
+                                            'caseload_id':pwp_caseload_id
+                                            ,'caseload_level':pwp_level.level
+                                            ,'caseload_cap':pwp_level.capacity})
             
             g.caseload_weekly_stats.append(self.weekly_pwp_snapshot)
                 
@@ -554,8 +560,9 @@ class Model:
             
             for cbt_caseload_id, cbt_level in self.cbt_resources.items():
                 self.weekly_cbt_snapshot['Data'].append({
-                                            'Caseload ID':cbt_caseload_id
-                                            ,'Caseload Level':cbt_level.level})
+                                            'caseload_id':cbt_caseload_id
+                                            ,'caseload_level':cbt_level.level
+                                            ,'caseload_cap':cbt_level.capacity})
             
             g.caseload_weekly_stats.append(self.weekly_cbt_snapshot)
             
@@ -565,8 +572,9 @@ class Model:
             
             for couns_caseload_id, couns_level in self.couns_resources.items():
                 self.weekly_couns_snapshot['Data'].append({
-                                            'Caseload ID':couns_caseload_id
-                                            ,'Caseload Level':couns_level.level})
+                                            'caseload_id':couns_caseload_id
+                                            ,'caseload_level':couns_level.level
+                                            ,'caseload_cap':couns_level.capacity})
                 
             g.caseload_weekly_stats.append(self.weekly_couns_snapshot)
 
@@ -580,21 +588,22 @@ class Model:
             # Create summary stats for each of the routes
             for pathway in self.waiting_list_path_step2:
 
-                step2_weekly_waiting_filtered = self.step2_weekly_waiting_stats[self.step2_weekly_waiting_stats['Route Name'] == pathway]
+                self.step2_weekly_waiting_filtered = self.step2_weekly_waiting_stats[self.step2_weekly_waiting_stats['Route Name'] == pathway]
 
-                # Use local variables to avoid cross-iteration conflicts
-                step2_waiting_count = step2_weekly_waiting_filtered['IsWaiting'].sum()
-                step2_waiting_time = step2_weekly_waiting_filtered['Weeks Waited'].mean()
+                self.step2_waiting_count = self.step2_weekly_waiting_filtered['IsWaiting'].sum()
+                self.step2_waiting_avg = self.step2_weekly_waiting_filtered['Weeks Waited'].mean()
+                self.step2_waiting_max = self.step2_weekly_waiting_filtered['Weeks Waited'].max()
 
-                if pd.isna(step2_waiting_time):
-                    step2_waiting_time = 0
+                # if pd.isna(step2_waiting_time):
+                #     step2_waiting_time = 0
 
                 self.step2_waiting_stats.append({
                     'Run Number': self.run_number,
                     'Week Number': self.stats_week_number,
                     'Route Name': pathway,
-                    'Num Waiting': step2_waiting_count,
-                    'Avg Wait': step2_waiting_time
+                    'Num Waiting': self.step2_waiting_count,
+                    'Avg Wait': self.step2_waiting_avg,
+                    'Max Wait': self.step2_waiting_max
                 })
                 # if g.debug_level == 1:
                 #     print(self.step2_waiting_list)
@@ -608,21 +617,23 @@ class Model:
             # Create summary stats for each of the routes
             for pathway in self.waiting_list_path_step3:
 
-                step3_weekly_waiting_filtered = self.step3_weekly_waiting_stats[self.step3_weekly_waiting_stats['Route Name'] == pathway]
+                self.step3_weekly_waiting_filtered = self.step3_weekly_waiting_stats[self.step3_weekly_waiting_stats['Route Name'] == pathway]
 
                 # Use local variables to avoid cross-iteration conflicts
-                step3_waiting_count = step3_weekly_waiting_filtered['IsWaiting'].sum()
-                step3_waiting_time = step3_weekly_waiting_filtered['Weeks Waited'].mean()
+                self.step3_waiting_count = self.step3_weekly_waiting_filtered['IsWaiting'].sum()
+                self.step3_waiting_avg = self.step3_weekly_waiting_filtered['Weeks Waited'].mean()
+                self.step3_waiting_max = self.step3_weekly_waiting_filtered['Weeks Waited'].max()
 
-                if pd.isna(step2_waiting_time):
-                    step3_waiting_time = 0
+                # if pd.isna(step2_waiting_time):
+                #     step3_waiting_time = 0
 
                 self.step3_waiting_stats.append({
                     'Run Number': self.run_number,
                     'Week Number': self.stats_week_number,
                     'Route Name': pathway,
-                    'Num Waiting': step3_waiting_count,
-                    'Avg Wait': step3_waiting_time
+                    'Num Waiting': self.step3_waiting_count,
+                    'Avg Wait': self.step3_waiting_avg,
+                    'Max Wait': self.step3_waiting_max
                 })
                 # if g.debug_level == 1:
                 #     print(self.step3_waiting_list)
@@ -649,15 +660,33 @@ class Model:
     
     # this function builds staff resources containing the number of slots on the caseload
     # or the number of weekly appointment slots available
+    
+    def ta_resource_selector(self, resource_week):
+        # Default values to prevent undefined variable errors
+        cbt_ta_res = 0  
+        couns_ta_res = 0  
+
+        if resource_week % 4 == 0:  # Every 4th week
+            couns_ta_res = g.couns_avail
+            cbt_ta_res = g.cbt_avail  # Since 4 is also a multiple of 2
+
+        elif resource_week % 2 == 0:  # Every 2nd week
+            cbt_ta_res = g.cbt_avail  
+
+        pwp_ta_res = g.pwp_avail * 9  # Always included
+
+        tot_ta_res = cbt_ta_res + couns_ta_res + pwp_ta_res
+        return tot_ta_res
+        
     def resource_builder(self):
 
         ########## Weekly Resources ##########
         ##### TA #####
         self.ta_res = simpy.Container(
-            self.env,capacity=g.ta_resource,
+            self.env,capacity=self.ta_resource_selector(self.week_number),
             init=g.ta_resource
             )
-        ##### Group #####
+        ##### group #####
         self.group_res = simpy.Container(
             self.env,
             capacity=g.group_resource,
@@ -668,9 +697,9 @@ class Model:
 
     def caseload_builder(self):
 
-        ##### PwP #####
-        self.p_type = 'PwP'
-        # dictionary to hold PwP caseload resources
+        ##### pwp #####
+        self.p_type = 'pwp'
+        # dictionary to hold pwp caseload resources
         self.pwp_resources = {f'{self.p_type}_{p}':simpy.Container(self.env,
                     capacity=g.pwp_caseload,
                     init=g.pwp_caseload) for p in range(g.number_staff_pwp)}
@@ -682,9 +711,9 @@ class Model:
         
         if g.debug_level >= 2:
             print(self.pwp_restore)
-        ##### CBT #####
-        self.c_type = 'CBT'
-        # dictionary to hold CBT caseload resources
+        ##### cbt #####
+        self.c_type = 'cbt'
+        # dictionary to hold cbt caseload resources
         self.cbt_resources = {f'{self.c_type}_{c}':simpy.Container(self.env,
                     capacity=g.cbt_caseload,
                     init=g.cbt_caseload) for c in range(g.number_staff_cbt)}
@@ -694,9 +723,9 @@ class Model:
         
         if g.debug_level >= 2:
             print(self.cbt_restore)
-        ##### Couns #####
-        self.s_type = 'Couns'
-        # dictionary to hold Couns caseload resources
+        ##### couns #####
+        self.s_type = 'couns'
+        # dictionary to hold couns caseload resources
         self.couns_resources = {f'{self.s_type}_{s}':simpy.Container(self.env,
                     capacity=g.couns_caseload,
                     init=g.couns_caseload) for s in range(g.number_staff_couns)}
@@ -714,11 +743,11 @@ class Model:
         self.restore_week = week_number
         
         # Load in the correct resource use dictionary
-        if r_type == 'PwP':
+        if r_type == 'pwp':
             self.resources_used = self.pwp_restore
-        elif r_type == 'CBT':
+        elif r_type == 'cbt':
             self.resources_used = self.cbt_restore
-        elif r_type == 'Couns':
+        elif r_type == 'couns':
             self.resources_used = self.couns_restore
         
         # if g.debug_level >= 2:
@@ -744,7 +773,7 @@ class Model:
 
     def replenish_weekly_resources(self):
 
-            ##### TA and Group Resources #####
+            ##### TA and group Resources #####
             ta_amount_to_fill = g.ta_resource - self.ta_res.level
             group_amount_to_fill = g.group_resource - self.group_res.level
 
@@ -760,13 +789,13 @@ class Model:
 
             if group_amount_to_fill > 0:
                 if g.debug_level >= 2:
-                    print(f"Group Level: {self.group_res.level}")
+                    print(f"group Level: {self.group_res.level}")
                     print(f"Putting in {group_amount_to_fill}")
 
                 self.group_res.put(group_amount_to_fill)
 
                 if g.debug_level >= 2:
-                    print(f"New Group Level: {self.group_res.level}")
+                    print(f"New group Level: {self.group_res.level}")
 
             # don't wait, go to the next step
             yield self.env.timeout(0)
@@ -780,34 +809,34 @@ class Model:
                 if self.week_num in week_data and week_data[self.week_num]['res_topup'] > 0:
                     self.pwp_topup_value = week_data[self.week_num]['res_topup']
                     if g.debug_level >= 2:
-                        print(f"PwP Resource {self.pwp_restore_id} at week {self.week_num}: {self.pwp_resources[self.pwp_restore_id].level}, {self.pwp_topup_value} available to restore")
+                        print(f"pwp Resource {self.pwp_restore_id} at week {self.week_num}: {self.pwp_resources[self.pwp_restore_id].level}, {self.pwp_topup_value} available to restore")
 
                     self.pwp_resources[self.pwp_restore_id].put(self.pwp_topup_value)
 
                 if g.debug_level >= 2:
-                    print(f"PwP Resource {self.pwp_restore_id} now at: {self.pwp_resources[self.pwp_restore_id].level}")
+                    print(f"pwp Resource {self.pwp_restore_id} now at: {self.pwp_resources[self.pwp_restore_id].level}")
         
             for self.cbt_restore_id, week_data in self.cbt_restore.items():
                 if self.week_num in week_data and week_data[self.week_num]['res_topup'] > 0:
                     self.cbt_topup_value = week_data[self.week_num]['res_topup']
                     if g.debug_level >= 2:
-                        print(f"CBT Resource {self.cbt_restore_id} at week {self.week_num}: {self.cbt_resources[self.cbt_restore_id].level}, {self.cbt_topup_value} available to restore")
+                        print(f"cbt Resource {self.cbt_restore_id} at week {self.week_num}: {self.cbt_resources[self.cbt_restore_id].level}, {self.cbt_topup_value} available to restore")
 
                     self.cbt_resources[self.cbt_restore_id].put(self.cbt_topup_value)
 
                 if g.debug_level >= 2:
-                    print(f"Couns Resource {self.cbt_restore_id} now at: {self.cbt_resources[self.cbt_restore_id].level}")
+                    print(f"couns Resource {self.cbt_restore_id} now at: {self.cbt_resources[self.cbt_restore_id].level}")
                       
             for self.couns_restore_id, week_data in self.couns_restore.items():
                 if self.week_num in week_data and week_data[self.week_num]['res_topup'] > 0:
                     self.couns_topup_value = week_data[self.week_num]['res_topup']
                     if g.debug_level >= 2:
-                            print(f"PwP Resource {self.couns_restore_id} at week {self.week_num}: {self.couns_resources[self.couns_restore_id].level}, {self.couns_topup_value} available to restore")
+                            print(f"pwp Resource {self.couns_restore_id} at week {self.week_num}: {self.couns_resources[self.couns_restore_id].level}, {self.couns_topup_value} available to restore")
 
                     self.couns_resources[self.couns_restore_id].put(self.couns_topup_value)
 
                 if g.debug_level >= 2:
-                    print(f"PwP Resource {self.couns_restore_id} now at: {self.couns_resources[self.couns_restore_id].level}")
+                    print(f"pwp Resource {self.couns_restore_id} now at: {self.couns_resources[self.couns_restore_id].level}")
             # don't wait, go to the next step
             yield self.env.timeout(0)
             
@@ -815,11 +844,11 @@ class Model:
 
         self.r_type = r_type
         # load in the right resource dictionary
-        if self.r_type == 'PwP':
+        if self.r_type == 'pwp':
             self.resources = self.pwp_resources
-        elif self.r_type == 'CBT':
+        elif self.r_type == 'cbt':
             self.resources = self.cbt_resources
-        elif self.r_type == 'Couns':
+        elif self.r_type == 'couns':
             self.resources = self.couns_resources
 
         self.available_caseloads = {k: v for k, v in self.resources.items() if v.level > 0}
@@ -856,7 +885,7 @@ class Model:
 
         self.pwp_counter = 0
        
-        # iterate through the PwP staff accounting for half WTE's
+        # iterate through the pwp staff accounting for half WTE's
         # counter only increments by 0.5 so in effect each staff member
         # will get processed twice each week
         while self.pwp_counter < g.number_staff_pwp:
@@ -869,11 +898,11 @@ class Model:
 
             if g.debug_level >=2:
                 print('')
-                print(f"==== PwP Staff {s.id} Generated ====")
+                print(f"==== pwp Staff {s.id} Generated ====")
             
             self.staff_results_df.at[s.id,'Week Number'] = week_number
             self.staff_results_df.at[s.id,'Run Number'] = self.run_number
-            self.staff_results_df.at[s.id,'Job Role'] = 'PwP'
+            self.staff_results_df.at[s.id,'Job Role'] = 'pwp'
             self.staff_results_df.at[s.id,'Break Mins'] = g.break_time/2
             #self.staff_results_df.at[s.id,'Huddle Mins'] = g.huddle_time # counsellors only
             
@@ -893,7 +922,7 @@ class Model:
 
         self.cbt_counter = 0
        
-        # iterate through the CBT staff accounting for half WTE's
+        # iterate through the cbt staff accounting for half WTE's
         # counter only increments by 0.5 so in effect each staff member
         # will get processed twice each week
         while self.cbt_counter < g.number_staff_cbt:
@@ -906,11 +935,11 @@ class Model:
 
             if g.debug_level >=2:
                 print('')
-                print(f"==== CBT Staff {s.id} Generated ====")
+                print(f"==== cbt Staff {s.id} Generated ====")
             
             self.staff_results_df.at[s.id,'Week Number'] = week_number
             self.staff_results_df.at[s.id,'Run Number'] = self.run_number
-            self.staff_results_df.at[s.id,'Job Role'] = 'CBT'
+            self.staff_results_df.at[s.id,'Job Role'] = 'cbt'
             self.staff_results_df.at[s.id,'Break Mins'] = g.break_time/2
             #self.staff_results_df.at[s.id,'Huddle Mins'] = g.huddle_time # counsellors only
             
@@ -930,7 +959,7 @@ class Model:
 
         self.couns_counter = 0
        
-        # iterate through the Couns staff accounting for half WTE's
+        # iterate through the couns staff accounting for half WTE's
         # counter only increments by 0.5 so in effect each staff member
         # will get processed twice each week
         while self.couns_counter < g.number_staff_couns:
@@ -943,13 +972,13 @@ class Model:
 
             if g.debug_level >=2:
                 print('')
-                print(f"==== Couns Staff {s.id} Generated ====")
+                print(f"==== couns Staff {s.id} Generated ====")
             
             self.staff_results_df.at[s.id,'Week Number'] = week_number
             self.staff_results_df.at[s.id,'Run Number'] = self.run_number
-            self.staff_results_df.at[s.id,'Job Role'] = 'Couns'
+            self.staff_results_df.at[s.id,'Job Role'] = 'couns'
             self.staff_results_df.at[s.id,'Break Mins'] = g.break_time/2
-            self.staff_results_df.at[s.id,'Huddle Mins'] = g.counsellors_huddle/2 # Couns only
+            self.staff_results_df.at[s.id,'Huddle Mins'] = g.counsellors_huddle/2 # couns only
             
             # monthly staff activities
             if self.week_number % 4 == 0:
@@ -1206,7 +1235,7 @@ class Model:
                 #print(self.selected_step)
                 self.selected_step = random.choice(self.step_options)
 
-                if self.selected_step == "Step3":
+                if self.selected_step == "step3":
                     if g.debug_level >=2:
                         print(f"Selected step: **{self.selected_step}**")
                 else:
@@ -1227,7 +1256,7 @@ class Model:
 
         p = patient
 
-        if step_chosen == 'Step2':
+        if step_chosen == 'step2':
             # record that they've started waiting for treatment
             #p.step2_wait_week = self.env.now
             
@@ -1260,8 +1289,8 @@ class Model:
                                             ] = p.step2_path_route
 
         # push the patient down the chosen step2 route
-        if self.selected_step2_pathway == 'PwP':
-            # add to PwP WL
+        if self.selected_step2_pathway == 'pwp':
+            # add to pwp WL
             g.number_on_pwp_wl += 1
             if g.debug_level >=2:
                 print(f"Week Number {self.env.now}. Currently there are {g.number_on_pwp_wl} on the {p.step2_path_route} waiting list")
@@ -1282,7 +1311,7 @@ class Model:
             yield self.env.process(self.step2_pwp_process(p))
         else:
             if g.debug_level >=2:
-                print(f"Patient {p.id} sent to Group store")
+                print(f"Patient {p.id} sent to group store")
             
                 self.group_store.put(p)
 
@@ -1293,7 +1322,7 @@ class Model:
                     print(f"Week Number {self.env.now}. Currently there are {g.number_on_pwp_wl} on the {p.step2_path_route} waiting list")
                 
                 if g.debug_level >=2:
-                    print(f'Group store contains {len(self.group_store.items)} of possible {g.step2_group_size}')
+                    print(f'group store contains {len(self.group_store.items)} of possible {g.step2_group_size}')
 
                 # self.start_q_group = self.env.now
 
@@ -1307,14 +1336,14 @@ class Model:
                 
                 if len(self.group_store.items) == 7:
                     if g.debug_level >=2:
-                        print(f'Group is now full, putting {len(self.group_store.items)} through group therapy')
+                        print(f'group is now full, putting {len(self.group_store.items)} through group therapy')
                     # put all the stored patients through group therapy
                     while len(self.group_store.items) > 0:
 
                         p = yield self.group_store.get()
 
                         if g.debug_level >=2:
-                            print(f'Putting Patient {p.id} through Group Therapy, {len(self.group_store.items)} remaining')
+                            print(f'Putting Patient {p.id} through group Therapy, {len(self.group_store.items)} remaining')
                         if g.debug_level >=2:
                                 print(f"FUNC PROCESS patient_step2_pathway: Patient {p.id} Initiating {p.step2_path_route} Step 2 Route")
                         #yield self.env.timeout(0)
@@ -1339,8 +1368,8 @@ class Model:
                                             ] = p.step3_path_route
 
         # push the patient down the chosen step3 route
-        if self.selected_step3_pathway == 'CBT':
-            # add to CBT WL
+        if self.selected_step3_pathway == 'cbt':
+            # add to cbt WL
             g.number_on_cbt_wl += 1
 
             if g.debug_level >=2:
@@ -1359,7 +1388,7 @@ class Model:
             #yield self.env.timeout(0)
             yield self.env.process(self.step3_cbt_process(p))
         else:
-            # add to Couns WL
+            # add to couns WL
             g.number_on_couns_wl += 1
 
             if g.debug_level >=2:
@@ -1393,7 +1422,7 @@ class Model:
 
         self.start_q_pwp = self.env.now
 
-        # Record where the patient is on the PwP WL
+        # Record where the patient is on the pwp WL
         self.step2_results_df.at[p.id, 'WL Posn'] = \
                                             g.number_on_pwp_wl
         self.step2_waiting_list.at[p.id, 'WL Position'] = g.number_on_pwp_wl
@@ -1410,7 +1439,7 @@ class Model:
                     break  # Exit the loop when a resource is found
             else:
                 if g.debug_level >= 2:
-                    print("No available resource found for PwP, retrying...")
+                    print("No available resource found for pwp, retrying...")
             yield self.env.timeout(1)  # Wait a week and retry
 
             if self.result == (None, None):
@@ -1437,7 +1466,7 @@ class Model:
         # add to caseload
         g.number_on_pwp_cl += 1
         
-        # as each patient reaches this stage take them off PwP wl
+        # as each patient reaches this stage take them off pwp wl
         g.number_on_pwp_wl -= 1
         # record the week that they started treatment
         p.step2_start_week = self.env.now
@@ -1461,7 +1490,7 @@ class Model:
         self.step2_results_df.at[p.id, 'Route Name'] = p.step2_path_route
         self.step2_results_df.at[p.id, 'Run Number'] = self.run_number
         self.step2_results_df.at[p.id, 'Week Number'] = self.week_number
-        # Calculate how long patient queued for PwP
+        # Calculate how long patient queued for pwp
         self.step2_results_df.at[p.id, 'Q Time'] = self.q_time_pwp
 
         # Generate a list of week numbers the patient is going to attend
@@ -1542,7 +1571,7 @@ class Model:
                 p.treat_wait_week = self.env.now
             
                 if g.debug_level >= 2:
-                    print(f'### STEPPED UP ###: Patient {p.id} has been stepped up, running Step3 route selector')
+                    print(f'### STEPPED UP ###: Patient {p.id} has been stepped up, running step3 route selector')
                 yield self.env.process(self.patient_step3_pathway(p))
 
             # Handle dropout logic
@@ -1587,16 +1616,16 @@ class Model:
                                             g.number_on_group_wl
         self.step2_waiting_list.at[p.id, 'WL Position'] = g.number_on_group_wl
 
-        # Request a Group resource from the container
+        # Request a group resource from the container
         with self.group_res.get(1) as group_req:
             yield group_req
 
         # add to caseload
         g.number_on_group_cl +=1
 
-        # print(f'Patient {p} started Group')
+        # print(f'Patient {p} started group')
 
-        # as each patient reaches this stage take them off Group wl
+        # as each patient reaches this stage take them off group wl
         g.number_on_group_wl -= 1
 
         p.step2_start_week = self.env.now
@@ -1617,7 +1646,7 @@ class Model:
         self.step2_results_df.at[p.id, 'Route Name'] = p.step2_path_route
         self.step2_results_df.at[p.id, 'Run Number'] = self.run_number
         self.step2_results_df.at[p.id, 'Week Number'] = self.week_number
-        # Calculate how long patient queued for Group
+        # Calculate how long patient queued for group
         self.step2_results_df.at[p.id, 'Q Time'] = self.q_time_group
 
          # Generate a list of week numbers the patient is going to attend
@@ -1699,7 +1728,7 @@ class Model:
                 # record when they statted waiting i.e. at point of step up
                 p.treat_wait_week = self.env.now
                 if g.debug_level >= 2:
-                    print(f'### STEPPED UP ###: Patient {p.id} has been stepped up, running Step3 route selector')
+                    print(f'### STEPPED UP ###: Patient {p.id} has been stepped up, running step3 route selector')
                 yield self.env.process(self.patient_step3_pathway(p))
 
             # Handle dropout logic
@@ -1751,7 +1780,7 @@ class Model:
                     break  # Exit the loop when a resource is found
             else:
                 if g.debug_level >= 2:
-                    print("No available resource found for Couns, retrying...")
+                    print("No available resource found for couns, retrying...")
 
             if self.result == (None, None):
                 print(f"Stopping retry as no resources are available. Time: {self.env.now}")
@@ -1805,7 +1834,7 @@ class Model:
         self.step3_results_df.at[p.id, 'Route Name'] = p.step3_path_route
         self.step3_results_df.at[p.id, 'Run Number'] = self.run_number
         self.step3_results_df.at[p.id, 'Week Number'] = self.week_number
-        # Calculate how long patient queued for PwP
+        # Calculate how long patient queued for pwp
         self.step3_results_df.at[p.id, 'Q Time'] = self.q_time_cbt
         
         # decide whether the DNA policy had been followed or not
@@ -1908,7 +1937,7 @@ class Model:
                 self.cbt_dna_counter = 0  # Reset counters for the next step
                 p.treat_wait_week = self.env.now
                 if g.debug_level >= 2:
-                    print(f'### STEPPED UP ###: Patient {p.id} has been stepped up, running Step3 route selector')
+                    print(f'### STEPPED UP ###: Patient {p.id} has been stepped up, running step3 route selector')
                 yield self.env.process(self.patient_step2_pathway(p))
 
             # Handle dropout logic
@@ -1971,7 +2000,7 @@ class Model:
                     break  # Exit the loop when a resource is found
             else:
                 if g.debug_level >= 2:
-                    print("No available resource found for Couns, retrying...")
+                    print("No available resource found for couns, retrying...")
 
             if self.result == (None, None):
                 print(f"Stopping retry as no resources are available. Time: {self.env.now}")
@@ -2025,7 +2054,7 @@ class Model:
         self.step3_results_df.at[p.id, 'Route Name'] = p.step3_path_route
         self.step3_results_df.at[p.id, 'Run Number'] = self.run_number
         self.step3_results_df.at[p.id, 'Week Number'] = self.week_number
-        # Calculate how long patient queued for PwP
+        # Calculate how long patient queued for pwp
         self.step3_results_df.at[p.id, 'Q Time'] = self.q_time_couns
         
         # decide whether the DNA policy had been followed or not
@@ -2128,7 +2157,7 @@ class Model:
                 self.couns_dna_counter = 0  # Reset counters for the next step
                 p.treat_wait_week = self.env.now
                 if g.debug_level >= 2:
-                    print(f'### STEPPED UP ###: Patient {p.id} has been stepped up, running Step3 route selector')
+                    print(f'### STEPPED UP ###: Patient {p.id} has been stepped up, running step3 route selector')
                 yield self.env.process(self.patient_step2_pathway(p))
 
             # Handle dropout logic
