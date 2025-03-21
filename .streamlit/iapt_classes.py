@@ -90,7 +90,7 @@ class g:
     couns_caseload = 25
     dna_policy = 2 # number of DNA's allowed before discharged
     dna_policy_var = 0.05 # % of cases where the DNA policy is varied
-
+    
     # Simulation
     sim_duration = 52
     number_of_runs = 5
@@ -662,7 +662,9 @@ class Model:
     # or the number of weekly appointment slots available
     
     def ta_resource_selector(self, resource_week):
-        # Default values to prevent undefined variable errors
+        
+        # this function works out how many TA slots are available based on
+        # pwp = 9 per week, cbt = 1 every fortnight, couns = 1 every 4 weeks
         cbt_ta_res = 0  
         couns_ta_res = 0  
 

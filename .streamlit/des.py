@@ -209,9 +209,9 @@ g.step_down_rate = step_down_input/100
 g.step3_session_admin = step3_admin_input
 
 ##### Job Plans
-g.cbt_avail = cbt_avail_input + cbt_add_input
-g.couns_avail = couns_avail_input + couns_add_input
-g.pwp_avail = pwp_avail_input + pwp_add_input
+g.cbt_avail_tot = cbt_avail_input + cbt_add_input
+g.couns_avail_tot = couns_avail_input + couns_add_input
+g.pwp_avail_tot = pwp_avail_input + pwp_add_input
 g.cbt_caseload = cbt_caseload_input
 g.couns_caseload = couns_caseload_input
 g.pwp_caseload = pwp_caseload_input
@@ -219,6 +219,12 @@ g.pwp_caseload = pwp_caseload_input
 total_cbt_hours = g.cbt_avail*37.5
 total_couns_hours = g.couns_avail*37.5
 total_pwp_hours = g.pwp_avail*37.5
+staff_weeks_lost = weeks_lost_input
+weeks_lost_pc = (52-staff_weeks_lost)/52
+g.cbt_avail = int(g.cbt_avail_tot*weeks_lost_pc)
+g.couns_avail = int(g.couns_avail_tot*weeks_lost_pc)
+g.pwp_avail = int(g.pwp_avail_tot*weeks_lost_pc)
+asst_resource = int(62*weeks_lost_pc)
 
 g.sim_duration = sim_duration_input
 g.number_of_runs = number_of_runs_input
