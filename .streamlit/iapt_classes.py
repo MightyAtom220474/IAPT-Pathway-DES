@@ -217,7 +217,7 @@ class Model:
         self.asst_results_df['Referral Rejected'] = [0] # 1 = Yes, 0 = No
         self.asst_results_df['Referral Accepted'] = [0] # 1 = Yes, 0 = No
         self.asst_results_df['Referral Reviewed'] = [0] # 1 = Yes, 0 = No
-        self.asst_results_df['Review Wait'] = [0] # time between screening and getting review
+        self.asst_results_df['Review Wait'] = [0.0] # time between screening and getting review
         self.asst_results_df['Review Rejected'] = [0] # 1 = Yes, 0 = No
         self.asst_results_df['Opted In'] = [0] # 1 = Yes, 0 = No
         self.asst_results_df['Opt-in Wait'] = [0.0] # time between opt-in notification and patient opting in
@@ -235,7 +235,7 @@ class Model:
         self.step2_waiting_list['Patient ID'] = [1]
         self.step2_waiting_list['Run Number'] = 0
         self.step2_waiting_list['Week Number'] = 0
-        self.step2_waiting_list['Route Name'] = ['NA']
+        self.step2_waiting_list['Route Name'] = np.nan
         self.step2_waiting_list['IsWaiting'] = 1
         self.step2_waiting_list['WL Position'] = 0
         self.step2_waiting_list['Start Week'] = 0
@@ -253,7 +253,7 @@ class Model:
         self.step2_results_df['Patient ID'] = [1]
         self.step2_results_df['Week Number'] = [0]
         self.step2_results_df['Run Number'] = [0]
-        self.step2_results_df['Route Name'] = ['NA'] # which step2 pathway the patient was sent down
+        self.step2_results_df['Route Name'] = np.nan # which step2 pathway the patient was sent down
         self.step2_results_df['Q Time'] = [0.0] # time spent queueing
         self.step2_results_df['WL Posn'] = [0] # place in queue 
         self.step2_results_df['IsDropout'] = [0]
@@ -271,7 +271,7 @@ class Model:
         # Indexing
         self.step2_results_df.set_index("Patient ID", inplace=True)
         self.step2_sessions_df.set_index("Patient ID", inplace=True)
-
+        
         # step3
         # Create DataFrames that will store step3 results against the patient ID
         
@@ -580,23 +580,33 @@ class Model:
 
             # record weekly waiting list stats
             ##### Step 2 #####
-            self.step2_weekly_waiting_stats = self.step2_waiting_list[self.step2_waiting_list['IsWaiting'] == 1].copy()
+                        
+            #print(self.step2_waiting_list)
+            # get rid of records that didn't get to the stage of deciding which path to go down
+            self.step2_waiting_list_clean = self.step2_waiting_list.dropna(subset=['Route Name'])
+            # Reset index to avoid mismatches
+            self.step2_waiting_list_clean = self.step2_waiting_list_clean.reset_index(drop=True)
+            # get patients that are still waiting at the end of this week
+            self.step2_weekly_waiting_stats = self.step2_waiting_list_clean[self.step2_waiting_list_clean['IsWaiting'] == 1].copy()
+            # calculate how long they've been waiting
             self.step2_weekly_waiting_stats['Weeks Waited'] = self.stats_week_number - self.step2_weekly_waiting_stats['Start Week']
-            
-            self.waiting_list_path_step2 = list(self.step2_weekly_waiting_stats['Route Name'].unique())
+            #print(self.step2_weekly_waiting_stats)
+            # possible options to iterate through
+            self.waiting_list_path_step2 = ['pwp','group']
+            #print(self.step2_waiting_list)
 
             # Create summary stats for each of the routes
             for pathway in self.waiting_list_path_step2:
-
-                self.step2_weekly_waiting_filtered = self.step2_weekly_waiting_stats[self.step2_weekly_waiting_stats['Route Name'] == pathway]
-
+                # filter for appropriate pathway
+                self.step2_weekly_waiting_filtered = self.step2_weekly_waiting_stats[self.step2_weekly_waiting_stats['Route Name'] == pathway].reset_index()
+                # calculate required values
                 self.step2_waiting_count = self.step2_weekly_waiting_filtered['IsWaiting'].sum()
                 self.step2_waiting_avg = self.step2_weekly_waiting_filtered['Weeks Waited'].mean()
                 self.step2_waiting_max = self.step2_weekly_waiting_filtered['Weeks Waited'].max()
 
                 # if pd.isna(step2_waiting_time):
                 #     step2_waiting_time = 0
-
+                # append data
                 self.step2_waiting_stats.append({
                     'Run Number': self.run_number,
                     'Week Number': self.stats_week_number,
@@ -605,28 +615,39 @@ class Model:
                     'Avg Wait': self.step2_waiting_avg,
                     'Max Wait': self.step2_waiting_max
                 })
+
+                #print(self.step2_weekly_stats)
                 # if g.debug_level == 1:
                 #     print(self.step2_waiting_list)
-                ##### Step 3 ##### 
-                # record weekly waiting list stats
-            self.step3_weekly_waiting_stats = self.step3_waiting_list[self.step3_waiting_list['IsWaiting'] == 1].copy()
+            #     ##### Step 3 ##### 
+            #     # record weekly waiting list stats
+            #print(self.step3_waiting_list)
+            # get rid of records that didn't get to the stage of deciding which path to go down
+            self.step3_waiting_list_clean = self.step3_waiting_list.dropna(subset=['Route Name'])
+            # Reset index to avoid mismatches
+            self.step3_waiting_list_clean = self.step3_waiting_list_clean.reset_index(drop=True)
+            # get patients that are still waiting at the end of this week
+            self.step3_weekly_waiting_stats = self.step3_waiting_list_clean[self.step3_waiting_list_clean['IsWaiting'] == 1].copy()
+            # calculate how long they've been waiting
             self.step3_weekly_waiting_stats['Weeks Waited'] = self.stats_week_number - self.step3_weekly_waiting_stats['Start Week']
+            #print(self.step3_weekly_waiting_stats)
+            # possible options to iterate through
+            self.waiting_list_path_step3 = ['cbt','couns']
             
-            self.waiting_list_path_step3 = list(self.step3_weekly_waiting_stats['Route Name'].unique())
-            # create summary stats for each of the routes
+            #print(self.step3_waiting_list)
+
             # Create summary stats for each of the routes
             for pathway in self.waiting_list_path_step3:
-
-                self.step3_weekly_waiting_filtered = self.step3_weekly_waiting_stats[self.step3_weekly_waiting_stats['Route Name'] == pathway]
-
-                # Use local variables to avoid cross-iteration conflicts
+                # filter for appropriate pathway
+                self.step3_weekly_waiting_filtered = self.step3_weekly_waiting_stats[self.step3_weekly_waiting_stats['Route Name'] == pathway].reset_index()
+                # calculate required values
                 self.step3_waiting_count = self.step3_weekly_waiting_filtered['IsWaiting'].sum()
                 self.step3_waiting_avg = self.step3_weekly_waiting_filtered['Weeks Waited'].mean()
                 self.step3_waiting_max = self.step3_weekly_waiting_filtered['Weeks Waited'].max()
 
-                # if pd.isna(step2_waiting_time):
+                # if pd.isna(step3_waiting_time):
                 #     step3_waiting_time = 0
-
+                # append data
                 self.step3_waiting_stats.append({
                     'Run Number': self.run_number,
                     'Week Number': self.stats_week_number,
@@ -635,6 +656,8 @@ class Model:
                     'Avg Wait': self.step3_waiting_avg,
                     'Max Wait': self.step3_waiting_max
                 })
+
+                #print(self.step3_weekly_stats)
                 # if g.debug_level == 1:
                 #     print(self.step3_waiting_list)
             # hand control back to the governor function
@@ -1246,6 +1269,7 @@ class Model:
 
                 self.asst_results_df.at[p.id, 'Treatment Path'] = self.selected_step
                 p.initial_step = self.selected_step
+                # assign week they started waiting to the patient class for use later
                 p.treat_wait_week = self.env.now # when they started waiting for treatment
                 
                 if g.debug_level >=2:
@@ -1297,12 +1321,30 @@ class Model:
             if g.debug_level >=2:
                 print(f"Week Number {self.env.now}. Currently there are {g.number_on_pwp_wl} on the {p.step2_path_route} waiting list")
             # now we know which route they are taking, record waiting list data
-            self.step2_waiting_list.at[p.id, 'Route Name'] = p.step2_path_route
-            self.step2_waiting_list.at[p.id, 'Run Number'] = self.run_number
-            self.step2_waiting_list.at[p.id, 'Week Number'] = self.week_number
-            self.step2_waiting_list.at[p.id, 'IsWaiting'] = 1
-            self.step2_waiting_list.at[p.id, 'WL Position'] = g.number_on_pwp_wl
-            self.step2_waiting_list.at[p.id, 'Start Week'] = p.treat_wait_week
+            if p.id not in self.step2_waiting_list.index:
+                
+                new_row = pd.DataFrame([{
+                                'Patient ID': p.id,
+                                'Run Number': self.run_number,
+                                'Week Number': self.week_number,
+                                'Route Name': 'pwp',
+                                'IsWaiting': 1,
+                                'WL Position': g.number_on_pwp_wl,
+                                'Start Week': p.treat_wait_week,
+                                'End Week': -1,
+                                'Wait Time': 0.0
+                            }])
+                self.step2_waiting_list = pd.concat([self.step2_waiting_list, new_row])
+            else:
+                # Otherwise, update the existing row
+                self.step2_waiting_list.at[p.id, 'Run Number'] = self.run_number
+                self.step2_waiting_list.at[p.id, 'Week Number'] = self.week_number
+                self.step2_waiting_list.at[p.id, 'Route Name'] = 'pwp'
+                self.step2_waiting_list.at[p.id, 'IsWaiting'] = 1
+                self.step2_waiting_list.at[p.id, 'WL Position'] = g.number_on_pwp_wl
+                self.step2_waiting_list.at[p.id, 'Start Week'] = p.treat_wait_week
+                self.step2_waiting_list.at[p.id, 'End Week'] = -1
+                self.step2_waiting_list.at[p.id, 'Wait Time'] = 0.0
 
             #     self.step2_waiting_list['IsWaiting'] = 1
             # self.step2_waiting_list['WL Position'] = 0
@@ -1327,15 +1369,32 @@ class Model:
                     print(f'group store contains {len(self.group_store.items)} of possible {g.step2_group_size}')
 
                 # self.start_q_group = self.env.now
-
                 # now we know which route they are taking, record waiting list data
-                self.step2_waiting_list.at[p.id, 'Route Name'] = p.step2_path_route
-                self.step2_waiting_list.at[p.id, 'Run Number'] = self.run_number
-                self.step2_waiting_list.at[p.id, 'Week Number'] = self.week_number
-                self.step2_waiting_list.at[p.id, 'IsWaiting'] = 1
-                self.step2_waiting_list.at[p.id, 'WL Position'] = g.number_on_group_wl
-                self.step2_waiting_list.at[p.id, 'Start Week'] = p.treat_wait_week
-                
+                if p.id not in self.step2_waiting_list.index:
+                    # If the id doesn't exist, append a new row with `p.id`
+                    new_row = pd.DataFrame([{
+                                'Patient ID': p.id,
+                                'Run Number': self.run_number,
+                                'Week Number': self.week_number,
+                                'Route Name': 'group',
+                                'IsWaiting': 1,
+                                'WL Position': g.number_on_group_wl,
+                                'Start Week': p.treat_wait_week,
+                                'End Week': -1,
+                                'Wait Time': 0.0
+                            }])
+                    self.step2_waiting_list = pd.concat([self.step2_waiting_list, new_row])
+                else:
+                    # Otherwise, update the existing row
+                    self.step2_waiting_list.at[p.id, 'Run Number'] = self.run_number
+                    self.step2_waiting_list.at[p.id, 'Week Number'] = self.week_number
+                    self.step2_waiting_list.at[p.id, 'Route Name'] = 'group'
+                    self.step2_waiting_list.at[p.id, 'IsWaiting'] = 1
+                    self.step2_waiting_list.at[p.id, 'WL Position'] = g.number_on_group_wl
+                    self.step2_waiting_list.at[p.id, 'Start Week'] = p.treat_wait_week
+                    self.step2_waiting_list.at[p.id, 'End Week'] = -1
+                    self.step2_waiting_list.at[p.id, 'Wait Time'] = 0.0
+                                
                 if len(self.group_store.items) == 7:
                     if g.debug_level >=2:
                         print(f'group is now full, putting {len(self.group_store.items)} through group therapy')
@@ -1378,12 +1437,30 @@ class Model:
                 print(f"Week Number {self.env.now}. Currently there are {g.number_on_cbt_wl} on the {p.step3_path_route} waiting list")
 
             # now we know which route they are taking, record waiting list data
-            self.step3_waiting_list.at[p.id, 'Route Name'] = self.selected_step3_pathway
-            self.step3_waiting_list.at[p.id, 'Run Number'] = self.run_number
-            self.step3_waiting_list.at[p.id, 'Week Number'] = self.week_number
-            self.step3_waiting_list.at[p.id, 'IsWaiting'] = 1
-            self.step3_waiting_list.at[p.id, 'WL Position'] = g.number_on_cbt_wl
-            self.step3_waiting_list.at[p.id, 'Start Week'] = p.treat_wait_week
+            if p.id not in self.step3_waiting_list.index:
+                # If the id doesn't exist, append a new row with `p.id`
+                new_row = pd.DataFrame([{
+                                'Patient ID': p.id,
+                                'Run Number': self.run_number,
+                                'Week Number': self.week_number,
+                                'Route Name': 'cbt',
+                                'IsWaiting': 1,
+                                'WL Position': g.number_on_cbt_wl,
+                                'Start Week': p.treat_wait_week,
+                                'End Week': -1,
+                                'Wait Time': 0.0
+                            }])
+                self.step3_waiting_list = pd.concat([self.step3_waiting_list, new_row])
+            else:
+                # Otherwise, update the existing row
+                self.step3_waiting_list.at[p.id, 'Run Number'] = self.run_number
+                self.step3_waiting_list.at[p.id, 'Week Number'] = self.week_number
+                self.step3_waiting_list.at[p.id, 'Route Name'] = 'cbt'
+                self.step3_waiting_list.at[p.id, 'IsWaiting'] = 1
+                self.step3_waiting_list.at[p.id, 'WL Position'] = g.number_on_cbt_wl
+                self.step3_waiting_list.at[p.id, 'Start Week'] = p.treat_wait_week
+                self.step3_waiting_list.at[p.id, 'End Week'] = -1
+                self.step3_waiting_list.at[p.id, 'Wait Time'] = 0.0
             
             if g.debug_level >=2:
                 print(f"FUNC PROCESS patient_step3_pathway: Patient {p.id} Initiating {p.step3_path_route} Step 3 Route")
@@ -1397,12 +1474,31 @@ class Model:
                 print(f"Week Number {self.env.now}. Currently there are {g.number_on_couns_wl} on the {p.step3_path_route} waiting list")
 
             # now we know which route they are taking, record waiting list data
-            self.step3_waiting_list.at[p.id, 'Route Name'] = p.step3_path_route
-            self.step3_waiting_list.at[p.id, 'Run Number'] = self.run_number
-            self.step3_waiting_list.at[p.id, 'Week Number'] = self.week_number
-            self.step3_waiting_list.at[p.id, 'IsWaiting'] = 1
-            self.step3_waiting_list.at[p.id, 'WL Position'] = g.number_on_couns_wl
-            self.step3_waiting_list.at[p.id, 'Start Week'] = p.treat_wait_week
+            if p.id not in self.step3_waiting_list.index:
+                # If the id doesn't exist, append a new row with `p.id`
+                new_row = pd.DataFrame([{
+                                'Patient ID': p.id,
+                                'Run Number': self.run_number,
+                                'Week Number': self.week_number,
+                                'Route Name': 'couns',
+                                'IsWaiting': 1,
+                                'WL Position': g.number_on_couns_wl,
+                                'Start Week': p.treat_wait_week,
+                                'End Week': -1,
+                                'Wait Time': 0.0
+                            }])
+                # Concatenate the new row to the existing DataFrame
+                self.step3_waiting_list = pd.concat([self.step3_waiting_list, new_row])
+            else:
+                # Otherwise, update the existing row
+                self.step3_waiting_list.at[p.id, 'Run Number'] = self.run_number
+                self.step3_waiting_list.at[p.id, 'Week Number'] = self.week_number
+                self.step3_waiting_list.at[p.id, 'Route Name'] = 'couns'
+                self.step3_waiting_list.at[p.id, 'IsWaiting'] = 1
+                self.step3_waiting_list.at[p.id, 'WL Position'] = g.number_on_couns_wl
+                self.step3_waiting_list.at[p.id, 'Start Week'] = p.treat_wait_week
+                self.step3_waiting_list.at[p.id, 'End Week'] = -1
+                self.step3_waiting_list.at[p.id, 'Wait Time'] = 0.0
             
             if g.debug_level >=2:
                 print(f"FUNC PROCESS patient_step3_pathway: Patient {p.id} Initiating {p.step3_path_route} Step 3 Route")
@@ -2347,7 +2443,7 @@ class Trial:
 if __name__ == "__main__":
     my_trial = Trial()
     step2_results_df, step2_sessions_df, step3_results_df, step3_sessions_df, asst_weekly_dfs, step2_waiting_dfs, step3_waiting_dfs, staff_weekly_dfs, caseload_weekly_dfs  = my_trial.run_trial()
-
+    #print(step2_waiting_dfs)
     # print(df_trial_results)
     # step2_waiting_dfs.to_csv("step2_waiters.csv", index=True)
     # step3_waiting_dfs.to_csv("step3_waiters.csv", index=True)

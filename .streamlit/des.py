@@ -216,15 +216,16 @@ g.cbt_caseload = cbt_caseload_input
 g.couns_caseload = couns_caseload_input
 g.pwp_caseload = pwp_caseload_input
 # calculate total hours for job plans
-total_cbt_hours = g.cbt_avail*37.5
-total_couns_hours = g.couns_avail*37.5
-total_pwp_hours = g.pwp_avail*37.5
+
 staff_weeks_lost = weeks_lost_input
 weeks_lost_pc = (52-staff_weeks_lost)/52
 g.cbt_avail = int(g.cbt_avail_tot*weeks_lost_pc)
 g.couns_avail = int(g.couns_avail_tot*weeks_lost_pc)
 g.pwp_avail = int(g.pwp_avail_tot*weeks_lost_pc)
-asst_resource = int(62*weeks_lost_pc)
+g.ta_resource = int(g.pwp_avail_tot*weeks_lost_pc)
+total_cbt_hours = g.cbt_avail*37.5
+total_couns_hours = g.couns_avail*37.5
+total_pwp_hours = g.pwp_avail*37.5
 
 g.sim_duration = sim_duration_input
 g.number_of_runs = number_of_runs_input
@@ -275,62 +276,62 @@ if button_run_pressed:
         asst_weekly_dfs['Accepted Referrals'] = asst_weekly_dfs['Referrals Received']-asst_weekly_dfs['Referrals Rejected']
       
         # filter dataframe to just return columns needed
-        asst_weekly_summary = asst_weekly_dfs[['Run Number','Week Number','Referrals Received','Referral Screen Hrs','Accepted Referrals','Referrals Rejected','Referrals Reviewed','Reviews Rejected','Referrals Opted-in','TA Waiting List','TA Avg Wait','TA Total Accept','TA Hrs']]
+        asst_weekly_summary = asst_weekly_dfs[['Run Number','Week Number','Referrals Received','Referral Screen Hrs','Accepted Referrals','Referrals Rejected','Referrals Reviewed','Reviews Rejected','Referrals Opted-in','TA Waiting List','TA Avg Wait','TA Total Accept','TA Hrs']].reset_index()
                
-        asst_weekly_summary = asst_weekly_summary[asst_weekly_summary["Week Number"] != 0]
+        asst_weekly_summary = asst_weekly_summary[asst_weekly_summary["Week Number"] != 0].reset_index()
                               
         step2_pwp_results_summary = step2_results_df.loc[step2_results_df[
                 'Route Name'] == 'pwp',['Run Number', 'Week Number', 
-                                        'IsStep','IsDropout']]
+                                        'IsStep','IsDropout']].reset_index()
         
         step2_pwp_waiting_summary = step2_waiting_dfs.loc[step2_waiting_dfs[
                 'Route Name'] == 'pwp',['Run Number', 'Week Number', 
-                                      'Num Waiting','Avg Wait','Max Wait']]
+                                      'Num Waiting','Avg Wait','Max Wait']].reset_index()
 
         step2_pwp_sessions_summary = step2_sessions_df.loc[step2_sessions_df[
                 'Route Name'] == 'pwp', ['Run Number', 'Week Number', 
                                       'Session Number','Session Time',
-                                      'Admin Time','IsDNA']]
+                                      'Admin Time','IsDNA']].reset_index()
         
         step2_group_results_summary = step2_results_df.loc[step2_results_df[
                 'Route Name'] == 'group',['Run Number', 'Week Number', 
-                                        'IsStep','IsDropout']]
+                                        'IsStep','IsDropout']].reset_index()
         
         step2_group_waiting_summary = step2_waiting_dfs.loc[step2_waiting_dfs[
                 'Route Name'] == 'group',['Run Number', 'Week Number', 
-                                      'Num Waiting','Avg Wait','Max Wait']]
+                                      'Num Waiting','Avg Wait','Max Wait']].reset_index()
         
         step2_group_sessions_summary = step2_sessions_df.loc[step2_sessions_df[
                 'Route Name'] == 'group', ['Run Number', 'Week Number', 
                                       'Session Number','Session Time',
-                                      'Admin Time','IsDNA']]
+                                      'Admin Time','IsDNA']].reset_index()
         
         step3_cbt_results_summary = step3_results_df.loc[step3_results_df[
                 'Route Name'] == 'cbt', ['Run Number', 'Week Number', 
-                                      'IsStep','IsDropout']]
+                                      'IsStep','IsDropout']].reset_index()
         
         step3_cbt_waiting_summary = step3_waiting_dfs.loc[step3_waiting_dfs[
                 'Route Name'] == 'cbt',['Run Number', 'Week Number', 
-                                      'Num Waiting','Avg Wait','Max Wait']]
+                                      'Num Waiting','Avg Wait','Max Wait']].reset_index()
         
         step3_cbt_sessions_summary = step3_sessions_df.loc[step3_sessions_df[
                 'Route Name'] == 'cbt', ['Run Number', 'Week Number', 
                                       'Session Number','Session Time',
-                                      'Admin Time','IsDNA']]
+                                      'Admin Time','IsDNA']].reset_index()
         
         step3_couns_results_summary = step3_results_df.loc[step3_results_df[
                 'Route Name'] == 'couns', ['Run Number', 'Week Number', 
                                       'WL Posn','Q Time',
-                                      'IsStep','IsDropout']]
+                                      'IsStep','IsDropout']].reset_index()
         
         step3_couns_waiting_summary = step3_waiting_dfs.loc[step3_waiting_dfs[
                 'Route Name'] == 'couns',['Run Number', 'Week Number', 
-                                      'Num Waiting','Avg Wait','Max Wait']]
+                                      'Num Waiting','Avg Wait','Max Wait']].reset_index()
         
         step3_couns_sessions_summary = step3_sessions_df.loc[step3_sessions_df[
                 'Route Name'] == 'couns', ['Run Number', 'Week Number', 
                                       'Session Number','Session Time',
-                                      'Admin Time','IsDNA']]
+                                      'Admin Time','IsDNA']].reset_index()
         
         # Define correct aggregation mapping based on the variable name
         aggregated_sessions = {}
@@ -473,15 +474,15 @@ if button_run_pressed:
         couns_waiting_summary = aggregated_waiting['step3_couns_waiting_summary']
  
         ##### merge results and sessions #####
-        pwp_combined_summary = pd.concat([pwp_sessions_summary,pwp_results_summary,pwp_waiting_summary], ignore_index=True)
-        group_combined_summary = pd.concat([group_sessions_summary,group_results_summary,group_waiting_summary], ignore_index=True)
-        cbt_combined_summary = pd.concat([cbt_sessions_summary,cbt_results_summary,cbt_waiting_summary], ignore_index=True)
-        couns_combined_summary = pd.concat([couns_sessions_summary,couns_results_summary,couns_waiting_summary], ignore_index=True)
+        pwp_combined_summary = pd.concat([pwp_sessions_summary,pwp_results_summary,pwp_waiting_summary], ignore_index=True).reset_index()
+        group_combined_summary = pd.concat([group_sessions_summary,group_results_summary,group_waiting_summary], ignore_index=True).reset_index()
+        cbt_combined_summary = pd.concat([cbt_sessions_summary,cbt_results_summary,cbt_waiting_summary], ignore_index=True).reset_index()
+        couns_combined_summary = pd.concat([couns_sessions_summary,couns_results_summary,couns_waiting_summary], ignore_index=True).reset_index()
         # get rid of any sessions recorded beyond the simulation period
-        pwp_combined_summary = pwp_combined_summary[pwp_combined_summary["Week Number"] <= sim_duration_input]
-        group_combined_summary = group_combined_summary[group_combined_summary["Week Number"] <= sim_duration_input]
-        cbt_combined_summary = cbt_combined_summary[cbt_combined_summary["Week Number"] <= sim_duration_input]
-        couns_combined_summary = couns_combined_summary[couns_combined_summary["Week Number"] <= sim_duration_input]
+        pwp_combined_summary = pwp_combined_summary[pwp_combined_summary["Week Number"] <= sim_duration_input].reset_index()
+        group_combined_summary = group_combined_summary[group_combined_summary["Week Number"] <= sim_duration_input].reset_index()
+        cbt_combined_summary = cbt_combined_summary[cbt_combined_summary["Week Number"] <= sim_duration_input].reset_index()
+        couns_combined_summary = couns_combined_summary[couns_combined_summary["Week Number"] <= sim_duration_input].reset_index()
         # get rid of week zero as no sessions run until week 1 when assessments come through
         pwp_combined_summary = pwp_combined_summary[pwp_combined_summary["Week Number"] != 0]
         group_combined_summary = group_combined_summary[group_combined_summary["Week Number"] != 0]
@@ -497,7 +498,7 @@ if button_run_pressed:
         staff_weekly_dfs['CPD Hrs'] = staff_weekly_dfs['CPD Mins']/(60*number_of_runs_input)
         
         pwp_weekly_act_dfs = staff_weekly_dfs.loc[staff_weekly_dfs[
-                'Job Role'] == 'pwp']
+                'Job Role'] == 'pwp'].reset_index()
         
         pwp_weekly_activity = pd.melt(pwp_weekly_act_dfs, value_vars=['Supervision Hrs',
                                                                  'Break Hrs',
@@ -508,7 +509,7 @@ if button_run_pressed:
                                                                 'Week Number'])
         
         cbt_weekly_act_dfs = staff_weekly_dfs.loc[staff_weekly_dfs[
-                'Job Role'] == 'cbt']
+                'Job Role'] == 'cbt'].reset_index()
         
         cbt_weekly_activity = pd.melt(cbt_weekly_act_dfs, value_vars=['Supervision Hrs',
                                                                  'Break Hrs',
@@ -518,7 +519,7 @@ if button_run_pressed:
                                                                  id_vars=[
                                                                 'Week Number'])
         couns_weekly_act_dfs = staff_weekly_dfs.loc[staff_weekly_dfs[
-                'Job Role'] == 'couns']
+                'Job Role'] == 'couns'].reset_index()
         
         couns_weekly_activity = pd.melt(couns_weekly_act_dfs, value_vars=['Supervision Hrs',
                                                                  'Break Hrs',
@@ -527,24 +528,13 @@ if button_run_pressed:
                                                                  'CPD Hrs'],
                                                                  id_vars=[
                                                                 'Week Number'])
-        
-        # st.write(pwp_sessions_summary)
-        # st.write(group_sessions_summary)
-        # st.write(cbt_sessions_summary)
-        # st.write(couns_sessions_summary)
-
-        # st.write(pwp_results_summary)
-        # st.write(group_results_summary)
-        # st.write(cbt_results_summary)
-        # st.write(couns_results_summary)
-
-        # st.write(step2_sessions_summary)
-        # st.write(step3_sessions_summary)
-   
         with st.expander("See explanation"):
             st.write('This Simulation is designed to replicate the flow '
                      'of patients through the Talking Therapies Assessment and'
                      'Treatment Pathway.')
+            
+            st.write(step2_waiting_dfs)
+            st.write(step3_waiting_dfs)
   
           
         ########## Job Plans Tab ##########
@@ -853,6 +843,8 @@ if button_run_pressed:
 
             st.header('Step 2')
 
+            #st.write(pwp_waiting_summary)
+
             col1, col2 = st.columns(2)
 
             with col1:
@@ -1031,6 +1023,8 @@ if button_run_pressed:
             ########## groups ##########
 
             col3, col4 = st.columns(2)
+
+            #st.write(group_waiting_summary)
 
             with col3:
 
@@ -1211,6 +1205,8 @@ if button_run_pressed:
 
             st.header('Step 3')
 
+            #st.write(cbt_waiting_summary)
+
             col1, col2 = st.columns(2)
 
             with col1:
@@ -1360,8 +1356,8 @@ if button_run_pressed:
                                                         'variable'])['value'].mean(
                                                         ).reset_index()
                         
-                        # get the max waiting time across all the runs
-                        weekly_avg_col2 = cbt_combined_col2_max.groupby(['Week Number',
+                        # get the average waiting time across all the runs
+                        weekly_max_col2 = cbt_combined_col2_max.groupby(['Week Number',
                                                         'variable'])['value'].mean(
                                                         ).reset_index()
                         
@@ -1389,6 +1385,8 @@ if button_run_pressed:
             ########## counselling ##########
 
             col1, col2 = st.columns(2)
+
+            #st.write(couns_waiting_summary)
 
             with col1:
 
@@ -1564,11 +1562,7 @@ if button_run_pressed:
 
         ########## Job Plans ##########
         with tab4:
-
-            # st.write(cbt_sessions_weekly_summary)
-            # st.write(cbt_sessions_summary)
-            # st.write(cbt_hours_weekly_summary)
-            #st.write(couns_sessions_weekly_summary)
+            
             st.header('Job Plans')
 
             ##### pwp Practitioner #####
