@@ -1163,7 +1163,7 @@ if button_run_pressed:
                                         },
                                     height=500,
                                     width=350,
-                                    title='Average Waiting Time by Week'
+                                    title='Waiting Time by Week'
                                     )
                         
                         fig8.update_traces(line=dict(dash='dot'))
@@ -1346,7 +1346,7 @@ if button_run_pressed:
                                         },
                                     height=500,
                                     width=350,
-                                    title='Average Waiting Time by Week'
+                                    title='Waiting Time by Week'
                                     )
                         
                         fig12.update_traces(line=dict(dash='dot'))
@@ -1525,7 +1525,7 @@ if button_run_pressed:
                                         },
                                     height=500,
                                     width=350,
-                                    title='Average Waiting Time by Week'
+                                    title='Waiting Time by Week'
                                     )
                         
                         fig16.update_traces(line=dict(dash='dot'))
