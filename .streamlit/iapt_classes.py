@@ -114,8 +114,8 @@ class g:
 
     # bring in past referral data
     
-    # referral_rate_lookup = pd.read_csv('talking_therapies_referral_rates.csv'
-    #                                                            ,index_col=0)
+    referral_rate_lookup = pd.read_csv('talking_therapies_referral_rates.csv'
+                                                               ,index_col=0)
     #print(referral_rate_lookup)
 # function to vary the number of sessions
 def vary_number_sessions(lower, upper, lambda_val=0.1):
@@ -222,11 +222,11 @@ class Model:
         self.asst_results_df['Opted In'] = [0] # 1 = Yes, 0 = No
         self.asst_results_df['Opt-in Wait'] = [0.0] # time between opt-in notification and patient opting in
         self.asst_results_df['Opt-in Q Time'] = [0.0] # time between opting in and actual TA, 4 week window
-        self.asst_results_df['TA Q Time'] = [0] # time spent queueing for TA
+        self.asst_results_df['TA Q Time'] = [0.0] # time spent queueing for TA
         self.asst_results_df['TA WL Posn'] = [0] # position in queue for TA
         self.asst_results_df['TA Outcome'] = [0] # 1 = Accepted, 0 = Rejected
         self.asst_results_df['TA Mins'] = [0] # time allocated to completing TA
-        self.asst_results_df['Treatment Path'] = ['NA']
+        self.asst_results_df['Treatment Path'] = 'NA'
 
         # Indexing
         self.asst_results_df.set_index("Patient ID", inplace=True)
@@ -235,7 +235,7 @@ class Model:
         self.step2_waiting_list['Patient ID'] = [1]
         self.step2_waiting_list['Run Number'] = 0
         self.step2_waiting_list['Week Number'] = 0
-        self.step2_waiting_list['Route Name'] = np.nan
+        self.step2_waiting_list['Route Name'] = pd.NA
         self.step2_waiting_list['IsWaiting'] = 1
         self.step2_waiting_list['WL Position'] = 0
         self.step2_waiting_list['Start Week'] = 0
@@ -253,7 +253,7 @@ class Model:
         self.step2_results_df['Patient ID'] = [1]
         self.step2_results_df['Week Number'] = [0]
         self.step2_results_df['Run Number'] = [0]
-        self.step2_results_df['Route Name'] = np.nan # which step2 pathway the patient was sent down
+        self.step2_results_df['Route Name'] = pd.NA # which step2 pathway the patient was sent down
         self.step2_results_df['Q Time'] = [0.0] # time spent queueing
         self.step2_results_df['WL Posn'] = [0] # place in queue 
         self.step2_results_df['IsDropout'] = [0]
@@ -262,7 +262,7 @@ class Model:
         self.step2_sessions_df['Patient ID'] = [1]
         self.step2_sessions_df['Week Number'] = [0]
         self.step2_sessions_df['Run Number'] = [0]
-        self.step2_sessions_df['Route Name'] = ['NA'] # which step2 pathway the patient was sent down
+        self.step2_sessions_df['Route Name'] = pd.NA# which step2 pathway the patient was sent down
         self.step2_sessions_df['Session Number'] = [0]
         self.step2_sessions_df['Session Time'] = [0] # clinical session time in mins
         self.step2_sessions_df['Admin Time'] = [0] # admin session time in mins
@@ -279,7 +279,7 @@ class Model:
         self.step3_waiting_list['Patient ID'] = [1]
         self.step3_waiting_list['Run Number'] = 0
         self.step3_waiting_list['Week Number'] = 0
-        self.step3_waiting_list['Route Name'] = ['NA']
+        self.step3_waiting_list['Route Name'] = pd.NA
         self.step3_waiting_list['IsWaiting'] = 1
         self.step3_waiting_list['WL Position'] = 0
         self.step3_waiting_list['Start Week'] = 0
@@ -294,7 +294,7 @@ class Model:
         self.step3_results_df['Patient ID'] = [1]
         self.step3_results_df['Week Number'] = [0]
         self.step3_results_df['Run Number'] = [0]
-        self.step3_results_df['Route Name'] = ['NA'] # which step3 pathway the patient was sent down
+        self.step3_results_df['Route Name'] = pd.NA # which step3 pathway the patient was sent down
         self.step3_results_df['WL Posn'] = [0] # place in queue
         self.step3_results_df['Q Time'] = [0.0] # time spent queueing 
         self.step3_results_df['IsDropout'] = [0]
@@ -303,7 +303,7 @@ class Model:
         self.step3_sessions_df['Patient ID'] = [1]
         self.step3_sessions_df['Week Number'] = [0]
         self.step3_sessions_df['Run Number'] = [0]
-        self.step3_sessions_df['Route Name'] = ['NA'] # which step2 pathway the patient was sent down
+        self.step3_sessions_df['Route Name'] = pd.NA # which step2 pathway the patient was sent down
         self.step3_sessions_df['Session Number'] = [0]
         self.step3_sessions_df['Session Time'] = [0] # clinical session time in mins
         self.step3_sessions_df['Admin Time'] = [0] # admin session time in mins
@@ -354,7 +354,8 @@ class Model:
                     print(f"Building Sim Resources")
                    
         # build the weekly resources needed to run the model
-        yield self.env.process(self.resource_builder())
+        # pass in 0 for TA resource which is dynamic
+        yield self.env.process(self.resource_builder(0))
 
         if g.debug_level >= 2:
                     print(f"Sim Resources Ready")
@@ -390,7 +391,7 @@ class Model:
             if g.debug_level >= 2:
                     print(f"Topping Up Resources")
             # top up the weekly resources ready for next run
-            yield self.env.process(self.replenish_weekly_resources())
+            yield self.env.process(self.replenish_weekly_resources(self.week_number))
 
             if g.debug_level >= 2:
                     print(f"Topping Up Caseloads")
@@ -688,6 +689,7 @@ class Model:
         
         # this function works out how many TA slots are available based on
         # pwp = 9 per week, cbt = 1 every fortnight, couns = 1 every 4 weeks
+        
         cbt_ta_res = 0  
         couns_ta_res = 0  
 
@@ -703,13 +705,13 @@ class Model:
         tot_ta_res = cbt_ta_res + couns_ta_res + pwp_ta_res
         return tot_ta_res
         
-    def resource_builder(self):
+    def resource_builder(self,res_week):
 
         ########## Weekly Resources ##########
         ##### TA #####
         self.ta_res = simpy.Container(
             self.env,capacity=self.ta_resource_selector(self.week_number),
-            init=g.ta_resource
+            init=self.ta_resource_selector(res_week) ## resources at week 0
             )
         ##### group #####
         self.group_res = simpy.Container(
@@ -796,21 +798,26 @@ class Model:
 
         yield self.env.timeout(0)
 
-    def replenish_weekly_resources(self):
+    def replenish_weekly_resources(self,res_week):
 
             ##### TA and group Resources #####
-            ta_amount_to_fill = g.ta_resource - self.ta_res.level
+            # ta_amount_to_fill = g.ta_resource - self.ta_res.level
             group_amount_to_fill = g.group_resource - self.group_res.level
 
-            if ta_amount_to_fill > 0:
-                if g.debug_level >= 2:
-                    print(f"TA Level: {self.ta_res.level}")
-                    print(f"Putting in {ta_amount_to_fill}")
+            self.ta_res = simpy.Container(
+            self.env,capacity=self.ta_resource_selector(self.week_number),
+            init=self.ta_resource_selector(res_week) ## resources at week 0
+            )
 
-                self.ta_res.put(ta_amount_to_fill)
+            # if ta_amount_to_fill > 0:
+            #     if g.debug_level >= 2:
+            #         print(f"TA Level: {self.ta_res.level}")
+            #         print(f"Putting in {ta_amount_to_fill}")
 
-                if g.debug_level >= 2:
-                    print(f"New TA Level: {self.ta_res.level}")
+            #     self.ta_res.put(ta_amount_to_fill)
+
+            #     if g.debug_level >= 2:
+            #         print(f"New TA Level: {self.ta_res.level}")
 
             if group_amount_to_fill > 0:
                 if g.debug_level >= 2:

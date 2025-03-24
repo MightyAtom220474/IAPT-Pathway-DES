@@ -44,7 +44,7 @@ with st.sidebar:
         referral_review_input = st.number_input("% of Referral sent for Screening",
                         min_value=0.0, max_value=100.0, step=0.5, value=60.0)
         referral_reject_input = st.number_input("Screening Rejection Rate (%)",
-                        min_value=0.0, max_value=100.0, step=0.25, value=g.review_rej_rate)
+                        min_value=0.0, max_value=100.0, step=0.25, value=g.review_rej_rate*100)
         referral_screen_input = st.slider("Number of Mins to Screen Referral",
                                           1, 20, 25)
         opt_in_input = st.number_input("% of Referrals that Opt-in",
@@ -1565,6 +1565,17 @@ if button_run_pressed:
             
             st.header('Job Plans')
 
+            custom_colors = {
+                            "CPD Hrs": "#1f77b4",       # Muted blue (better than pure blue)
+                            "Huddle Hrs": "#ffcc00",     # Warm golden yellow
+                            "Wellbeing Hrs": "#2ca02c",  # Rich green
+                            "Break Hrs": "#17becf",      # Brighter cyan
+                            "Supervision Hrs": "#34495e",# Deep navy (less harsh)
+                            "TA Hrs": "#d62728",         # Strong red
+                            "Session Time": "#20c997",   # Soft turquoise
+                            "Admin Time": "#e377c2"      # Gentle pink
+                        }
+
             ##### pwp Practitioner #####
 
             st.subheader('Psychological Wellbeing Practitioners')
@@ -1576,7 +1587,7 @@ if button_run_pressed:
                                 labels={'value': 'Hours'
                                         ,'variable':'Time Alloc'},
                                 color='variable',
-                                color_discrete_sequence=px.colors.qualitative.Dark24,
+                                color_discrete_map=custom_colors, #color_discrete_sequence = px.colors.qualitative.Dark24,
                                 title=f'Psychological Wellbeing Practitioner Hours by Week')
             
             fig17.update_layout(title_x=0.4,font=dict(size=10),bargap=0.2,legend_traceorder="reversed")
@@ -1605,7 +1616,7 @@ if button_run_pressed:
                                 labels={'value': 'Hours'
                                         ,'variable':'Time Alloc'},
                                 color='variable',
-                                color_discrete_sequence=px.colors.qualitative.Dark24,
+                                color_discrete_map=custom_colors, #color_discrete_sequence=px.colors.qualitative.Dark24,
                                 title=f'Cognitive Behavioural Therapist Hours by Week')
             
             fig18.update_layout(title_x=0.4,font=dict(size=10),bargap=0.2,legend_traceorder="reversed")
@@ -1634,7 +1645,7 @@ if button_run_pressed:
                                 labels={'value': 'Hours'
                                         ,'variable':'Time Alloc'},
                                 color='variable',
-                                color_discrete_sequence=px.colors.qualitative.Dark24,
+                                color_discrete_map=custom_colors, #color_discrete_sequence=px.colors.qualitative.Dark24,
                                 title=f'Depression Counselling Therapist Hours by Week')
             
             fig19.update_layout(title_x=0.4,font=dict(size=10),bargap=0.2,legend_traceorder="reversed")
