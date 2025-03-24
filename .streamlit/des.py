@@ -276,7 +276,7 @@ if button_run_pressed:
         asst_weekly_dfs['Accepted Referrals'] = asst_weekly_dfs['Referrals Received']-asst_weekly_dfs['Referrals Rejected']
       
         # filter dataframe to just return columns needed
-        asst_weekly_summary = asst_weekly_dfs[['Run Number','Week Number','Referrals Received','Referral Screen Hrs','Accepted Referrals','Referrals Rejected','Referrals Reviewed','Reviews Rejected','Referrals Opted-in','TA Waiting List','TA Avg Wait','TA Total Accept','TA Hrs']].reset_index()
+        asst_weekly_summary = asst_weekly_dfs[['Run Number','Week Number','Referrals Received','Referral Screen Hrs','Accepted Referrals','Referrals Rejected','Referrals Reviewed','Reviews Rejected','Referrals Opted-in','TA Waiting List','TA Avg Wait','TA Max Wait','TA Total Accept','TA Hrs']].reset_index()
                
         asst_weekly_summary = asst_weekly_summary[asst_weekly_summary["Week Number"] != 0].reset_index()
                               
@@ -615,10 +615,17 @@ if button_run_pressed:
         
         ########## Referrals & Assessments ##########
         
-        asst_referrals_col1_unpivot = pd.melt(asst_weekly_summary, value_vars=['Referrals Received',
+        asst_weekly_summary_filtered = asst_weekly_summary[['Run Number','Week Number','Referrals Received','TA Avg Wait']]
+        
+        asst_weekly_summary_max_wait = asst_weekly_summary[['Week Number','TA Max Wait']]
+
+        asst_referrals_col1_unpivot = pd.melt(asst_weekly_summary_filtered, value_vars=['Referrals Received',
                                                                  'TA Avg Wait'],
                                                                  id_vars=['Run Number',
                                                                 'Week Number'])
+        
+        asst_referrals_max_unpivot = pd.melt(asst_weekly_summary_max_wait, value_vars=['TA Max Wait'],
+                                                                 id_vars=['Week Number']).reset_index()
         
         asst_referrals_col2_unpivot = pd.melt(asst_weekly_summary, value_vars=['Referrals Rejected',
                                                                  'TA Waiting List'],
@@ -688,18 +695,28 @@ if button_run_pressed:
                                 )
                     
                     fig_asst_1.update_traces(line=dict(dash='dot'))
+
+                    weekly_avg_col1 = asst_referrals_col1_filtered.groupby(['Week Number', 'variable'])['value'].mean().reset_index()
                     
-                    # get the average waiting list across all the runs
-                    weekly_avg_col1 = asst_referrals_col1_filtered.groupby(['Week Number',
-                                                    'variable'])['value'].mean(
-                                                    ).reset_index()
+                    if list_name == 'TA Avg Wait':
+
+                        weekly_max_col1 = asst_referrals_max_unpivot.loc[
+                                                        asst_referrals_max_unpivot['variable'] == 'TA Max Wait'
+                                                    ].groupby(['Week Number', 'variable'])['value'].mean().reset_index()
                     
+                        fig_asst_1.add_trace(
+                                go.Scatter(x=weekly_avg_col1["Week Number"],
+                                        y=weekly_max_col1["value"], name='Maximum',
+                                        line=dict(width=3,color='red')))
+        
+                    else:
+                        pass
+
                     fig_asst_1.add_trace(
                                 go.Scatter(x=weekly_avg_col1["Week Number"],
                                         y=weekly_avg_col1["value"], name='Average',
                                         line=dict(width=3,color='blue')))
-        
-                    
+                           
                     # get rid of 'variable' prefix resulting from df.melt
                     fig_asst_1.for_each_annotation(lambda a: a.update(text=a.text.split
                                                             ("=")[1]))
@@ -1028,7 +1045,7 @@ if button_run_pressed:
 
             with col3:
 
-                st.subheader('Psychological Wellbeing Practitioner - groups')
+                st.subheader('Psychological Wellbeing Practitioner - Groups')
             
                 for e, list_name in enumerate(group_combined_summary['variable']
                                             .unique()):
@@ -1390,7 +1407,7 @@ if button_run_pressed:
 
             with col1:
 
-                st.subheader('Depression counselling')
+                st.subheader('Depression Counselling')
             
                 for i, list_name in enumerate(couns_combined_summary['variable']
                                             .unique()):
@@ -1594,6 +1611,8 @@ if button_run_pressed:
             
             fig17.update_traces(marker_line_color='black', marker_line_width=1)
 
+            fig17.update_yaxes(title_text="Hours")
+
             # add line for available pwp hours
             fig17.add_trace(
                                 go.Scatter(x=pwp_hours_weekly_summary["Week Number"],
@@ -1622,6 +1641,8 @@ if button_run_pressed:
             fig18.update_layout(title_x=0.4,font=dict(size=10),bargap=0.2,legend_traceorder="reversed")
             
             fig18.update_traces(marker_line_color='black', marker_line_width=1)
+            
+            fig18.update_yaxes(title_text="Hours")
 
             # add line for available pwp hours
             fig18.add_trace(
@@ -1652,6 +1673,8 @@ if button_run_pressed:
             
             fig19.update_traces(marker_line_color='black', marker_line_width=1)
 
+            fig19.update_yaxes(title_text="Hours")
+
             # add line for available pwp hours
             fig19.add_trace(
                                 go.Scatter(x=couns_hours_weekly_summary["Week Number"],
@@ -1672,7 +1695,7 @@ if button_run_pressed:
 
             st.subheader('Psychological Wellbeing Practitioners')
 
-            fig17 = px.histogram(pwp_caseload_weekly_summary, 
+            fig22 = px.histogram(pwp_caseload_weekly_summary, 
                                 x='Week Number',
                                 y='caseload_used',
                                 nbins=sim_duration_input,
@@ -1683,19 +1706,21 @@ if button_run_pressed:
                                 color_discrete_sequence=['red'],
                                 title=f'Psychological Wellbeing Practitioner Caseload by Week')
             
-            fig17.update_layout(title_x=0.4,font=dict(size=10),bargap=0.2,legend_traceorder="reversed")
+            fig22.update_layout(title_x=0.4,font=dict(size=10),bargap=0.2,legend_traceorder="reversed")
             
-            fig17.update_traces(marker_line_color='black', marker_line_width=1)
+            fig22.update_traces(marker_line_color='black', marker_line_width=1)
+
+            fig22.update_yaxes(title_text="Caseload")
 
             # add line for available pwp hours
-            fig17.add_trace(
+            fig22.add_trace(
                                 go.Scatter(x=pwp_caseload_weekly_summary["Week Number"],
                                         y=np.repeat(pwp_caseload_input*(pwp_avail_input+pwp_add_input)
                                                     ,sim_duration_input*(pwp_avail_input+pwp_add_input)),
                                         name='Avail Slots',line=dict(width=3,
                                         color='green')))
 
-            st.plotly_chart(fig17, use_container_width=True)
+            st.plotly_chart(fig22, use_container_width=True)
 
             st.divider()
 
@@ -1703,7 +1728,7 @@ if button_run_pressed:
 
             st.subheader('Cognitive Behavioural Therapists')
 
-            fig17 = px.histogram(cbt_caseload_weekly_summary, 
+            fig22 = px.histogram(cbt_caseload_weekly_summary, 
                                 x='Week Number',
                                 y='caseload_used',
                                 nbins=sim_duration_input,
@@ -1714,19 +1739,21 @@ if button_run_pressed:
                                 color_discrete_sequence=['red'],
                                 title=f'Cognitive Behavioural Therapist Caseload by Week')
             
-            fig17.update_layout(title_x=0.4,font=dict(size=10),bargap=0.2,legend_traceorder="reversed")
+            fig22.update_layout(title_x=0.4,font=dict(size=10),bargap=0.2,legend_traceorder="reversed")
             
-            fig17.update_traces(marker_line_color='black', marker_line_width=1)
+            fig22.update_traces(marker_line_color='black', marker_line_width=1)
+
+            fig22.update_yaxes(title_text="Caseload")
 
             # add line for available cbt hours
-            fig17.add_trace(
+            fig22.add_trace(
                                 go.Scatter(x=cbt_caseload_weekly_summary["Week Number"],
                                         y=np.repeat(cbt_caseload_input*(cbt_avail_input+cbt_add_input)
                                                     ,sim_duration_input*(cbt_avail_input+cbt_add_input)),
                                         name='Avail Slots',line=dict(width=3,
                                         color='green')))
 
-            st.plotly_chart(fig17, use_container_width=True)
+            st.plotly_chart(fig22, use_container_width=True)
 
             st.divider()
 
@@ -1734,7 +1761,7 @@ if button_run_pressed:
 
             st.subheader('Depression Counsellors')
 
-            fig17 = px.histogram(couns_caseload_weekly_summary, 
+            fig22 = px.histogram(couns_caseload_weekly_summary, 
                                 x='Week Number',
                                 y='caseload_used',
                                 nbins=sim_duration_input,
@@ -1745,19 +1772,21 @@ if button_run_pressed:
                                 color_discrete_sequence=['red'],
                                 title=f'Depression Counsellors Caseload by Week')
             
-            fig17.update_layout(title_x=0.4,font=dict(size=10),bargap=0.2,legend_traceorder="reversed")
+            fig22.update_layout(title_x=0.4,font=dict(size=10),bargap=0.2,legend_traceorder="reversed")
             
-            fig17.update_traces(marker_line_color='black', marker_line_width=1)
+            fig22.update_traces(marker_line_color='black', marker_line_width=1)
+
+            fig22.update_yaxes(title_text="Caseload")
 
             # add line for available couns hours
-            fig17.add_trace(
+            fig22.add_trace(
                                 go.Scatter(x=couns_caseload_weekly_summary["Week Number"],
                                         y=np.repeat(couns_caseload_input*(couns_avail_input+couns_add_input)
                                                     ,sim_duration_input*(couns_avail_input+couns_add_input)),
                                         name='Avail Slots',line=dict(width=3,
                                         color='green')))
 
-            st.plotly_chart(fig17, use_container_width=True)
+            st.plotly_chart(fig22, use_container_width=True)
 
             st.divider()   
 

@@ -10,7 +10,7 @@ class g:
     debug_level = 0
 
     # Referrals
-    mean_referrals_pw = 100
+    mean_referrals_pw = 400
 
     # Screening
     referral_rej_rate = 0.3 # % of referrals rejected, advised 30%
@@ -93,7 +93,7 @@ class g:
     
     # Simulation
     sim_duration = 52
-    number_of_runs = 5
+    number_of_runs = 1
     std_dev = 3 # used for randomising activity times
     #event_week_tracker = {} # used to track the latest events week for each patient
 
@@ -150,6 +150,7 @@ class Patient:
         self.opted_in = 0 # did the patient opt in or not
         self.opt_in_wait = 0 # how much of 1 week opt-in window was used
         self.opt_in_qtime = 0 # how much of 4 week TA app window was used
+        self.ta_wait_start = 0  # when they started waiting for a TA
         self.attended_ta = 0 # did the patient attend TA appointment
         self.treat_wait_week = 0 # week they started waiting to enter treatment
 
@@ -700,9 +701,11 @@ class Model:
         elif resource_week % 2 == 0:  # Every 2nd week
             cbt_ta_res = g.cbt_avail  
 
-        pwp_ta_res = g.pwp_avail * 9  # Always included
+        pwp_ta_res = g.ta_resource  # Always included
 
         tot_ta_res = cbt_ta_res + couns_ta_res + pwp_ta_res
+        if g.debug_level >= 2:
+            print(f'Total TA resource selected is {tot_ta_res}')
         return tot_ta_res
         
     def resource_builder(self,res_week):
@@ -801,23 +804,24 @@ class Model:
     def replenish_weekly_resources(self,res_week):
 
             ##### TA and group Resources #####
-            # ta_amount_to_fill = g.ta_resource - self.ta_res.level
+            # set resource level to what it will be next week using function
+            ta_amount_to_fill = self.ta_resource_selector(res_week+1) - self.ta_res.level
             group_amount_to_fill = g.group_resource - self.group_res.level
 
-            self.ta_res = simpy.Container(
-            self.env,capacity=self.ta_resource_selector(self.week_number),
-            init=self.ta_resource_selector(res_week) ## resources at week 0
-            )
+            # self.ta_res = simpy.Container(
+            # self.env,capacity=self.ta_resource_selector(self.week_number),
+            # init=self.ta_resource_selector(res_week) ## resources at week 0
+            # )
 
-            # if ta_amount_to_fill > 0:
-            #     if g.debug_level >= 2:
-            #         print(f"TA Level: {self.ta_res.level}")
-            #         print(f"Putting in {ta_amount_to_fill}")
+            if ta_amount_to_fill > 0:
+                if g.debug_level >= 2:
+                    print(f"TA Level: {self.ta_res.level}")
+                    print(f"Putting in {ta_amount_to_fill}")
 
-            #     self.ta_res.put(ta_amount_to_fill)
+                self.ta_res.put(ta_amount_to_fill)
 
-            #     if g.debug_level >= 2:
-            #         print(f"New TA Level: {self.ta_res.level}")
+                if g.debug_level >= 2:
+                    print(f"New TA Level: {self.ta_res.level}")
 
             if group_amount_to_fill > 0:
                 if g.debug_level >= 2:
@@ -1196,13 +1200,15 @@ class Model:
             self.asst_results_df.at[p.id, 'Opt-in Q Time'
                                         ] = random.uniform(0,4)
             
+            p.ta_wait_start = self.env.now # start the patient waiting for TA
+            
             yield self.env.process(self.telephone_assessment(p))
             
     def telephone_assessment(self,patient):
             
             p = patient
 
-            start_q_ta = self.env.now
+            # start_q_ta = self.env.now
 
             g.number_on_ta_wl += 1
 
@@ -1228,7 +1234,10 @@ class Model:
             end_q_ta = self.env.now
 
             # Calculate how long patient queued for TA
-            self.q_time_ta = end_q_ta - start_q_ta
+            self.q_time_ta = end_q_ta - p.ta_wait_start
+            if g.debug_level >= 2:
+                print(f'Patient {p.id} waited {self.q_time_ta} for assessment')
+
             # Record how long patient queued for TA
             self.asst_results_df.at[p.id, 'TA Q Time'] = self.q_time_ta
 
@@ -2460,7 +2469,7 @@ if __name__ == "__main__":
 
 #df_trial_results, print(asst_weekly_dfs.to_string()), print(step2_weekly_dfs.to_string()), print(step3_weekly_dfs.to_string()), staff_weekly_dfs, print(caseload_weekly_dfs.to_string())
 
-# asst_weekly_dfs.to_csv('S:\Departmental Shares\IM&T\Information\Business Intelligence\Heath McDonald\HSMA\Discrete Event Simulations\IAPT DES\asst_weekly_summary.csv')
+# asst_weekly_dfs.to_csv('asst_weekly_summary.csv')
 # step2_weekly_dfs.to_csv('step2_weekly_summary.csv')
 # step3_weekly_dfs.to_csv('step3_weekly_summary.csv')
 # caseload_weekly_dfs.to_csv('caseload_weekly_summary.csv')
