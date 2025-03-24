@@ -46,10 +46,11 @@ with st.sidebar:
         referral_reject_input = st.number_input("Screening Rejection Rate (%)",
                         min_value=0.0, max_value=100.0, step=0.25, value=g.review_rej_rate*100)
         referral_screen_input = st.slider("Number of Mins to Screen Referral",
-                                          1, 20, 25)
+                                          1, 30, 20)
         opt_in_input = st.number_input("% of Referrals that Opt-in",
                         min_value=50.0, max_value=100.0, step=0.5, value=75.0)
         st.markdown("#### Assessment")
+        ta_resource_pwp = st.slider("Number of TA Slots per PwP per Week", 0, 15, 9)
         ta_accept_input = st.number_input("% of TA's that are Accepted",
                         min_value=50.0, max_value=100.0, step=0.5, value=70.0)
         ta_time_input = st.slider("Number of Mins to Perform TA", 1, 90, 60)
@@ -181,6 +182,7 @@ g.referral_rejection_rate = referral_reject_input/100
 g.referral_review_rate = referral_review_input
 g.referral_screen_time = referral_screen_input
 g.opt_in_rate = opt_in_input/100
+g.ta_resource = ta_resource_pwp
 g.ta_accept_rate = ta_accept_input/100
 g.step2_step3_ratio = (step2_step3_rate_input/100,1-(step2_step3_rate_input/100))
 
