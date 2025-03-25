@@ -149,7 +149,7 @@ with st.sidebar:
         couns_caseload_input = st.slider("Number of Patients Allowed on DepC Caseload",
                                             1, 50, g.couns_caseload)
         pwp_caseload_input = st.slider("Number of Patients Allowed on PwP Caseload",
-                                            1, 50, g.pwp_caseload)
+                                            1, 100, g.pwp_caseload)
         cbt_hours_avail_input = st.number_input(label="Non-Clinical Hours p/w for CBT Pratitioners",
                                                 min_value=10.0,max_value=25.0,
                                                 step=0.5,value = g.hours_avail_cbt)
@@ -182,7 +182,7 @@ g.referral_rejection_rate = referral_reject_input/100
 g.referral_review_rate = referral_review_input
 g.referral_screen_time = referral_screen_input
 g.opt_in_rate = opt_in_input/100
-g.ta_resource = ta_resource_pwp
+g.ta_resource = (pwp_avail_input + pwp_add_input) * ta_resource_pwp #int(g.pwp_avail_tot*weeks_lost_pc)
 g.ta_accept_rate = ta_accept_input/100
 g.step2_step3_ratio = (step2_step3_rate_input/100,1-(step2_step3_rate_input/100))
 
@@ -221,10 +221,9 @@ g.pwp_caseload = pwp_caseload_input
 
 staff_weeks_lost = weeks_lost_input
 weeks_lost_pc = (52-staff_weeks_lost)/52
-g.cbt_avail = int(g.cbt_avail_tot*weeks_lost_pc)
-g.couns_avail = int(g.couns_avail_tot*weeks_lost_pc)
-g.pwp_avail = int(g.pwp_avail_tot*weeks_lost_pc)
-g.ta_resource = int(g.pwp_avail_tot*weeks_lost_pc)
+g.cbt_avail = cbt_avail_input + cbt_add_input #int(g.cbt_avail_tot*weeks_lost_pc)
+g.couns_avail = couns_avail_input + couns_add_input #int(g.couns_avail_tot*weeks_lost_pc)
+g.pwp_avail = pwp_avail_input + pwp_add_input #int(g.pwp_avail_tot*weeks_lost_pc)
 total_cbt_hours = g.cbt_avail*37.5
 total_couns_hours = g.couns_avail*37.5
 total_pwp_hours = g.pwp_avail*37.5
@@ -266,10 +265,9 @@ if button_run_pressed:
         for name, df in st.session_state.sim_data.items():
             pd.DataFrame(df)
 
-        st.subheader(f'Summary of all {g.number_of_runs} Simulation Runs over {g.sim_duration}'
-                     f' Weeks with {cbt_add_input} additional cbt,'
-                      f' {couns_add_input} additional Depression counsellors and '
-                      f'{pwp_add_input} additional pwp Practitioners')
+        st.subheader(f'Summary of all {g.number_of_runs} Simulation Runs over {g.sim_duration} Weeks')
+        st.subheader(f' Weeks with {cbt_add_input} change in CBT, {couns_add_input} change in DepC and ')
+        st.subheader(f'{pwp_add_input} change in PwP Practitioners')
         
         ##### get all data structured correctly for dashboard #####
               
@@ -1784,7 +1782,7 @@ if button_run_pressed:
             fig22.add_trace(
                                 go.Scatter(x=couns_caseload_weekly_summary["Week Number"],
                                         y=np.repeat(couns_caseload_input*(couns_avail_input+couns_add_input)
-                                                    ,sim_duration_input*(couns_avail_input+couns_add_input)),
+                                                    ,sim_duration_input),#*(couns_avail_input+couns_add_input)),
                                         name='Avail Slots',line=dict(width=3,
                                         color='green')))
 
