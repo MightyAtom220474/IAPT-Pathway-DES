@@ -227,6 +227,9 @@ g.pwp_avail = pwp_avail_input + pwp_add_input #int(g.pwp_avail_tot*weeks_lost_pc
 total_cbt_hours = g.cbt_avail*37.5
 total_couns_hours = g.couns_avail*37.5
 total_pwp_hours = g.pwp_avail*37.5
+pwp_1st_res = (pwp_avail_input + pwp_add_input) * 4 #  4 1st's per PwP per week
+cbt_1st_res = (cbt_avail_input + cbt_add_input) * 2 #  2 1st's per CBT per week
+couns_1st_res = (couns_avail_input + couns_add_input) * 2 # 2 1st's per Couns per week
 
 g.sim_duration = sim_duration_input
 g.number_of_runs = number_of_runs_input
@@ -237,6 +240,8 @@ g.number_of_runs = number_of_runs_input
 ###########################################################
 
 button_run_pressed = st.button("Run simulation")
+
+st.session_state.sim_data = {}
 
 if button_run_pressed:
     with st.spinner('Simulating the system...'):
@@ -268,6 +273,8 @@ if button_run_pressed:
         st.subheader(f'Summary of all {g.number_of_runs} Simulation Runs over {g.sim_duration} Weeks')
         st.subheader(f' Weeks with {cbt_add_input} change in CBT, {couns_add_input} change in DepC and ')
         st.subheader(f'{pwp_add_input} change in PwP Practitioners')
+
+        #st.write(step2_sessions_df)
         
         ##### get all data structured correctly for dashboard #####
               
@@ -293,6 +300,13 @@ if button_run_pressed:
                                       'Session Number','Session Time',
                                       'Admin Time','IsDNA']].reset_index()
         
+        step2_pwp_session_type_summary = step2_sessions_df.loc[step2_sessions_df[
+                'Route Name'] == 'pwp', ['Run Number', 'Week Number', 
+                                      'Session Number','Session Type','Session Time',
+                                      'Admin Time','IsDNA']].reset_index()
+        
+        #st.write(step2_pwp_session_type_summary)
+        
         step2_group_results_summary = step2_results_df.loc[step2_results_df[
                 'Route Name'] == 'group',['Run Number', 'Week Number', 
                                         'IsStep','IsDropout']].reset_index()
@@ -304,6 +318,11 @@ if button_run_pressed:
         step2_group_sessions_summary = step2_sessions_df.loc[step2_sessions_df[
                 'Route Name'] == 'group', ['Run Number', 'Week Number', 
                                       'Session Number','Session Time',
+                                      'Admin Time','IsDNA']].reset_index()
+        
+        step2_group_session_type_summary = step2_sessions_df.loc[step2_sessions_df[
+                'Route Name'] == 'group', ['Run Number', 'Week Number', 
+                                      'Session Number','Session Type','Session Time',
                                       'Admin Time','IsDNA']].reset_index()
         
         step3_cbt_results_summary = step3_results_df.loc[step3_results_df[
@@ -319,6 +338,11 @@ if button_run_pressed:
                                       'Session Number','Session Time',
                                       'Admin Time','IsDNA']].reset_index()
         
+        step3_cbt_session_type_summary = step3_sessions_df.loc[step3_sessions_df[
+                'Route Name'] == 'cbt', ['Run Number', 'Week Number', 
+                                      'Session Number','Session Type','Session Time',
+                                      'Admin Time','IsDNA']].reset_index()
+        
         step3_couns_results_summary = step3_results_df.loc[step3_results_df[
                 'Route Name'] == 'couns', ['Run Number', 'Week Number', 
                                       'WL Posn','Q Time',
@@ -331,6 +355,11 @@ if button_run_pressed:
         step3_couns_sessions_summary = step3_sessions_df.loc[step3_sessions_df[
                 'Route Name'] == 'couns', ['Run Number', 'Week Number', 
                                       'Session Number','Session Time',
+                                      'Admin Time','IsDNA']].reset_index()
+        
+        step3_couns_session_type_summary = step3_sessions_df.loc[step3_sessions_df[
+                'Route Name'] == 'couns', ['Run Number', 'Week Number', 
+                                      'Session Number','Session Type','Session Time',
                                       'Admin Time','IsDNA']].reset_index()
         
         # Define correct aggregation mapping based on the variable name
@@ -360,12 +389,47 @@ if button_run_pressed:
             # print(melted_df.head())
 
             # Apply the aggregation function based on variable
-            aggregated_sessions_df = melted_df.groupby(['Run Number', 'Week Number', 'variable'])['value'].agg(
+            aggregated_sessions_df = melted_df.groupby(['Run Number', 'Week Number','variable'])['value'].agg(
                 lambda x: x.sum() if agg_mapping.get(x.name, 'sum') == 'sum' else x.count()
             ).reset_index()
 
             # Store the result
             aggregated_sessions[name] = aggregated_sessions_df
+
+        # get sessions by type
+        # Define correct aggregation mapping based on the variable name
+        aggregated_session_types = {}
+        
+        agg_mapping = {
+            'Session Number': 'count',
+            'Session Time': 'sum',
+            'Admin Time': 'sum',
+            'IsDNA': 'sum'
+        }
+
+        # Dictionary of DataFrames to process
+        aggregated_session_types_dfs = {
+            'step2_pwp_session_type_summary': step2_pwp_session_type_summary,
+            'step2_group_session_type_summary': step2_group_session_type_summary,
+            'step3_cbt_session_type_summary': step3_cbt_session_type_summary,
+            'step3_couns_session_type_summary': step3_couns_session_type_summary
+        }
+
+        for name, df in aggregated_session_types_dfs.items():
+            # Melt the DataFrame
+            melted_df = pd.melt(df, id_vars=['Run Number','Week Number','Session Type'], var_name='variable', value_name='value')
+            #st.write(melted_df)
+            # Debug: Check melted output
+            # print(f"Checking {name} melted_df:")
+            # print(melted_df.head())
+
+            # Apply the aggregation function based on variable
+            aggregated_session_type_df = melted_df.groupby(['Run Number', 'Week Number','Session Type','variable'])['value'].agg(
+                lambda x: x.count() if agg_mapping.get(x.name, 'count') == 'count' else x.sum()
+            ).reset_index()
+
+            # Store the result
+            aggregated_session_types[name] = aggregated_session_type_df
  
         ########## repeat above but for results dfs ##########
         # Define correct aggregation mapping based on the variable name
@@ -463,6 +527,22 @@ if button_run_pressed:
         cbt_sessions_summary = aggregated_sessions['step3_cbt_sessions_summary']
         couns_sessions_summary = aggregated_sessions['step3_couns_sessions_summary']
 
+        pwp_session_type_summary = aggregated_session_types['step2_pwp_session_type_summary']
+        group_session_type_summary = aggregated_session_types['step2_group_session_type_summary']
+        cbt_session_type_summary = aggregated_session_types['step3_cbt_session_type_summary']
+        couns_session_type_summary = aggregated_session_types['step3_couns_session_type_summary']
+
+        # get rid of any sessions recorded beyond the simulation period
+        pwp_session_type_summary = pwp_session_type_summary = pwp_session_type_summary[pwp_session_type_summary["Week Number"] <= sim_duration_input].reset_index()
+        group_session_type_summary = group_session_type_summary = group_session_type_summary[group_session_type_summary["Week Number"] <= sim_duration_input].reset_index()
+        cbt_session_type_summary = cbt_session_type_summary = cbt_session_type_summary[cbt_session_type_summary["Week Number"] <= sim_duration_input].reset_index()
+        couns_session_type_summary = couns_session_type_summary = couns_session_type_summary[couns_session_type_summary["Week Number"] <= sim_duration_input].reset_index()
+        # get rid of week zero as no sessions run until week 1 when assessments come through
+        pwp_session_type_summary = pwp_session_type_summary = pwp_session_type_summary[pwp_session_type_summary["Week Number"] != 0]
+        group_session_type_summary = group_session_type_summary = group_session_type_summary[group_session_type_summary["Week Number"] != 0]
+        cbt_session_type_summary = cbt_session_type_summary = cbt_session_type_summary[cbt_session_type_summary["Week Number"] != 0]
+        couns_session_type_summary = couns_session_type_summary = couns_session_type_summary[couns_session_type_summary["Week Number"] != 0]
+        
         pwp_results_summary = aggregated_results['step2_pwp_results_summary']
         group_results_summary = aggregated_results['step2_group_results_summary']
         cbt_results_summary = aggregated_results['step3_cbt_results_summary']
@@ -533,8 +613,8 @@ if button_run_pressed:
                      'of patients through the Talking Therapies Assessment and'
                      'Treatment Pathway.')
             
-            st.write(step2_waiting_dfs)
-            st.write(step3_waiting_dfs)
+            # st.write(step2_waiting_dfs)
+            # st.write(step3_waiting_dfs)
   
           
         ########## Job Plans Tab ##########
@@ -546,19 +626,40 @@ if button_run_pressed:
         pwp_sessions_weekly_summary.drop('Run Number', axis=1)
         pwp_sessions_weekly_summary[pwp_sessions_weekly_summary.select_dtypes(include="number").columns.difference(["Week Number"])] = \
                 pwp_sessions_weekly_summary[pwp_sessions_weekly_summary.select_dtypes(include="number").columns.difference(["Week Number"])].div(60*number_of_runs_input).round()
+        # get sessions by type and calculate average based on number of runs
+        pwp_sessions_weekly_bytype = pwp_session_type_summary[pwp_session_type_summary['variable'].isin(['Session Number','IsDNA'])]
+        pwp_sessions_weekly_bytype.drop('Run Number', axis=1)
+        pwp_sessions_weekly_bytype[pwp_sessions_weekly_bytype.select_dtypes(include="number").columns.difference(["Week Number"])] = \
+                pwp_session_type_summary[pwp_session_type_summary.select_dtypes(include="number").columns.difference(["Week Number"])].div(number_of_runs_input).round()
+                
         # group
         group_sessions_weekly_summary = group_sessions_summary[group_sessions_summary['variable'].isin(['Session Time','Admin Time'])]
         group_sessions_weekly_summary[group_sessions_weekly_summary.select_dtypes(include="number").columns.difference(["Week Number"])] = \
                 group_sessions_weekly_summary[group_sessions_weekly_summary.select_dtypes(include="number").columns.difference(["Week Number"])].div(60*number_of_runs_input).round()
+        
+        # get sessions by type and calculate average based on number of runs
+        group_sessions_weekly_bytype = group_session_type_summary[group_session_type_summary['variable'].isin(['Session Number','IsDNA'])]
+        group_sessions_weekly_bytype.drop('Run Number', axis=1)
+        group_sessions_weekly_bytype[group_sessions_weekly_bytype.select_dtypes(include="number").columns.difference(["Week Number"])] = \
+                group_sessions_weekly_bytype[group_sessions_weekly_bytype.select_dtypes(include="number").columns.difference(["Week Number"])].div(number_of_runs_input).round()
         # cbt
         cbt_sessions_weekly_summary = cbt_sessions_summary[cbt_sessions_summary['variable'].isin(['Session Time','Admin Time'])]
         cbt_sessions_weekly_summary[cbt_sessions_weekly_summary.select_dtypes(include="number").columns.difference(["Week Number"])] = \
                 cbt_sessions_weekly_summary[cbt_sessions_weekly_summary.select_dtypes(include="number").columns.difference(["Week Number"])].div(60*number_of_runs_input).round()
+        # get sessions by type and calculate average based on number of runs
+        cbt_sessions_weekly_bytype = cbt_session_type_summary[cbt_session_type_summary['variable'].isin(['Session Number','IsDNA'])]
+        cbt_sessions_weekly_bytype.drop('Run Number', axis=1)
+        cbt_sessions_weekly_bytype[cbt_sessions_weekly_bytype.select_dtypes(include="number").columns.difference(["Week Number"])] = \
+                cbt_sessions_weekly_bytype[cbt_sessions_weekly_bytype.select_dtypes(include="number").columns.difference(["Week Number"])].div(number_of_runs_input).round()
         # couns
         couns_sessions_weekly_summary = couns_sessions_summary[couns_sessions_summary['variable'].isin(['Session Time','Admin Time'])]
         couns_sessions_weekly_summary[couns_sessions_weekly_summary.select_dtypes(include="number").columns.difference(["Week Number"])] = \
                 couns_sessions_weekly_summary[couns_sessions_weekly_summary.select_dtypes(include="number").columns.difference(["Week Number"])].div(60*number_of_runs_input).round()
-              
+        # get sessions by type and calculate average based on number of runs
+        couns_sessions_weekly_bytype = couns_session_type_summary[couns_session_type_summary['variable'].isin(['Session Number','IsDNA'])]
+        couns_sessions_weekly_bytype.drop('Run Number', axis=1)
+        couns_sessions_weekly_bytype[couns_sessions_weekly_bytype.select_dtypes(include="number").columns.difference(["Week Number"])] = \
+                couns_sessions_weekly_bytype[couns_sessions_weekly_bytype.select_dtypes(include="number").columns.difference(["Week Number"])].div(number_of_runs_input).round()     
         
         
         # pwp_sessions_weekly_summary['variable'] = pwp_sessions_weekly_summary['variable'].replace({"Session Hrs": "pwp Sessions", "Admin Hrs": "pwp Admin"}, inplace=True)
@@ -881,18 +982,28 @@ if button_run_pressed:
                     elif list_name == 'Num Waiting':
                         axis_title = 'Patients'
 
+                    pwp_sessions_weekly_type_filtered = pwp_sessions_weekly_bytype[
+                                        pwp_sessions_weekly_bytype["variable"]==list_name]
+                    
                     pwp_combined_col1_filtered = pwp_combined_summary[
                                         pwp_combined_summary["variable"]==list_name]
                     
                     if list_name == 'Session Number':
                         section_title = 'Sessions'
+
+                        custom_colors = {'First': "#2ca02c",
+                                        'Follow-Up': "#98df8a"}
+                        
+                        custom_stack_order = ["First", "Follow-Up"]  # Order from bottom to top
                     
-                        fig1 = px.histogram(pwp_combined_col1_filtered, 
+                        fig1 = px.histogram(pwp_sessions_weekly_type_filtered, 
                                             x='Week Number',
                                             y='value',
                                             nbins=sim_duration_input,
                                             labels={'value': 'Sessions'},
-                                            color_discrete_sequence=['green'],
+                                            color='Session Type',
+                                            color_discrete_map=custom_colors, #custom_colors,
+                                            category_orders={'Session Type': custom_stack_order},
                                             title=f'Number of Sessions per Week')
                         
                         fig1.update_layout(title_x=0.4,font=dict(size=10),bargap=0.2)
@@ -1041,8 +1152,6 @@ if button_run_pressed:
 
             col3, col4 = st.columns(2)
 
-            #st.write(group_waiting_summary)
-
             with col3:
 
                 st.subheader('Psychological Wellbeing Practitioner - Groups')
@@ -1060,18 +1169,28 @@ if button_run_pressed:
                     elif list_name == 'Num Waiting':
                         axis_title = 'Patients'
 
+                    group_sessions_weekly_type_filtered = group_sessions_weekly_bytype[
+                                        group_sessions_weekly_bytype["variable"]==list_name]
+                    
                     group_combined_col1_filtered = group_combined_summary[
                                         group_combined_summary["variable"]==list_name]
                                         
                     if list_name == 'Session Number':
                         section_title = 'Sessions'
                     
-                        fig5 = px.histogram(group_combined_col1_filtered, 
+                        custom_colors = {'First': "#2ca02c",
+                                        'Follow-Up': "#98df8a"}
+                        
+                        custom_stack_order = ["First", "Follow-Up"]  # Order from bottom to top
+                    
+                        fig5 = px.histogram(group_sessions_weekly_type_filtered, 
                                             x='Week Number',
                                             y='value',
                                             nbins=sim_duration_input,
                                             labels={'value': 'Sessions'},
-                                            color_discrete_sequence=['green'],
+                                            color='Session Type',
+                                            color_discrete_map=custom_colors, #custom_colors,
+                                            category_orders={'Session Type': custom_stack_order},
                                             title=f'Number of Sessions per Week')
                         
                         fig5.update_layout(title_x=0.4,font=dict(size=10),bargap=0.2)
@@ -1246,15 +1365,25 @@ if button_run_pressed:
                     cbt_combined_col1_filtered = cbt_combined_summary[
                                         cbt_combined_summary["variable"]==list_name]
                     
+                    cbt_sessions_weekly_type_filtered = cbt_sessions_weekly_bytype[
+                                        cbt_sessions_weekly_bytype["variable"]==list_name]
+                    
                     if list_name == 'Session Number':
                         section_title = 'Sessions'
+
+                        custom_colors = {'First': "#2ca02c",
+                                        'Follow-Up': "#98df8a"}
+                        
+                        custom_stack_order = ["First", "Follow-Up"]  # Order from bottom to top
                     
-                        fig9 = px.histogram(cbt_combined_col1_filtered, 
+                        fig9 = px.histogram(cbt_sessions_weekly_type_filtered, 
                                             x='Week Number',
                                             y='value',
                                             nbins=sim_duration_input,
                                             labels={'value': 'Sessions'},
-                                            color_discrete_sequence=['green'],
+                                            color='Session Type',
+                                            color_discrete_map=custom_colors, #custom_colors,
+                                            category_orders={'Session Type': custom_stack_order},
                                             title=f'Number of Sessions per Week')
                         
                         fig9.update_layout(title_x=0.4,font=dict(size=10),bargap=0.2)
@@ -1425,15 +1554,25 @@ if button_run_pressed:
                     couns_combined_col1_filtered = couns_combined_summary[
                                         couns_combined_summary["variable"]==list_name]
                     
+                    couns_sessions_weekly_type_filtered = couns_sessions_weekly_bytype[
+                                        couns_sessions_weekly_bytype["variable"]==list_name]
+                    
                     if list_name == 'Session Number':
                         section_title = 'Sessions'
+
+                        custom_colors = {'First': "#2ca02c",
+                                        'Follow-Up': "#98df8a"}
+                        
+                        custom_stack_order = ["First", "Follow-Up"]  # Order from bottom to top
                     
-                        fig13 = px.histogram(couns_combined_col1_filtered, 
+                        fig13 = px.histogram(couns_sessions_weekly_type_filtered, 
                                             x='Week Number',
                                             y='value',
                                             nbins=sim_duration_input,
                                             labels={'value': 'Sessions'},
-                                            color_discrete_sequence=['green'],
+                                            color='Session Type',
+                                            color_discrete_map=custom_colors, #custom_colors,
+                                            category_orders={'Session Type': custom_stack_order},
                                             title=f'Number of Sessions per Week')
                         
                         fig13.update_layout(title_x=0.4,font=dict(size=10),bargap=0.2)

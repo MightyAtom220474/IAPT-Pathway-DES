@@ -117,8 +117,8 @@ class g:
 
     # bring in past referral data
     
-    # referral_rate_lookup = pd.read_csv('talking_therapies_referral_rates.csv'
-    #                                                            ,index_col=0)
+    referral_rate_lookup = pd.read_csv('talking_therapies_referral_rates.csv'
+                                                               ,index_col=0)
     #print(referral_rate_lookup)
 # function to vary the number of sessions
 def vary_number_sessions(lower, upper, lambda_val=0.1):
@@ -268,7 +268,7 @@ class Model:
         self.step2_sessions_df['Run Number'] = [0]
         self.step2_sessions_df['Route Name'] = pd.NA# which step2 pathway the patient was sent down
         self.step2_sessions_df['Session Number'] = [0]
-        self.step2_sessions_df['Session Type'] = pd.NA
+        self.step2_sessions_df['Session Type'] = 'NA'
         self.step2_sessions_df['Session Time'] = [0] # clinical session time in mins
         self.step2_sessions_df['Admin Time'] = [0] # admin session time in mins
         self.step2_sessions_df['IsDNA'] = [0]
@@ -310,7 +310,7 @@ class Model:
         self.step3_sessions_df['Run Number'] = [0]
         self.step3_sessions_df['Route Name'] = pd.NA # which step2 pathway the patient was sent down
         self.step3_sessions_df['Session Number'] = [0]
-        self.step3_sessions_df['Session Type'] = pd.NA
+        self.step3_sessions_df['Session Type'] = 'NA'
         self.step3_sessions_df['Session Time'] = [0] # clinical session time in mins
         self.step3_sessions_df['Admin Time'] = [0] # admin session time in mins
         self.step3_sessions_df['IsDNA'] = [0]
@@ -1689,6 +1689,13 @@ class Model:
                 print(f'FUNC PROCESS step2_pwp_process: Week {self.env.now}: Patient {p.id} '
                     f'(added week {p.week_added}) on {p.step2_path_route} '
                     f'Session {self.pwp_session_counter} on Week {self.pwp_random_weeks[self.pwp_session_counter]}')
+          
+            self.pwp_session_type = 'NA'
+            
+            if self.pwp_session_counter == 0:
+                self.pwp_session_type = 'First'
+            else:
+                self.pwp_session_type = 'Follow-Up'
 
             # Determine whether the session was DNA'd
             self.dna_pwp_session = random.uniform(0, 1)
@@ -1718,10 +1725,11 @@ class Model:
             # Store session results as a dictionary
             new_row = {
                         'Patient ID': p.id,
-                        'Week Number': p.step3_start_week + self.pwp_random_weeks[self.pwp_session_counter],
+                        'Week Number': p.step2_start_week + self.pwp_random_weeks[self.pwp_session_counter],
                         'Run Number': self.run_number,
                         'Route Name': p.step2_path_route,
                         'Session Number': self.pwp_session_counter,
+                        'Session Type': self.pwp_session_type,
                         'Session Time': session_time,
                         'Admin Time': admin_time,
                         'IsDNA': is_dna
@@ -1844,6 +1852,13 @@ class Model:
                 print(f'FUNC PROCESS step2_group_process: Week {self.env.now}: Patient {p.id} '
                     f'(added week {p.week_added}) on {p.step2_path_route} '
                     f'Session {self.group_session_counter} on Week {self.group_random_weeks[self.group_session_counter]}')
+                
+            self.group_session_type = pd.NA
+            
+            if self.group_session_counter == 0:
+                self.group_session_type = 'First'
+            else:
+                self.group_session_type = 'Follow-Up'
 
             # Determine whether the session was DNA'd
             self.dna_group_session = random.uniform(0, 1)
@@ -1874,10 +1889,11 @@ class Model:
             # Store session results as a dictionary
             new_row = {
                         'Patient ID': p.id,
-                        'Week Number': p.step3_start_week + self.group_random_weeks[self.group_session_counter],
+                        'Week Number': p.step2_start_week + self.group_random_weeks[self.group_session_counter],
                         'Run Number': self.run_number,
                         'Route Name': p.step2_path_route,
                         'Session Number': self.group_session_counter,
+                        'Session Type': self.group_session_type,
                         'Session Time': session_time,
                         'Admin Time': admin_time,
                         'IsDNA': is_dna
@@ -2045,6 +2061,13 @@ class Model:
                 print(f'FUNC PROCESS step3_cbt_process: Week {self.env.now}: Patient {p.id} '
                     f'(added week {p.week_added}) on {p.step3_path_route} '
                     f'Session {self.cbt_session_counter} on Week {self.cbt_random_weeks[self.cbt_session_counter]}')
+                
+            self.cbt_session_type = pd.NA
+            
+            if self.cbt_session_counter == 0:
+                self.cbt_session_type = 'First'
+            else:
+                self.cbt_session_type = 'Follow-Up'
 
             # Determine whether the session was DNA'd
             self.dna_cbt_session = random.uniform(0, 1)
@@ -2079,6 +2102,7 @@ class Model:
                         'Run Number': self.run_number,
                         'Route Name': p.step3_path_route,
                         'Session Number': self.cbt_session_counter,
+                        'Session Type': self.cbt_session_type,
                         'Session Time': session_time,
                         'Admin Time': admin_time,
                         'IsDNA': is_dna
@@ -2256,6 +2280,13 @@ class Model:
                 print(f'FUNC PROCESS step3_couns_process: Week {self.env.now}: Patient {p.id} '
                     f'(added week {p.week_added}) on {p.step3_path_route} '
                     f'Session {self.couns_session_counter} on Week {self.couns_random_weeks[self.couns_session_counter]}')
+                
+            self.couns_session_type = pd.NA
+            
+            if self.couns_session_counter == 0:
+                self.couns_session_type = 'First'
+            else:
+                self.couns_session_type = 'Follow-Up'
 
             # Determine whether the session was DNA'd
             self.dna_couns_session = random.uniform(0, 1)
@@ -2290,6 +2321,7 @@ class Model:
                         'Run Number': self.run_number,
                         'Route Name': p.step3_path_route,
                         'Session Number': self.couns_session_counter,
+                        'Session Type': self.couns_session_type,
                         'Session Time': session_time,
                         'Admin Time': admin_time,
                         'IsDNA': is_dna
