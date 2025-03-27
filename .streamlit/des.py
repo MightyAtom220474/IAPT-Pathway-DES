@@ -227,9 +227,10 @@ g.pwp_avail = pwp_avail_input + pwp_add_input #int(g.pwp_avail_tot*weeks_lost_pc
 total_cbt_hours = g.cbt_avail*37.5
 total_couns_hours = g.couns_avail*37.5
 total_pwp_hours = g.pwp_avail*37.5
-pwp_1st_res = (pwp_avail_input + pwp_add_input) * 4 #  4 1st's per PwP per week
-cbt_1st_res = (cbt_avail_input + cbt_add_input) * 2 #  2 1st's per CBT per week
-couns_1st_res = (couns_avail_input + couns_add_input) * 2 # 2 1st's per Couns per week
+g.ta_resource = (pwp_avail_input + pwp_add_input) * step2_group_size_input
+g.pwp_1st_res = (pwp_avail_input + pwp_add_input) * 4 #  4 1st's per PwP per week
+g.cbt_1st_res = (cbt_avail_input + cbt_add_input) * 2 #  2 1st's per CBT per week
+g.couns_1st_res = (couns_avail_input + couns_add_input) * 2 # 2 1st's per Couns per week
 
 g.sim_duration = sim_duration_input
 g.number_of_runs = number_of_runs_input
