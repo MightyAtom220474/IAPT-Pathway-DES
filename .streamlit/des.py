@@ -215,8 +215,11 @@ g.cbt_avail_tot = cbt_avail_input + cbt_add_input
 g.couns_avail_tot = couns_avail_input + couns_add_input
 g.pwp_avail_tot = pwp_avail_input + pwp_add_input
 g.cbt_caseload = cbt_caseload_input
+cbt_caseload_max = 35
 g.couns_caseload = couns_caseload_input
+couns_caseload_max = 35
 g.pwp_caseload = pwp_caseload_input
+pwp_caseload_max = 35
 # calculate total hours for job plans
 
 staff_weeks_lost = weeks_lost_input
@@ -271,9 +274,9 @@ if button_run_pressed:
         for name, df in st.session_state.sim_data.items():
             pd.DataFrame(df)
 
-        st.subheader(f'Summary of all {g.number_of_runs} Simulation Runs over {g.sim_duration} Weeks')
-        st.subheader(f' Weeks with {cbt_add_input} change in CBT, {couns_add_input} change in DepC and ')
-        st.subheader(f'{pwp_add_input} change in PwP Practitioners')
+        # st.subheader(f'Summary of all {g.number_of_runs} Simulation Runs over {g.sim_duration} Weeks')
+        # st.subheader(f' Weeks with {cbt_add_input} change in CBT, {couns_add_input} change in DepC and ')
+        # st.subheader(f'{pwp_add_input} change in PwP Practitioners')
 
         #st.write(step2_sessions_df)
         
@@ -1855,7 +1858,7 @@ if button_run_pressed:
             # add line for available pwp hours
             fig22.add_trace(
                                 go.Scatter(x=pwp_caseload_weekly_summary["Week Number"],
-                                        y=np.repeat(pwp_caseload_input*(pwp_avail_input+pwp_add_input)
+                                        y=np.repeat(pwp_caseload_max*(pwp_avail_input+pwp_add_input)
                                                     ,sim_duration_input*(pwp_avail_input+pwp_add_input)),
                                         name='Avail Slots',line=dict(width=3,
                                         color='green')))
@@ -1888,7 +1891,7 @@ if button_run_pressed:
             # add line for available cbt hours
             fig22.add_trace(
                                 go.Scatter(x=cbt_caseload_weekly_summary["Week Number"],
-                                        y=np.repeat(cbt_caseload_input*(cbt_avail_input+cbt_add_input)
+                                        y=np.repeat(cbt_caseload_max*(cbt_avail_input+cbt_add_input)
                                                     ,sim_duration_input*(cbt_avail_input+cbt_add_input)),
                                         name='Avail Slots',line=dict(width=3,
                                         color='green')))
@@ -1921,8 +1924,8 @@ if button_run_pressed:
             # add line for available couns hours
             fig22.add_trace(
                                 go.Scatter(x=couns_caseload_weekly_summary["Week Number"],
-                                        y=np.repeat(couns_caseload_input*(couns_avail_input+couns_add_input)
-                                                    ,sim_duration_input),#*(couns_avail_input+couns_add_input)),
+                                        y=np.repeat(couns_caseload_max*(couns_avail_input+couns_add_input)
+                                                    ,sim_duration_input*(couns_avail_input+couns_add_input)),
                                         name='Avail Slots',line=dict(width=3,
                                         color='green')))
 
@@ -1930,64 +1933,4 @@ if button_run_pressed:
 
             st.divider()   
 
-            # ##### cbt Practitioner #####
-
-            # st.subheader('Cognitive Behavioural Therapists')
-
-            # fig18 = px.histogram(cbt_hours_weekly_summary, 
-            #                     x='Week Number',
-            #                     y='value',
-            #                     nbins=sim_duration_input,
-            #                     labels={'value': 'Hours'
-            #                             ,'variable':'Time Alloc'},
-            #                     color='variable',
-            #                     color_discrete_sequence=px.colors.qualitative.Dark24,
-            #                     title=f'Cognitive Behavioural Therapist Hours by Week')
             
-            # fig18.update_layout(title_x=0.4,font=dict(size=10),bargap=0.2,legend_traceorder="reversed")
-            
-            # fig18.update_traces(marker_line_color='black', marker_line_width=1)
-
-            # # add line for available pwp hours
-            # fig18.add_trace(
-            #                     go.Scatter(x=cbt_hours_weekly_summary["Week Number"],
-            #                             y=np.repeat(total_cbt_hours,sim_duration_input*2),
-            #                             name='Avail Hrs',line=dict(width=3,
-            #                             color='green')))
-
-            # st.plotly_chart(fig18, use_container_width=True)
-
-            # st.divider()   
-
-            # ##### couns Practitioner #####
-
-            # st.subheader('Depression counselling Therapists')
-
-            # fig19 = px.histogram(couns_hours_weekly_summary, 
-            #                     x='Week Number',
-            #                     y='value',
-            #                     nbins=sim_duration_input,
-            #                     labels={'value': 'Hours'
-            #                             ,'variable':'Time Alloc'},
-            #                     color='variable',
-            #                     color_discrete_sequence=px.colors.qualitative.Dark24,
-            #                     title=f'Depression counselling Therapist Hours by Week')
-            
-            # fig19.update_layout(title_x=0.4,font=dict(size=10),bargap=0.2,legend_traceorder="reversed")
-            
-            # fig19.update_traces(marker_line_color='black', marker_line_width=1)
-
-            # # add line for available pwp hours
-            # fig19.add_trace(
-            #                     go.Scatter(x=couns_hours_weekly_summary["Week Number"],
-            #                             y=np.repeat(total_couns_hours,sim_duration_input*2),
-            #                             name='Avail Hrs',line=dict(width=3,
-            #                             color='green')))
-
-            # st.plotly_chart(fig19, use_container_width=True)
-
-            # st.divider()
-
-
-
-    
