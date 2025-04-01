@@ -76,9 +76,9 @@ class g:
     cpd_time = 225 # half day per month CPD
     
     # Job Plans
-    number_staff_cbt = 138 #138
-    number_staff_couns = 40 #40
-    number_staff_pwp = 128 #125
+    number_staff_cbt = 14 #138
+    number_staff_couns = 4 #40
+    number_staff_pwp = 12 #125
     pwp_avail = number_staff_pwp
     cbt_avail = number_staff_cbt
     couns_avail = number_staff_couns
@@ -86,9 +86,9 @@ class g:
     hours_avail_couns = 22.0
     hours_avail_pwp = 21.0
     ta_resource = pwp_avail * 9 # job plan = 3 TA per week per pwp
-    pwp_1st_res = pwp_avail * 10 #  4 1st's per PwP per week
-    cbt_1st_res = cbt_avail * 8 #  2 1st's per CBT per week
-    couns_1st_res = couns_avail * 8 # 2 1st's per Couns per week
+    pwp_1st_res = pwp_avail * 4 #  4 1st's per PwP per week
+    cbt_1st_res = cbt_avail * 2 #  2 1st's per CBT per week
+    couns_1st_res = couns_avail * 2 # 2 1st's per Couns per week
     pwp_caseload = 200
     group_resource = pwp_avail * step2_group_size
     cbt_caseload = 100
