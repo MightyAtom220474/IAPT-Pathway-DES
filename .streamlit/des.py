@@ -219,7 +219,7 @@ cbt_caseload_max = 35
 g.couns_caseload = couns_caseload_input
 couns_caseload_max = 35
 g.pwp_caseload = pwp_caseload_input
-pwp_caseload_max = 35
+pwp_caseload_max = 45
 # calculate total hours for job plans
 
 staff_weeks_lost = weeks_lost_input

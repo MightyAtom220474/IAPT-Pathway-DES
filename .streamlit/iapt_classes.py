@@ -624,8 +624,8 @@ class Model:
             #print(self.step2_weekly_waiting_stats)
             # possible options to iterate through
             
-            if self.stats_week_number == 51:
-                self.step2_weekly_waiting_stats.to_csv("step2_waiting_list.csv", index=True)
+            # if self.stats_week_number == 51:
+            #     self.step2_weekly_waiting_stats.to_csv("step2_waiting_list.csv", index=True)
         
             self.waiting_list_path_step2 = ['pwp','group']
 
