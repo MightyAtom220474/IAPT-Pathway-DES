@@ -56,14 +56,14 @@ class g:
     step3_routes =['cbt','couns'] # full pathway options = ['Pfcbt','group','cbt','EMDR','DepC','DIT','IPT','CDEP']
     step3_path_ratios = [0.368,0.632]# [0.1,0.25,0.25,0.05,0.05,0.1,0.1,0.1] # step3 proportion for each route ##### Need to clarify exact split
     step3_cbt_sessions = 12 # number of pwp sessions at step2
-    step3_cbt_1st_mins = 45 # minutes allocated for 1st cbt session
-    step3_cbt_fup_mins = 30 # minutes allocated for cbt follow-up session
+    step3_cbt_1st_mins = 90 # minutes allocated for 1st cbt session
+    step3_cbt_fup_mins = 60 # minutes allocated for cbt follow-up session
     step3_cbt_dna_rate = 0.216 # Wellbeing Workshop attendance 78.6%
     step3_session_admin = 15 # number of mins of clinical admin per session
     step3_cbt_period = 16 # max number of weeks cbt delivered over
     step3_couns_sessions = 8 # number of couns sessions
-    step3_couns_1st_mins = 45 # minutes allocated for 1st couns session
-    step3_couns_fup_mins = 30 # minutes allocated for couns follow-up session
+    step3_couns_1st_mins = 90 # minutes allocated for 1st couns session
+    step3_couns_fup_mins = 60 # minutes allocated for couns follow-up session
     step3_couns_dna_rate = 0.216 # Wellbeing Workshop attendance 78.6%
     step3_couns_period = 16 # max number of weeks couns delivered over
     step3_session_var = 0.15 # % of instances where number sessions goes over standard amount
@@ -1001,7 +1001,6 @@ class Model:
             self.staff_results_df.at[s.id,'Run Number'] = self.run_number
             self.staff_results_df.at[s.id,'Job Role'] = 'pwp'
             self.staff_results_df.at[s.id,'Break Mins'] = g.break_time/2
-            #self.staff_results_df.at[s.id,'Huddle Mins'] = g.huddle_time # counsellors only
             
             # monthly staff activities
             if self.week_number % 4 == 0:
