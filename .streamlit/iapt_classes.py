@@ -1247,7 +1247,7 @@ class Model:
             # # can stop here and move on to next patient
             yield self.env.timeout(0) 
 
-        else: # self.patient_optedin < g.opt_in_rate:
+        else:
             # otherwise set flag to show they opted-in
             self.asst_results_df.at[p.id, 'Opted In'] = 1
             if g.debug_level == 2:
@@ -1344,7 +1344,7 @@ class Model:
                 self.asst_results_df.at[p.id, 'Treatment Path'] = self.selected_step
                 p.initial_step = self.selected_step
                 # assign week they started waiting to the patient class for use later
-                p.treat_wait_week = self.env.now # when they started waiting for treatment
+                p.treat_wait_week = self.env.now
                 
                 if g.debug_level == 2:
                     print(f"-- Pathway Runner Initiated --")
@@ -1830,8 +1830,6 @@ class Model:
         # counter for applying DNA policy
         self.group_dna_counter = 0
 
-        #self.start_q_group = self.env.now
-
         # Record where the patient is on the group WL
         self.step2_results_df.at[p.id, 'WL Posn'] = \
                                             g.number_on_group_wl
@@ -1991,7 +1989,8 @@ class Model:
                 self.step2_results_df.at[p.id, 'IsDropOut'] = 1
                 if g.debug_level == 2:
                     print(f'Patient {p.id} dropped out of {p.step2_path_route} treatment')
-                p.step2_end_week = p.step2_start_week + self.group_random_weeks[self.group_session_counter]
+                p.step2_end_week = p.step2_start_week + self.group_random_weeks\
+                                    [self.group_session_counter]
                 break  # Stop the loop if patient drops out
 
             # Move to the next session
@@ -2016,7 +2015,8 @@ class Model:
         self.cbt_dna_counter = 0
 
         if g.debug_level == 2:
-            print(f'{p.step3_path_route} RUNNER: Patient {p.id} added to {p.step3_path_route} waiting list')
+            print(f'{p.step3_path_route} RUNNER: Patient {p.id} added to \
+                    {p.step3_path_route} waiting list')
 
         start_q_couns = self.env.now
 
@@ -2074,10 +2074,13 @@ class Model:
         g.number_on_cbt_wl -= 1
 
         if g.debug_level == 2:
-            print(f'{p.step3_path_route} RUNNER: Patient {p.id} removed from {p.step3_path_route} waiting list')
+            print(f'{p.step3_path_route} RUNNER: Patient {p.id} removed from \
+                    {p.step3_path_route} waiting list')
 
         if g.debug_level == 2:
-            print(f'FUNC PROCESS step3_cbt_process: Week {self.env.now}: Patient {p.id} (added week {p.week_added}) put through {p.step3_path_route}')
+            print(f'FUNC PROCESS step3_cbt_process: Week {self.env.now
+                        }: Patient {p.id} (added week {p.week_added}\
+                        ) put through {p.step3_path_route}')
 
         p.step3_start_week = self.week_number
 
@@ -2088,7 +2091,9 @@ class Model:
         self.q_time_cbt = p.step3_start_week - p.treat_wait_week
 
         if g.debug_level == 2:
-            print(f'Patient {p.id} WEEK NUMBER {self.env.now} waited {self.q_time_cbt} weeks from {p.treat_wait_week} weeks to {p.step3_start_week} to enter {p.step3_path_route} treatment')
+            print(f'Patient {p.id} WEEK NUMBER {self.env.now} waited {
+                self.q_time_cbt} weeks from {p.treat_wait_week} weeks to {
+                p.step3_start_week} to enter {p.step3_path_route} treatment')
         self.step3_results_df.at[p.id, 'Route Name'] = p.step3_path_route
         self.step3_results_df.at[p.id, 'Run Number'] = self.run_number
         self.step3_results_df.at[p.id, 'Week Number'] = self.week_number
@@ -2268,8 +2273,6 @@ class Model:
         if g.debug_level == 2:
             print(f'{p.step3_path_route} RUNNER: Patient {p.id} added to {p.step3_path_route} waiting list')
 
-        start_q_couns = self.env.now
-
         # Record where the patient is on the couns WL
         self.step3_results_df.at[p.id, 'WL Posn'] = \
                                             g.number_on_couns_wl
@@ -2298,7 +2301,7 @@ class Model:
             result = yield req | self.env.timeout(0)  # Try to get the resource immediately
 
             if req not in result:  # If resource is unavailable
-                #next_week = ((self.env.now // 7) + 1) * 7  # Calculate start of next week
+                
                 yield self.env.timeout(1)  # Wait until next week
 
                 with self.couns_first_res.get(1) as req:  # Retry resource request
