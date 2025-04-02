@@ -282,7 +282,13 @@ if button_run_pressed:
         asst_weekly_dfs['Accepted Referrals'] = asst_weekly_dfs['Referrals Received']-asst_weekly_dfs['Referrals Rejected']
       
         # filter dataframe to just return columns needed
-        asst_weekly_summary = asst_weekly_dfs[['Run Number','Week Number','Referrals Received','Referral Screen Hrs','Accepted Referrals','Referrals Rejected','Referrals Reviewed','Reviews Rejected','Referrals Opted-in','TA Waiting List','TA Avg Wait','TA Max Wait','TA Total Accept','TA Hrs']].reset_index()
+        asst_weekly_summary = asst_weekly_dfs[['Run Number','Week Number',
+                                    'Referrals Received','Referral Screen Hrs',
+                                    'Accepted Referrals','Referrals Rejected',
+                                    'Referrals Reviewed','Reviews Rejected',
+                                    'Referrals Opted-in','TA Waiting List',
+                                    'TA Avg Wait','TA Max Wait',
+                                    'TA Total Accept','TA Hrs']].reset_index()
                
         asst_weekly_summary = asst_weekly_summary[asst_weekly_summary["Week Number"] != 0].reset_index()
                               
@@ -450,10 +456,6 @@ if button_run_pressed:
         for name, df in aggregated_results_dfs.items():
             # Melt the DataFrame
             melted_df = pd.melt(df, id_vars=['Run Number', 'Week Number'], var_name='variable', value_name='value')
-            
-            # Debug: Check melted output
-            # print(f"Checking {name} melted_df:")
-            # print(melted_df.head())
 
             # Aggregating using the correct aggregation function based on variable
             def agg_func(x):
@@ -495,10 +497,6 @@ if button_run_pressed:
         for name, df in aggregated_waiting_dfs.items():
             # Melt the DataFrame
             melted_df = pd.melt(df, id_vars=['Run Number', 'Week Number'], var_name='variable', value_name='value')
-            
-            # Debug: Check melted output
-            # print(f"Checking {name} melted_df:")
-            # print(melted_df.head())
 
             # Aggregating using the correct aggregation function based on variable
             def agg_func(x):
@@ -519,7 +517,7 @@ if button_run_pressed:
             # Store the result
             aggregated_waiting[name] = aggregated_waiting_df
 
-        # Extract final DataFrames
+        ##### Extract final DataFrames #####
 
         pwp_sessions_summary = aggregated_sessions['step2_pwp_sessions_summary']
         group_sessions_summary = aggregated_sessions['step2_group_sessions_summary']
@@ -537,6 +535,12 @@ if button_run_pressed:
         cbt_session_type_summary = cbt_session_type_summary = cbt_session_type_summary[cbt_session_type_summary["Week Number"] <= sim_duration_input].reset_index()
         couns_session_type_summary = couns_session_type_summary = couns_session_type_summary[couns_session_type_summary["Week Number"] <= sim_duration_input].reset_index()
         # get rid of week zero as no sessions run until week 1 when assessments come through
+        pwp_session_type_summary = pwp_session_type_summary = pwp_session_type_summary[pwp_session_type_summary["Week Number"] <= sim_duration_input]
+        group_session_type_summary = group_session_type_summary = group_session_type_summary[group_session_type_summary["Week Number"] <= sim_duration_input
+        cbt_session_type_summary = cbt_session_type_summary = cbt_session_type_summary[cbt_session_type_summary["Week Number"] <= sim_duration_input]
+        couns_session_type_summary = couns_session_type_summary = couns_session_type_summary[couns_session_type_summary["Week Number"] <= sim_duration_input]
+
+        # get rid of weeks beyond sim duration
         pwp_session_type_summary = pwp_session_type_summary = pwp_session_type_summary[pwp_session_type_summary["Week Number"] != 0]
         group_session_type_summary = group_session_type_summary = group_session_type_summary[group_session_type_summary["Week Number"] != 0]
         cbt_session_type_summary = cbt_session_type_summary = cbt_session_type_summary[cbt_session_type_summary["Week Number"] != 0]
@@ -659,10 +663,7 @@ if button_run_pressed:
         couns_sessions_weekly_bytype.drop('Run Number', axis=1)
         couns_sessions_weekly_bytype[couns_sessions_weekly_bytype.select_dtypes(include="number").columns.difference(["Week Number"])] = \
                 couns_sessions_weekly_bytype[couns_sessions_weekly_bytype.select_dtypes(include="number").columns.difference(["Week Number"])].div(number_of_runs_input).round()     
-        
-        
-        # pwp_sessions_weekly_summary['variable'] = pwp_sessions_weekly_summary['variable'].replace({"Session Hrs": "pwp Sessions", "Admin Hrs": "pwp Admin"}, inplace=True)
-        # group_sessions_weekly_summary['variable'] = group_sessions_weekly_summary['variable'].replace({"Session Hrs": "group Sessions", "Admin Hrs": "group Admin"}, inplace=True)
+                
         # combine pwp and group as all delivered by pwp
         pwp_group_sessions_combined = pd.concat([pwp_sessions_weekly_summary,group_sessions_weekly_summary], ignore_index=True)
         
