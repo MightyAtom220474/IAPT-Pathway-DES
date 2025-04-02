@@ -536,7 +536,7 @@ if button_run_pressed:
         couns_session_type_summary = couns_session_type_summary = couns_session_type_summary[couns_session_type_summary["Week Number"] <= sim_duration_input].reset_index()
         # get rid of week zero as no sessions run until week 1 when assessments come through
         pwp_session_type_summary = pwp_session_type_summary = pwp_session_type_summary[pwp_session_type_summary["Week Number"] <= sim_duration_input]
-        group_session_type_summary = group_session_type_summary = group_session_type_summary[group_session_type_summary["Week Number"] <= sim_duration_input
+        group_session_type_summary = group_session_type_summary = group_session_type_summary[group_session_type_summary["Week Number"] <= sim_duration_input]
         cbt_session_type_summary = cbt_session_type_summary = cbt_session_type_summary[cbt_session_type_summary["Week Number"] <= sim_duration_input]
         couns_session_type_summary = couns_session_type_summary = couns_session_type_summary[couns_session_type_summary["Week Number"] <= sim_duration_input]
 
