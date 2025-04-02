@@ -182,7 +182,6 @@ g.referral_rejection_rate = referral_reject_input/100
 g.referral_review_rate = referral_review_input
 g.referral_screen_time = referral_screen_input
 g.opt_in_rate = opt_in_input/100
-g.ta_resource = (pwp_avail_input + pwp_add_input) * ta_resource_pwp #int(g.pwp_avail_tot*weeks_lost_pc)
 g.ta_accept_rate = ta_accept_input/100
 g.step2_step3_ratio = (step2_step3_rate_input/100,1-(step2_step3_rate_input/100))
 
@@ -211,36 +210,26 @@ g.step_down_rate = step_down_input/100
 g.step3_session_admin = step3_admin_input
 
 ##### Job Plans
-# g.cbt_avail_tot = cbt_avail_input + cbt_add_input
-# g.couns_avail_tot = couns_avail_input + couns_add_input
-# g.pwp_avail_tot = pwp_avail_input + pwp_add_input
 g.cbt_caseload = cbt_caseload_input
 cbt_caseload_max = 35
 g.couns_caseload = couns_caseload_input
 couns_caseload_max = 35
 g.pwp_caseload = pwp_caseload_input
 pwp_caseload_max = 45
-# calculate total hours for job plans
-
 staff_weeks_lost = weeks_lost_input
 weeks_lost_pc = (52-staff_weeks_lost)/52
-# g.cbt_avail = cbt_avail_input + cbt_add_input #int(g.cbt_avail_tot*weeks_lost_pc)
-# g.couns_avail = couns_avail_input + couns_add_input #int(g.couns_avail_tot*weeks_lost_pc)
-# g.pwp_avail = pwp_avail_input + pwp_add_input #int(g.pwp_avail_tot*weeks_lost_pc)
 total_cbt_hours = g.cbt_avail*37.5
 total_couns_hours = g.couns_avail*37.5
 total_pwp_hours = g.pwp_avail*37.5
-
 staff_weeks_lost = weeks_lost_input
 weeks_lost_pc = (52-staff_weeks_lost)/52 # turn number of weeks lost into a %
 g.cbt_avail = int((cbt_avail_input + cbt_add_input)*weeks_lost_pc)
 g.couns_avail = int((couns_avail_input + couns_add_input)*weeks_lost_pc)
 g.pwp_avail = int((pwp_avail_input + pwp_add_input)*weeks_lost_pc)
-g.ta_resource = g.pwp_avail * step2_group_size_input
 g.pwp_1st_res = g.pwp_avail * 4 #  4 1st's per PwP per week
 g.cbt_1st_res = g.cbt_avail * 2 #  2 1st's per CBT per week
 g.couns_1st_res = g.couns_avail * 2 # 2 1st's per Couns per week
-
+g.ta_resource = g.pwp_avail * ta_resource_pwp #int(g.pwp_avail_tot*weeks_lost_pc)
 g.sim_duration = sim_duration_input
 g.number_of_runs = number_of_runs_input
 
