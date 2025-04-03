@@ -41,7 +41,7 @@ with st.sidebar:
         referral_input = st.slider("Average Number of Referrals Per Week", 0, 1500, g.mean_referrals_pw)
         referral_reject_input = st.number_input("Referral Rejection Rate (%)",
                         min_value=0.0, max_value=20.0, step=0.25, value=4.25)
-        referral_review_input = st.number_input("% of Referral sent for Screening",
+        referral_review_input = st.number_input("% of Referral Sent for Screening",
                         min_value=0.0, max_value=100.0, step=0.5, value=60.0)
         referral_reject_input = st.number_input("Screening Rejection Rate (%)",
                         min_value=0.0, max_value=100.0, step=0.25, value=g.review_rej_rate*100)
@@ -388,10 +388,6 @@ if button_run_pressed:
         for name, df in aggregated_sessions_dfs.items():
             # Melt the DataFrame
             melted_df = pd.melt(df, id_vars=['Run Number', 'Week Number'], var_name='variable', value_name='value')
-            #st.write(melted_df)
-            # Debug: Check melted output
-            # print(f"Checking {name} melted_df:")
-            # print(melted_df.head())
 
             # Apply the aggregation function based on variable
             aggregated_sessions_df = melted_df.groupby(['Run Number', 'Week Number','variable'])['value'].agg(
@@ -423,10 +419,6 @@ if button_run_pressed:
         for name, df in aggregated_session_types_dfs.items():
             # Melt the DataFrame
             melted_df = pd.melt(df, id_vars=['Run Number','Week Number','Session Type'], var_name='variable', value_name='value')
-            #st.write(melted_df)
-            # Debug: Check melted output
-            # print(f"Checking {name} melted_df:")
-            # print(melted_df.head())
 
             # Apply the aggregation function based on variable
             aggregated_session_type_df = melted_df.groupby(['Run Number', 'Week Number','Session Type','variable'])['value'].agg(
@@ -615,10 +607,6 @@ if button_run_pressed:
             st.write('This Simulation is designed to replicate the flow '
                      'of patients through the Talking Therapies Assessment and'
                      'Treatment Pathway.')
-            
-            # st.write(step2_waiting_dfs)
-            # st.write(step3_waiting_dfs)
-  
           
         ########## Job Plans Tab ##########
         ##### pwp Practitoner #####
@@ -809,7 +797,6 @@ if button_run_pressed:
                                 go.Scatter(x=weekly_avg_col1["Week Number"],
                                         y=weekly_max_col1["value"], name='Maximum',
                                         line=dict(width=3,color='red')))
-        
                     else:
                         pass
 
@@ -821,12 +808,7 @@ if button_run_pressed:
                     # get rid of 'variable' prefix resulting from df.melt
                     fig_asst_1.for_each_annotation(lambda a: a.update(text=a.text.split
                                                             ("=")[1]))
-                    #fig.for_each_trace(lambda t: t.update(name=t.name.split("=")[1]))
 
-                    # fig.update_layout(
-                    #     title=dict(text=f'ADHD {'variable'} Waiting Lists by Week, 
-                    #               font=dict(size=20), automargin=True, yref='paper')
-                    #     ))
                     fig_asst_1.update_layout(title_x=0.3,font=dict(size=10))
                     #fig.
 
@@ -858,8 +840,6 @@ if button_run_pressed:
                                 labels={
                                         "value": axis_title
                                         },
-                                    #facet_row="variable", # show each facet as a row
-                                    #facet_col="variable", # show each facet as a column
                                     height=500,
                                     width=350,
                                     title=f'{list_name} by Week'
@@ -881,12 +861,7 @@ if button_run_pressed:
                     # get rid of 'variable' prefix resulting from df.melt
                     fig_asst_2.for_each_annotation(lambda a: a.update(text=a.text.split
                                                             ("=")[1]))
-                    #fig.for_each_trace(lambda t: t.update(name=t.name.split("=")[1]))
 
-                    # fig.update_layout(
-                    #     title=dict(text=f'ADHD {'variable'} Waiting Lists by Week, 
-                    #               font=dict(size=20), automargin=True, yref='paper')
-                    #     ))
                     fig_asst_2.update_layout(title_x=0.3,font=dict(size=10))
                     #fig.
 
@@ -918,8 +893,6 @@ if button_run_pressed:
                             labels={
                                     "value": axis_title
                                     },
-                                #facet_row="variable", # show each facet as a row
-                                #facet_col="variable", # show each facet as a column
                                 height=500,
                                 width=350,
                                 title=f'{list_name} by Week'
@@ -941,12 +914,7 @@ if button_run_pressed:
                 # get rid of 'variable' prefix resulting from df.melt
                 fig_asst_3.for_each_annotation(lambda a: a.update(text=a.text.split
                                                         ("=")[1]))
-                #fig.for_each_trace(lambda t: t.update(name=t.name.split("=")[1]))
 
-                # fig.update_layout(
-                #     title=dict(text=f'ADHD {'variable'} Waiting Lists by Week, 
-                #               font=dict(size=20), automargin=True, yref='paper')
-                #     ))
                 fig_asst_3.update_layout(title_x=0.3,font=dict(size=10))
                 #fig.
 
@@ -960,8 +928,6 @@ if button_run_pressed:
         with tab2:
 
             st.header('Step 2')
-
-            #st.write(pwp_waiting_summary)
 
             col1, col2 = st.columns(2)
 
@@ -1341,8 +1307,6 @@ if button_run_pressed:
 
             st.header('Step 3')
 
-            #st.write(cbt_waiting_summary)
-
             col1, col2 = st.columns(2)
 
             with col1:
@@ -1531,8 +1495,6 @@ if button_run_pressed:
             ########## counselling ##########
 
             col1, col2 = st.columns(2)
-
-            #st.write(couns_waiting_summary)
 
             with col1:
 
