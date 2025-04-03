@@ -15,10 +15,13 @@ from iapt_classes import g, Trial
 st.set_page_config(layout="wide")
 
 @st.cache_data
-def load_referral_rates(): # thanks to Sammi Rosser :-)
-    return pd.read_csv("https://raw.githubusercontent.com/MightyAtom220474/IAPT-Pathway-DES/refs/heads/waiting_lists_dev/.streamlit/talking_therapies_referral_rates.csv",index_col=0)  # Ensure the file is in the app directory
 
-#st.write(load_referral_rates())
+def load_referral_rates():  # Thanks to Sammi Rosser :-)
+    return pd.read_csv(
+        ("https://raw.githubusercontent.com/MightyAtom220474/IAPT-Pathway-DES/"
+         "refs/heads/waiting_lists_dev/.streamlit/talking_therapies_referral_rates.csv"),
+        index_col=0)
+
 
 #st.logo("https://lancsvp.org.uk/wp-content/uploads/2021/08/nhs-logo-300x189.png")
 
@@ -38,23 +41,27 @@ with st.sidebar:
 
         # Referral Inputs
         st.markdown("#### Screening")
-        referral_input = st.slider("Average Number of Referrals Per Week", 0, 1500, g.mean_referrals_pw)
+        referral_input = st.slider("Average Number of Referrals Per Week", 0, 1500
+                                   , g.mean_referrals_pw)
         referral_reject_input = st.number_input("Referral Rejection Rate (%)",
                         min_value=0.0, max_value=20.0, step=0.25, value=4.25)
-        referral_review_input = st.number_input("% of Referral Sent for Screening",
+        referral_review_input = st.number_input("% of Referrals Sent for Screening",
                         min_value=0.0, max_value=100.0, step=0.5, value=60.0)
         referral_reject_input = st.number_input("Screening Rejection Rate (%)",
-                        min_value=0.0, max_value=100.0, step=0.25, value=g.review_rej_rate*100)
+                        min_value=0.0, max_value=100.0, step=0.25, 
+                        value=g.review_rej_rate*100)
         referral_screen_input = st.slider("Number of Mins to Screen Referral",
                                           1, 30, 20)
         opt_in_input = st.number_input("% of Referrals that Opt-in",
                         min_value=50.0, max_value=100.0, step=0.5, value=75.0)
         st.markdown("#### Assessment")
-        ta_resource_pwp = st.slider("Number of TA Slots per PwP per Week", 0, 15, 9)
+        ta_resource_pwp = st.slider("Number of TA Slots per PwP per Week"
+                                    , 0, 15, 9)
         ta_accept_input = st.number_input("% of TA's that are Accepted",
                         min_value=50.0, max_value=100.0, step=0.5, value=70.0)
         ta_time_input = st.slider("Number of Mins to Perform TA", 1, 90, 60)
-        step2_step3_rate_input = st.number_input("% of Patients Assigned to Step 2 vs Step 3",
+        step2_step3_rate_input = st.number_input(
+                                "% of Patients Assigned to Step 2 vs Step 3",
                         min_value=0.0, max_value=100.0, step=0.5, value=47.0)
            
     with st.expander("Step 2"):
@@ -84,7 +91,7 @@ with st.sidebar:
         step2_group_sessions_input = st.slider("Number of Step2 Group Sessions",
                                               1, 10, 7)
         step2_group_size_input = st.slider("Maximum Step2 Group Size", 1, 12, 7)
-        step2_group_duration_input = st.number_input("Length of group Sessions (mins)",
+        step2_group_duration_input = st.number_input("Length of Group Sessions (mins)",
                                                 min_value=180, max_value=300,
                                                 step=30, value=240)
 
@@ -116,9 +123,11 @@ with st.sidebar:
         step3_couns_dna_input = st.number_input("% DNA's for DepC Sessions",
                                                 min_value=0.0, max_value=30.0,
                                                 step=0.25, value=20.0)
-        step3_session_var_input = st.number_input("% of Instances where Patients Receive Additional Sessions ",
+        step3_session_var_input = st.number_input(
+                    "% of Instances where Patients Receive Additional Sessions",
                                                   min_value=0.0, max_value=30.0,
                                                   step=0.25, value=20.0)
+        
         # code for conditional streamlit inputs
         # if triage_wl_input > 0:
         #     triage_wait_input = st.number_input("Current Average Triage Waiting Time (weeks)", min_value=0, max_value=52, step=1, value=0)
@@ -220,6 +229,9 @@ staff_weeks_lost = weeks_lost_input
 weeks_lost_pc = (52-staff_weeks_lost)/52
 total_cbt_hours = g.cbt_avail*37.5
 total_couns_hours = g.couns_avail*37.5
+clin_pwp_hours = g.pwp_avail*(37.5-pwp_hours_avail_input)
+clin_cbt_hours = g.cbt_avail*(37.5-cbt_hours_avail_input)
+clin_couns_hours = g.couns_avail*(37.5-couns_hours_avail_input)
 total_pwp_hours = g.pwp_avail*37.5
 staff_weeks_lost = weeks_lost_input
 weeks_lost_pc = (52-staff_weeks_lost)/52 # turn number of weeks lost into a %
@@ -279,7 +291,8 @@ if button_run_pressed:
               
         asst_weekly_dfs['Referral Screen Hrs'] = asst_weekly_dfs['Referral Screen Mins']/60
         asst_weekly_dfs['TA Hrs'] = asst_weekly_dfs['TA Mins']/60
-        asst_weekly_dfs['Accepted Referrals'] = asst_weekly_dfs['Referrals Received']-asst_weekly_dfs['Referrals Rejected']
+        asst_weekly_dfs['Accepted Referrals'] = asst_weekly_dfs['Referrals Received'
+                                                ]-asst_weekly_dfs['Referrals Rejected']
       
         # filter dataframe to just return columns needed
         asst_weekly_summary = asst_weekly_dfs[['Run Number','Week Number',
@@ -290,7 +303,8 @@ if button_run_pressed:
                                     'TA Avg Wait','TA Max Wait',
                                     'TA Total Accept','TA Hrs']].reset_index()
                
-        asst_weekly_summary = asst_weekly_summary[asst_weekly_summary["Week Number"] != 0].reset_index()
+        asst_weekly_summary = asst_weekly_summary[asst_weekly_summary[
+                            "Week Number"] != 0].reset_index()
                               
         step2_pwp_results_summary = step2_results_df.loc[step2_results_df[
                 'Route Name'] == 'pwp',['Run Number', 'Week Number', 
@@ -387,12 +401,15 @@ if button_run_pressed:
 
         for name, df in aggregated_sessions_dfs.items():
             # Melt the DataFrame
-            melted_df = pd.melt(df, id_vars=['Run Number', 'Week Number'], var_name='variable', value_name='value')
+            melted_df = pd.melt(df, id_vars=['Run Number', 'Week Number'
+                        ], var_name='variable', value_name='value')
 
             # Apply the aggregation function based on variable
-            aggregated_sessions_df = melted_df.groupby(['Run Number', 'Week Number','variable'])['value'].agg(
-                lambda x: x.sum() if agg_mapping.get(x.name, 'sum') == 'sum' else x.count()
-            ).reset_index()
+            aggregated_sessions_df = melted_df.groupby(['Run Number',
+                                    'Week Number','variable'])['value'].agg(
+                                    lambda x: x.sum() if agg_mapping.get(
+                                    x.name, 'sum') == 'sum' else x.count()
+                                    ).reset_index()
 
             # Store the result
             aggregated_sessions[name] = aggregated_sessions_df
@@ -418,11 +435,15 @@ if button_run_pressed:
 
         for name, df in aggregated_session_types_dfs.items():
             # Melt the DataFrame
-            melted_df = pd.melt(df, id_vars=['Run Number','Week Number','Session Type'], var_name='variable', value_name='value')
+            melted_df = pd.melt(df, id_vars=['Run Number','Week Number',
+                        'Session Type'], var_name='variable', value_name='value')
 
             # Apply the aggregation function based on variable
-            aggregated_session_type_df = melted_df.groupby(['Run Number', 'Week Number','Session Type','variable'])['value'].agg(
-                lambda x: x.count() if agg_mapping.get(x.name, 'count') == 'count' else x.sum()
+            aggregated_session_type_df = melted_df.groupby(['Run Number',
+                                        'Week Number','Session Type',
+                                        'variable'])['value'].agg(
+                lambda x: x.count() if agg_mapping.get(x.name, 'count'
+                                            ) == 'count' else x.sum()
             ).reset_index()
 
             # Store the result
@@ -447,7 +468,9 @@ if button_run_pressed:
 
         for name, df in aggregated_results_dfs.items():
             # Melt the DataFrame
-            melted_df = pd.melt(df, id_vars=['Run Number', 'Week Number'], var_name='variable', value_name='value')
+            melted_df = pd.melt(df, id_vars=['Run Number',
+                        'Week Number'], var_name='variable',
+                        value_name='value')
 
             # Aggregating using the correct aggregation function based on variable
             def agg_func(x):
@@ -461,7 +484,8 @@ if button_run_pressed:
                     return x.sum()  # Default sum if not found in the mapping
 
             # Apply the aggregation function based on variable
-            aggregated_results_df = melted_df.groupby(['Run Number', 'Week Number', 'variable']).agg(
+            aggregated_results_df = melted_df.groupby(['Run Number', 
+                                    'Week Number', 'variable']).agg(
                 {'value': agg_func}
             ).reset_index()
 
@@ -488,7 +512,8 @@ if button_run_pressed:
 
         for name, df in aggregated_waiting_dfs.items():
             # Melt the DataFrame
-            melted_df = pd.melt(df, id_vars=['Run Number', 'Week Number'], var_name='variable', value_name='value')
+            melted_df = pd.melt(df, id_vars=['Run Number', 'Week Number'],
+                                var_name='variable', value_name='value')
 
             # Aggregating using the correct aggregation function based on variable
             def agg_func(x):
@@ -502,9 +527,10 @@ if button_run_pressed:
                     return x.sum()  # Default sum if not found in the mapping
 
             # Apply the aggregation function based on variable
-            aggregated_waiting_df = melted_df.groupby(['Run Number', 'Week Number', 'variable']).agg(
-                {'value': agg_func}
-            ).reset_index()
+            aggregated_waiting_df = melted_df.groupby(['Run Number', 
+                                                    'Week Number', 'variable']
+                                                    ).agg({'value': agg_func}
+                                                    ).reset_index()
 
             # Store the result
             aggregated_waiting[name] = aggregated_waiting_df
@@ -516,27 +542,51 @@ if button_run_pressed:
         cbt_sessions_summary = aggregated_sessions['step3_cbt_sessions_summary']
         couns_sessions_summary = aggregated_sessions['step3_couns_sessions_summary']
 
-        pwp_session_type_summary = aggregated_session_types['step2_pwp_session_type_summary']
-        group_session_type_summary = aggregated_session_types['step2_group_session_type_summary']
-        cbt_session_type_summary = aggregated_session_types['step3_cbt_session_type_summary']
-        couns_session_type_summary = aggregated_session_types['step3_couns_session_type_summary']
+        pwp_session_type_summary = aggregated_session_types[
+                                    'step2_pwp_session_type_summary']
+        group_session_type_summary = aggregated_session_types[
+                                    'step2_group_session_type_summary']
+        cbt_session_type_summary = aggregated_session_types[
+                                    'step3_cbt_session_type_summary']
+        couns_session_type_summary = aggregated_session_types[
+                                    'step3_couns_session_type_summary']
 
         # get rid of any sessions recorded beyond the simulation period
-        pwp_session_type_summary = pwp_session_type_summary = pwp_session_type_summary[pwp_session_type_summary["Week Number"] <= sim_duration_input].reset_index()
-        group_session_type_summary = group_session_type_summary = group_session_type_summary[group_session_type_summary["Week Number"] <= sim_duration_input].reset_index()
-        cbt_session_type_summary = cbt_session_type_summary = cbt_session_type_summary[cbt_session_type_summary["Week Number"] <= sim_duration_input].reset_index()
-        couns_session_type_summary = couns_session_type_summary = couns_session_type_summary[couns_session_type_summary["Week Number"] <= sim_duration_input].reset_index()
+        pwp_session_type_summary = pwp_session_type_summary = pwp_session_type_summary[
+                                    pwp_session_type_summary["Week Number"
+                                    ] <= sim_duration_input].reset_index()
+        group_session_type_summary = group_session_type_summary = group_session_type_summary[
+                                    group_session_type_summary["Week Number"
+                                    ] <= sim_duration_input].reset_index()
+        cbt_session_type_summary = cbt_session_type_summary = cbt_session_type_summary[
+                                    cbt_session_type_summary["Week Number"
+                                    ] <= sim_duration_input].reset_index()
+        couns_session_type_summary = couns_session_type_summary = couns_session_type_summary[
+                                    couns_session_type_summary["Week Number"
+                                    ] <= sim_duration_input].reset_index()
         # get rid of week zero as no sessions run until week 1 when assessments come through
-        pwp_session_type_summary = pwp_session_type_summary = pwp_session_type_summary[pwp_session_type_summary["Week Number"] <= sim_duration_input]
-        group_session_type_summary = group_session_type_summary = group_session_type_summary[group_session_type_summary["Week Number"] <= sim_duration_input]
-        cbt_session_type_summary = cbt_session_type_summary = cbt_session_type_summary[cbt_session_type_summary["Week Number"] <= sim_duration_input]
-        couns_session_type_summary = couns_session_type_summary = couns_session_type_summary[couns_session_type_summary["Week Number"] <= sim_duration_input]
+        pwp_session_type_summary = pwp_session_type_summary = pwp_session_type_summary[
+                                    pwp_session_type_summary["Week Number"
+                                    ] <= sim_duration_input]
+        group_session_type_summary = group_session_type_summary = group_session_type_summary[
+                                    group_session_type_summary["Week Number"
+                                    ] <= sim_duration_input]
+        cbt_session_type_summary = cbt_session_type_summary = cbt_session_type_summary[
+                                    cbt_session_type_summary["Week Number"
+                                    ] <= sim_duration_input]
+        couns_session_type_summary = couns_session_type_summary = couns_session_type_summary[
+                                    couns_session_type_summary["Week Number"
+                                    ] <= sim_duration_input]
 
         # get rid of weeks beyond sim duration
-        pwp_session_type_summary = pwp_session_type_summary = pwp_session_type_summary[pwp_session_type_summary["Week Number"] != 0]
-        group_session_type_summary = group_session_type_summary = group_session_type_summary[group_session_type_summary["Week Number"] != 0]
-        cbt_session_type_summary = cbt_session_type_summary = cbt_session_type_summary[cbt_session_type_summary["Week Number"] != 0]
-        couns_session_type_summary = couns_session_type_summary = couns_session_type_summary[couns_session_type_summary["Week Number"] != 0]
+        pwp_session_type_summary = pwp_session_type_summary = pwp_session_type_summary[
+                                    pwp_session_type_summary["Week Number"] != 0]
+        group_session_type_summary = group_session_type_summary = group_session_type_summary[
+                                    group_session_type_summary["Week Number"] != 0]
+        cbt_session_type_summary = cbt_session_type_summary = cbt_session_type_summary[
+                                    cbt_session_type_summary["Week Number"] != 0]
+        couns_session_type_summary = couns_session_type_summary = couns_session_type_summary[
+                                    couns_session_type_summary["Week Number"] != 0]
         
         pwp_results_summary = aggregated_results['step2_pwp_results_summary']
         group_results_summary = aggregated_results['step2_group_results_summary']
@@ -549,59 +599,88 @@ if button_run_pressed:
         couns_waiting_summary = aggregated_waiting['step3_couns_waiting_summary']
  
         ##### merge results and sessions #####
-        pwp_combined_summary = pd.concat([pwp_sessions_summary,pwp_results_summary,pwp_waiting_summary], ignore_index=True).reset_index()
-        group_combined_summary = pd.concat([group_sessions_summary,group_results_summary,group_waiting_summary], ignore_index=True).reset_index()
-        cbt_combined_summary = pd.concat([cbt_sessions_summary,cbt_results_summary,cbt_waiting_summary], ignore_index=True).reset_index()
-        couns_combined_summary = pd.concat([couns_sessions_summary,couns_results_summary,couns_waiting_summary], ignore_index=True).reset_index()
+        pwp_combined_summary = pd.concat([pwp_sessions_summary,
+                                        pwp_results_summary,
+                                        pwp_waiting_summary],
+                                        ignore_index=True).reset_index()
+        group_combined_summary = pd.concat([group_sessions_summary,
+                                        group_results_summary,
+                                        group_waiting_summary],
+                                        ignore_index=True).reset_index()
+        cbt_combined_summary = pd.concat([cbt_sessions_summary,
+                                        cbt_results_summary,
+                                        cbt_waiting_summary],
+                                        ignore_index=True).reset_index()
+        couns_combined_summary = pd.concat([couns_sessions_summary,
+                                        couns_results_summary,
+                                        couns_waiting_summary],
+                                        ignore_index=True).reset_index()
         # get rid of any sessions recorded beyond the simulation period
-        pwp_combined_summary = pwp_combined_summary[pwp_combined_summary["Week Number"] <= sim_duration_input].reset_index()
-        group_combined_summary = group_combined_summary[group_combined_summary["Week Number"] <= sim_duration_input].reset_index()
-        cbt_combined_summary = cbt_combined_summary[cbt_combined_summary["Week Number"] <= sim_duration_input].reset_index()
-        couns_combined_summary = couns_combined_summary[couns_combined_summary["Week Number"] <= sim_duration_input].reset_index()
+        pwp_combined_summary = pwp_combined_summary[pwp_combined_summary[  
+                                "Week Number"] <= sim_duration_input
+                                ].reset_index()
+        group_combined_summary = group_combined_summary[group_combined_summary[
+                                "Week Number"] <= sim_duration_input].reset_index()
+        cbt_combined_summary = cbt_combined_summary[cbt_combined_summary[
+                                "Week Number"] <= sim_duration_input].reset_index()
+        couns_combined_summary = couns_combined_summary[couns_combined_summary[
+                                "Week Number"] <= sim_duration_input].reset_index()
         # get rid of week zero as no sessions run until week 1 when assessments come through
-        pwp_combined_summary = pwp_combined_summary[pwp_combined_summary["Week Number"] != 0]
-        group_combined_summary = group_combined_summary[group_combined_summary["Week Number"] != 0]
-        cbt_combined_summary = cbt_combined_summary[cbt_combined_summary["Week Number"] != 0]
-        couns_combined_summary = couns_combined_summary[couns_combined_summary["Week Number"] != 0]
+        pwp_combined_summary = pwp_combined_summary[pwp_combined_summary[
+                                                    "Week Number"] != 0]
+        group_combined_summary = group_combined_summary[group_combined_summary[
+                                                    "Week Number"] != 0]
+        cbt_combined_summary = cbt_combined_summary[cbt_combined_summary[
+                                                    "Week Number"] != 0]
+        couns_combined_summary = couns_combined_summary[couns_combined_summary[
+                                                    "Week Number"] != 0]
         
         ##### Staff Non-clinical Activity #####
         # turn into hours and divide by number of sim runs to get average across all the runs
-        staff_weekly_dfs['Supervision Hrs'] = staff_weekly_dfs['Supervision Mins']/(60*number_of_runs_input)
-        staff_weekly_dfs['Break Hrs'] = staff_weekly_dfs['Break Mins']/(60*number_of_runs_input)
-        staff_weekly_dfs['Wellbeing Hrs'] = staff_weekly_dfs['Wellbeing Mins']/(60*number_of_runs_input)
-        staff_weekly_dfs['Huddle Hrs'] = staff_weekly_dfs['Huddle Mins']/(60*number_of_runs_input)
-        staff_weekly_dfs['CPD Hrs'] = staff_weekly_dfs['CPD Mins']/(60*number_of_runs_input)
+        staff_weekly_dfs['Supervision Hrs'] = staff_weekly_dfs['Supervision Mins'
+                                                    ]/(60*number_of_runs_input)
+        staff_weekly_dfs['Break Hrs'] = staff_weekly_dfs['Break Mins'
+                                                    ]/(60*number_of_runs_input)
+        staff_weekly_dfs['Wellbeing Hrs'] = staff_weekly_dfs['Wellbeing Mins'
+                                                    ]/(60*number_of_runs_input)
+        staff_weekly_dfs['Huddle Hrs'] = staff_weekly_dfs['Huddle Mins'
+                                                    ]/(60*number_of_runs_input)
+        staff_weekly_dfs['CPD Hrs'] = staff_weekly_dfs['CPD Mins'
+                                                    ]/(60*number_of_runs_input)
         
         pwp_weekly_act_dfs = staff_weekly_dfs.loc[staff_weekly_dfs[
                 'Job Role'] == 'pwp'].reset_index()
         
-        pwp_weekly_activity = pd.melt(pwp_weekly_act_dfs, value_vars=['Supervision Hrs',
-                                                                 'Break Hrs',
-                                                                 'Wellbeing Hrs',
-                                                                 'Huddle Hrs',
-                                                                 'CPD Hrs'],
-                                                                 id_vars=[
+        pwp_weekly_activity = pd.melt(pwp_weekly_act_dfs, value_vars=[
+                                                                'Supervision Hrs',
+                                                                'Break Hrs',
+                                                                'Wellbeing Hrs',
+                                                                'Huddle Hrs',
+                                                                'CPD Hrs'],
+                                                                id_vars=[
                                                                 'Week Number'])
         
         cbt_weekly_act_dfs = staff_weekly_dfs.loc[staff_weekly_dfs[
                 'Job Role'] == 'cbt'].reset_index()
         
-        cbt_weekly_activity = pd.melt(cbt_weekly_act_dfs, value_vars=['Supervision Hrs',
-                                                                 'Break Hrs',
-                                                                 'Wellbeing Hrs',
-                                                                 'Huddle Hrs',
-                                                                 'CPD Hrs'],
-                                                                 id_vars=[
+        cbt_weekly_activity = pd.melt(cbt_weekly_act_dfs, value_vars=[
+                                                                'Supervision Hrs',
+                                                                'Break Hrs',
+                                                                'Wellbeing Hrs',
+                                                                'Huddle Hrs',
+                                                                'CPD Hrs'],
+                                                                id_vars=[
                                                                 'Week Number'])
         couns_weekly_act_dfs = staff_weekly_dfs.loc[staff_weekly_dfs[
                 'Job Role'] == 'couns'].reset_index()
         
-        couns_weekly_activity = pd.melt(couns_weekly_act_dfs, value_vars=['Supervision Hrs',
-                                                                 'Break Hrs',
-                                                                 'Wellbeing Hrs',
-                                                                 'Huddle Hrs',
-                                                                 'CPD Hrs'],
-                                                                 id_vars=[
+        couns_weekly_activity = pd.melt(couns_weekly_act_dfs, value_vars=[
+                                                                'Supervision Hrs',
+                                                                'Break Hrs',
+                                                                'Wellbeing Hrs',
+                                                                'Huddle Hrs',
+                                                                'CPD Hrs'],
+                                                                id_vars=[
                                                                 'Week Number'])
         with st.expander("See explanation"):
             st.write('This Simulation is designed to replicate the flow '
@@ -613,65 +692,127 @@ if button_run_pressed:
         
         # get time values from sessions dataframe and convert to hours - divide by 60 * sim duration to get average across all runs when summed up
         # pwp
-        pwp_sessions_weekly_summary = pwp_sessions_summary[pwp_sessions_summary['variable'].isin(['Session Time','Admin Time'])]
+        pwp_sessions_weekly_summary = pwp_sessions_summary[pwp_sessions_summary
+                                        ['variable'].isin(['Session Time'
+                                        ,'Admin Time'])]
         pwp_sessions_weekly_summary.drop('Run Number', axis=1)
-        pwp_sessions_weekly_summary[pwp_sessions_weekly_summary.select_dtypes(include="number").columns.difference(["Week Number"])] = \
-                pwp_sessions_weekly_summary[pwp_sessions_weekly_summary.select_dtypes(include="number").columns.difference(["Week Number"])].div(60*number_of_runs_input).round()
+        pwp_sessions_weekly_summary[pwp_sessions_weekly_summary.select_dtypes(
+                                    include="number").columns.difference(
+                                    ["Week Number"])] = pwp_sessions_weekly_summary[
+                                    pwp_sessions_weekly_summary.select_dtypes(
+                                    include="number").columns.difference(
+                                    ["Week Number"])].div(60*number_of_runs_input
+                                    ).round()
         # get sessions by type and calculate average based on number of runs
-        pwp_sessions_weekly_bytype = pwp_session_type_summary[pwp_session_type_summary['variable'].isin(['Session Number','IsDNA'])]
+        pwp_sessions_weekly_bytype = pwp_session_type_summary[
+                                    pwp_session_type_summary['variable'
+                                    ].isin(['Session Number','IsDNA'])]
         pwp_sessions_weekly_bytype.drop('Run Number', axis=1)
-        pwp_sessions_weekly_bytype[pwp_sessions_weekly_bytype.select_dtypes(include="number").columns.difference(["Week Number"])] = \
-                pwp_session_type_summary[pwp_session_type_summary.select_dtypes(include="number").columns.difference(["Week Number"])].div(number_of_runs_input).round()
+        pwp_sessions_weekly_bytype[pwp_sessions_weekly_bytype.select_dtypes(
+                    include="number").columns.difference(["Week Number"])] = \
+                    pwp_session_type_summary[pwp_session_type_summary.select_dtypes(
+                    include="number").columns.difference(["Week Number"]
+                    )].div(number_of_runs_input).round()
                 
         # group
-        group_sessions_weekly_summary = group_sessions_summary[group_sessions_summary['variable'].isin(['Session Time','Admin Time'])]
-        group_sessions_weekly_summary[group_sessions_weekly_summary.select_dtypes(include="number").columns.difference(["Week Number"])] = \
-                group_sessions_weekly_summary[group_sessions_weekly_summary.select_dtypes(include="number").columns.difference(["Week Number"])].div(60*number_of_runs_input).round()
+        group_sessions_weekly_summary = group_sessions_summary[
+                                        group_sessions_summary['variable'].isin(
+                                        ['Session Time','Admin Time'])]
+        group_sessions_weekly_summary[group_sessions_weekly_summary.select_dtypes(
+                        include="number").columns.difference(["Week Number"])] = \
+                        group_sessions_weekly_summary[
+                        group_sessions_weekly_summary.select_dtypes(
+                        include="number").columns.difference(["Week Number"]
+                        )].div(60*number_of_runs_input).round()
         
         # get sessions by type and calculate average based on number of runs
-        group_sessions_weekly_bytype = group_session_type_summary[group_session_type_summary['variable'].isin(['Session Number','IsDNA'])]
+        group_sessions_weekly_bytype = group_session_type_summary[
+                                        group_session_type_summary['variable'
+                                        ].isin(['Session Number','IsDNA'])]
         group_sessions_weekly_bytype.drop('Run Number', axis=1)
-        group_sessions_weekly_bytype[group_sessions_weekly_bytype.select_dtypes(include="number").columns.difference(["Week Number"])] = \
-                group_sessions_weekly_bytype[group_sessions_weekly_bytype.select_dtypes(include="number").columns.difference(["Week Number"])].div(number_of_runs_input).round()
+        group_sessions_weekly_bytype[group_sessions_weekly_bytype.select_dtypes(
+                        include="number").columns.difference(["Week Number"])] = \
+                        group_sessions_weekly_bytype[
+                        group_sessions_weekly_bytype.select_dtypes(
+                        include="number").columns.difference(["Week Number"])
+                        ].div(number_of_runs_input).round()
         # cbt
-        cbt_sessions_weekly_summary = cbt_sessions_summary[cbt_sessions_summary['variable'].isin(['Session Time','Admin Time'])]
-        cbt_sessions_weekly_summary[cbt_sessions_weekly_summary.select_dtypes(include="number").columns.difference(["Week Number"])] = \
-                cbt_sessions_weekly_summary[cbt_sessions_weekly_summary.select_dtypes(include="number").columns.difference(["Week Number"])].div(60*number_of_runs_input).round()
+        cbt_sessions_weekly_summary = cbt_sessions_summary[cbt_sessions_summary[
+                                'variable'].isin(['Session Time','Admin Time'])]
+        cbt_sessions_weekly_summary[cbt_sessions_weekly_summary.select_dtypes(
+                        include="number").columns.difference(["Week Number"])] = \
+                        cbt_sessions_weekly_summary[
+                        cbt_sessions_weekly_summary.select_dtypes(
+                        include="number").columns.difference(["Week Number"])
+                        ].div(60*number_of_runs_input).round()
         # get sessions by type and calculate average based on number of runs
-        cbt_sessions_weekly_bytype = cbt_session_type_summary[cbt_session_type_summary['variable'].isin(['Session Number','IsDNA'])]
+        cbt_sessions_weekly_bytype = cbt_session_type_summary[
+                                    cbt_session_type_summary['variable'
+                                    ].isin(['Session Number','IsDNA'])]
         cbt_sessions_weekly_bytype.drop('Run Number', axis=1)
-        cbt_sessions_weekly_bytype[cbt_sessions_weekly_bytype.select_dtypes(include="number").columns.difference(["Week Number"])] = \
-                cbt_sessions_weekly_bytype[cbt_sessions_weekly_bytype.select_dtypes(include="number").columns.difference(["Week Number"])].div(number_of_runs_input).round()
+        cbt_sessions_weekly_bytype[cbt_sessions_weekly_bytype.select_dtypes(
+                                    include="number").columns.difference(
+                                    ["Week Number"])] = cbt_sessions_weekly_bytype[
+                                    cbt_sessions_weekly_bytype.select_dtypes(
+                                    include="number").columns.difference(
+                                    ["Week Number"])].div(number_of_runs_input
+                                    ).round()
         # couns
-        couns_sessions_weekly_summary = couns_sessions_summary[couns_sessions_summary['variable'].isin(['Session Time','Admin Time'])]
-        couns_sessions_weekly_summary[couns_sessions_weekly_summary.select_dtypes(include="number").columns.difference(["Week Number"])] = \
-                couns_sessions_weekly_summary[couns_sessions_weekly_summary.select_dtypes(include="number").columns.difference(["Week Number"])].div(60*number_of_runs_input).round()
+        couns_sessions_weekly_summary = couns_sessions_summary[
+                                        couns_sessions_summary['variable'].isin(
+                                        ['Session Time','Admin Time'])]
+        couns_sessions_weekly_summary[couns_sessions_weekly_summary.select_dtypes(
+                                    include="number").columns.difference(
+                                    ["Week Number"])] = couns_sessions_weekly_summary[
+                                    couns_sessions_weekly_summary.select_dtypes(
+                                    include="number").columns.difference(
+                                    ["Week Number"])].div(60*number_of_runs_input
+                                    ).round()
         # get sessions by type and calculate average based on number of runs
-        couns_sessions_weekly_bytype = couns_session_type_summary[couns_session_type_summary['variable'].isin(['Session Number','IsDNA'])]
+        couns_sessions_weekly_bytype = couns_session_type_summary[
+                                        couns_session_type_summary['variable'
+                                        ].isin(['Session Number','IsDNA'])]
         couns_sessions_weekly_bytype.drop('Run Number', axis=1)
-        couns_sessions_weekly_bytype[couns_sessions_weekly_bytype.select_dtypes(include="number").columns.difference(["Week Number"])] = \
-                couns_sessions_weekly_bytype[couns_sessions_weekly_bytype.select_dtypes(include="number").columns.difference(["Week Number"])].div(number_of_runs_input).round()     
+        couns_sessions_weekly_bytype[couns_sessions_weekly_bytype.select_dtypes(
+                                    include="number").columns.difference(
+                                    ["Week Number"])] = couns_sessions_weekly_bytype[
+                                    couns_sessions_weekly_bytype.select_dtypes(
+                                    include="number").columns.difference(
+                                    ["Week Number"])].div(number_of_runs_input
+                                    ).round()     
                 
         # combine pwp and group as all delivered by pwp
-        pwp_group_sessions_combined = pd.concat([pwp_sessions_weekly_summary,group_sessions_weekly_summary], ignore_index=True)
+        pwp_group_sessions_combined = pd.concat([pwp_sessions_weekly_summary,
+                                        group_sessions_weekly_summary]
+                                        ,ignore_index=True)
         
         # get time value from asst dataframe
-        pwp_asst_weekly_summary = asst_weekly_dfs[['Week Number','Referral Screen Hrs','TA Hrs']]
+        pwp_asst_weekly_summary = asst_weekly_dfs[['Week Number'
+                                                ,'Referral Screen Hrs'
+                                                ,'TA Hrs']]
         # get average across all runs
-        pwp_asst_weekly_summary[['Referral Screen Hrs','TA Hrs']] = pwp_asst_weekly_summary[['Referral Screen Hrs','TA Hrs']]/number_of_runs_input
-        pwp_asst_weekly_summary[['Referral Screen Hrs','TA Hrs']] = pwp_asst_weekly_summary[['Referral Screen Hrs','TA Hrs']]*0.87 # 87% of TA's done by pwp
+        pwp_asst_weekly_summary[['Referral Screen Hrs','TA Hrs']
+                                ] = pwp_asst_weekly_summary[[
+                                'Referral Screen Hrs','TA Hrs']
+                                ]/number_of_runs_input
+        pwp_asst_weekly_summary[['Referral Screen Hrs','TA Hrs']
+                                ] = pwp_asst_weekly_summary[[
+                                'Referral Screen Hrs','TA Hrs']]*0.87 # 87% of TA's done by pwp
 
-        pwp_asst_weekly_summary = pd.melt(pwp_asst_weekly_summary, value_vars=['Referral Screen Hrs',
-                                                                 'TA Hrs'],
-                                                                 id_vars=[
-                                                                'Week Number'])
+        pwp_asst_weekly_summary = pd.melt(pwp_asst_weekly_summary, value_vars=[
+                                                            'Referral Screen Hrs',
+                                                            'TA Hrs'],
+                                                            id_vars=[
+                                                            'Week Number'])
 
         ##### cbt #####
 
         cbt_asst_weekly_summary = asst_weekly_dfs[['Week Number','TA Hrs']]
         # get average across all runs
-        cbt_asst_weekly_summary['TA Hrs'] = asst_weekly_dfs['TA Hrs']/number_of_runs_input
-        cbt_asst_weekly_summary['TA Hrs'] = cbt_asst_weekly_summary['TA Hrs']*0.11 # 11% of TA's done by cbt
+        cbt_asst_weekly_summary['TA Hrs'] = asst_weekly_dfs['TA Hrs'
+                                            ]/number_of_runs_input
+        cbt_asst_weekly_summary['TA Hrs'] = cbt_asst_weekly_summary[
+                                            'TA Hrs']*0.11 # 11% of TA's done by cbt
 
         cbt_asst_weekly_summary = pd.melt(cbt_asst_weekly_summary, value_vars=[
                                                                  'TA Hrs'],
@@ -680,68 +821,104 @@ if button_run_pressed:
         ##### cbt #####
 
         couns_asst_weekly_summary = asst_weekly_dfs[['Week Number','TA Hrs']]
-        couns_asst_weekly_summary['TA Hrs'] = couns_asst_weekly_summary['TA Hrs']/number_of_runs_input
-        couns_asst_weekly_summary['TA Hrs'] = couns_asst_weekly_summary['TA Hrs']*0.02 # 2% of TA's done by couns
+        couns_asst_weekly_summary['TA Hrs'] = couns_asst_weekly_summary[
+                                            'TA Hrs']/number_of_runs_input
+        couns_asst_weekly_summary['TA Hrs'] = couns_asst_weekly_summary[
+                                            'TA Hrs']*0.02 # 2% of TA's done by couns
 
-        couns_asst_weekly_summary = pd.melt(couns_asst_weekly_summary, value_vars=[
-                                                                 'TA Hrs'],
-                                                                 id_vars=[
-                                                                'Week Number'])
+        couns_asst_weekly_summary = pd.melt(couns_asst_weekly_summary,
+                                            value_vars=['TA Hrs'],id_vars=[
+                                            'Week Number'])
       
         ##### bring all the clinical and non-clinical activity data together
-        pwp_hours_weekly_summary = pd.concat([pwp_sessions_weekly_summary,pwp_asst_weekly_summary,pwp_weekly_activity], ignore_index=True)
+        pwp_hours_weekly_summary = pd.concat([pwp_sessions_weekly_summary
+                                            ,pwp_asst_weekly_summary
+                                            ,pwp_weekly_activity
+                                            ],ignore_index=True)
         # get rid of sessions that go beyond sim duration
-        pwp_hours_weekly_summary = pwp_hours_weekly_summary[pwp_hours_weekly_summary["Week Number"] <=sim_duration_input]
+        pwp_hours_weekly_summary = pwp_hours_weekly_summary[
+                                    pwp_hours_weekly_summary[
+                                    "Week Number"] <=sim_duration_input]
            
-        cbt_hours_weekly_summary = pd.concat([cbt_sessions_weekly_summary,cbt_asst_weekly_summary,cbt_weekly_activity], ignore_index=True)
+        cbt_hours_weekly_summary = pd.concat([cbt_sessions_weekly_summary,
+                                            cbt_asst_weekly_summary,
+                                            cbt_weekly_activity]
+                                            ,ignore_index=True)
         # get rid of sessions that go beyond sim duration
-        cbt_hours_weekly_summary = cbt_hours_weekly_summary[cbt_hours_weekly_summary["Week Number"] <=sim_duration_input]
+        cbt_hours_weekly_summary = cbt_hours_weekly_summary[
+                                    cbt_hours_weekly_summary[
+                                    "Week Number"] <=sim_duration_input]
 
-        couns_hours_weekly_summary = pd.concat([couns_sessions_weekly_summary,couns_asst_weekly_summary,couns_weekly_activity], ignore_index=True)
+        couns_hours_weekly_summary = pd.concat([couns_sessions_weekly_summary,
+                                                couns_asst_weekly_summary
+                                                ,couns_weekly_activity]
+                                                ,ignore_index=True)
         # get rid of sessions that go beyond sim duration
-        couns_hours_weekly_summary = couns_hours_weekly_summary[couns_hours_weekly_summary["Week Number"] <=sim_duration_input]
+        couns_hours_weekly_summary = couns_hours_weekly_summary[
+                                    couns_hours_weekly_summary[
+                                    "Week Number"] <=sim_duration_input]
         
         
         ########## Referrals & Assessments ##########
         
-        asst_weekly_summary_filtered = asst_weekly_summary[['Run Number','Week Number','Referrals Received','TA Avg Wait']]
+        asst_weekly_summary_filtered = asst_weekly_summary[['Run Number'
+                                                            ,'Week Number',
+                                                            'Referrals Received'
+                                                            ,'TA Avg Wait']]
         
-        asst_weekly_summary_max_wait = asst_weekly_summary[['Week Number','TA Max Wait']]
+        asst_weekly_summary_max_wait = asst_weekly_summary[['Week Number',
+                                                            'TA Max Wait']]
 
-        asst_referrals_col1_unpivot = pd.melt(asst_weekly_summary_filtered, value_vars=['Referrals Received',
-                                                                 'TA Avg Wait'],
-                                                                 id_vars=['Run Number',
-                                                                'Week Number'])
+        asst_referrals_col1_unpivot = pd.melt(asst_weekly_summary_filtered,
+                                                        value_vars=[
+                                                        'Referrals Received',
+                                                        'TA Avg Wait'],
+                                                        id_vars=['Run Number',
+                                                        'Week Number'])
         
-        asst_referrals_max_unpivot = pd.melt(asst_weekly_summary_max_wait, value_vars=['TA Max Wait'],
-                                                                 id_vars=['Week Number']).reset_index()
+        asst_referrals_max_unpivot = pd.melt(asst_weekly_summary_max_wait,
+                                            value_vars=['TA Max Wait'],
+                                            id_vars=['Week Number']
+                                            ).reset_index()
         
-        asst_referrals_col2_unpivot = pd.melt(asst_weekly_summary, value_vars=['Referrals Rejected',
-                                                                 'TA Waiting List'],
-                                                                 id_vars=['Run Number',
-                                                                'Week Number'])
+        asst_referrals_col2_unpivot = pd.melt(asst_weekly_summary, value_vars=[
+                                                    'Referrals Rejected',
+                                                    'TA Waiting List'],
+                                                    id_vars=['Run Number',
+                                                    'Week Number'])
         
-        asst_referrals_col3_unpivot = pd.melt(asst_weekly_summary, value_vars=['Accepted Referrals',
-                                                                 'TA Total Accept'],
-                                                                 id_vars=['Run Number',
-                                                                'Week Number'])
+        asst_referrals_col3_unpivot = pd.melt(asst_weekly_summary, value_vars=[
+                                                    'Accepted Referrals',
+                                                    'TA Total Accept'],
+                                                    id_vars=['Run Number',
+                                                    'Week Number'])
         
         ########## Caseloads ##########
 
-        caseload_weekly_dfs['caseload_used'] = caseload_weekly_dfs['caseload_cap'] - caseload_weekly_dfs['caseload_level']
+        caseload_weekly_dfs['caseload_used'] = caseload_weekly_dfs[
+                                                'caseload_cap'] - \
+                                                caseload_weekly_dfs[
+                                                'caseload_level']
 
-        caseload_avg_df = caseload_weekly_dfs.groupby(['Week Number', 'caseload_id'])['caseload_used'].mean().reset_index()
+        caseload_avg_df = caseload_weekly_dfs.groupby(['Week Number',
+                        'caseload_id'])['caseload_used'].mean().reset_index()
         #st.write(caseload_avg_df)
         #caseload_weekly_dfs['Caseload Level'] = caseload_weekly_dfs['Caseload Level']/number_of_runs_input
 
-        pwp_caseload_weekly_summary = caseload_avg_df[caseload_avg_df['caseload_id'].str.startswith('pwp')]
-        cbt_caseload_weekly_summary = caseload_avg_df[caseload_avg_df['caseload_id'].str.startswith('cbt')]
-        couns_caseload_weekly_summary = caseload_avg_df[caseload_avg_df['caseload_id'].str.startswith('couns')]
+        pwp_caseload_weekly_summary = caseload_avg_df[caseload_avg_df[
+                                    'caseload_id'].str.startswith('pwp')]
+        cbt_caseload_weekly_summary = caseload_avg_df[caseload_avg_df[
+                                    'caseload_id'].str.startswith('cbt')]
+        couns_caseload_weekly_summary = caseload_avg_df[caseload_avg_df[
+                                    'caseload_id'].str.startswith('couns')]
+        
         ###########################
         ## Dashboard Starts Here ##
         ###########################
         
-        tab1, tab2, tab3, tab4, tab5 = st.tabs(["Screening & Assessment", "Step 2","Step 3","Job Plans","Caseloads"])
+        tab1, tab2, tab3, tab4, tab5 = st.tabs(["Screening & Assessment"
+                                                ,"Step 2","Step 3"
+                                                ,"Job Plans","Caseloads"])
         
         # ########## Screening & Assessment Tab ##########
         
@@ -751,8 +928,8 @@ if button_run_pressed:
 
             with col1:
             
-                for a, list_name in enumerate(asst_referrals_col1_unpivot['variable']
-                                            .unique()):
+                for a, list_name in enumerate(asst_referrals_col1_unpivot[
+                                            'variable'].unique()):
 
                     if list_name == 'Referrals Received':
                         section_title = 'Referrals'
@@ -767,7 +944,8 @@ if button_run_pressed:
                     st.subheader(section_title)
 
                     asst_referrals_col1_filtered = asst_referrals_col1_unpivot[
-                                        asst_referrals_col1_unpivot["variable"]==list_name]
+                                        asst_referrals_col1_unpivot["variable"]
+                                        ==list_name]
                     
                     fig_asst_1 = px.line(
                                 asst_referrals_col1_filtered,
@@ -785,13 +963,16 @@ if button_run_pressed:
                     
                     fig_asst_1.update_traces(line=dict(dash='dot'))
 
-                    weekly_avg_col1 = asst_referrals_col1_filtered.groupby(['Week Number', 'variable'])['value'].mean().reset_index()
+                    weekly_avg_col1 = asst_referrals_col1_filtered.groupby([
+                                        'Week Number', 'variable'])['value'
+                                        ].mean().reset_index()
                     
                     if list_name == 'TA Avg Wait':
 
                         weekly_max_col1 = asst_referrals_max_unpivot.loc[
-                                                        asst_referrals_max_unpivot['variable'] == 'TA Max Wait'
-                                                    ].groupby(['Week Number', 'variable'])['value'].mean().reset_index()
+                        asst_referrals_max_unpivot['variable'] == 'TA Max Wait'
+                        ].groupby(['Week Number', 'variable'])['value'
+                                                ].mean().reset_index()
                     
                         fig_asst_1.add_trace(
                                 go.Scatter(x=weekly_avg_col1["Week Number"],
@@ -806,23 +987,25 @@ if button_run_pressed:
                                         line=dict(width=3,color='blue')))
                            
                     # get rid of 'variable' prefix resulting from df.melt
-                    fig_asst_1.for_each_annotation(lambda a: a.update(text=a.text.split
-                                                            ("=")[1]))
+                    fig_asst_1.for_each_annotation(lambda a: a.update(
+                                            text=a.text.split("=")[1]))
 
                     fig_asst_1.update_layout(title_x=0.3,font=dict(size=10))
                     #fig.
 
-                    st.plotly_chart(fig_asst_1, key=f"chart_{list_name}_{a}", use_container_width=True)
+                    st.plotly_chart(fig_asst_1, key=f"chart_{list_name}_{a}"
+                                                ,use_container_width=True)
 
                     st.divider()
 
             with col2:
                            
-                for b, list_name in enumerate(asst_referrals_col2_unpivot['variable']
-                                            .unique()):
+                for b, list_name in enumerate(asst_referrals_col2_unpivot[
+                                                    'variable'].unique()):
 
                     asst_referrals_col2_filtered = asst_referrals_col2_unpivot[
-                                        asst_referrals_col2_unpivot["variable"]==list_name]
+                                        asst_referrals_col2_unpivot["variable"]
+                                        ==list_name]
                     
                     if list_name == 'Rejected Referrals':
                         axis_title = 'Referrals'
@@ -848,8 +1031,9 @@ if button_run_pressed:
                     fig_asst_2.update_traces(line=dict(dash='dot'))
                     
                     # get the average waiting list across all the runs
-                    weekly_avg_col2 = asst_referrals_col2_filtered.groupby(['Week Number',
-                                                    'variable'])['value'].mean(
+                    weekly_avg_col2 = asst_referrals_col2_filtered.groupby([
+                                                    'Week Number','variable']
+                                                    )['value'].mean(
                                                     ).reset_index()
                     
                     fig_asst_2.add_trace(
@@ -865,7 +1049,8 @@ if button_run_pressed:
                     fig_asst_2.update_layout(title_x=0.3,font=dict(size=10))
                     #fig.
 
-                    st.plotly_chart(fig_asst_2, key=f"chart_{list_name}_{b}", use_container_width=True)
+                    st.plotly_chart(fig_asst_2, key=f"chart_{list_name}_{b}"
+                                                    ,use_container_width=True)
 
                     st.divider()
 
@@ -875,7 +1060,8 @@ if button_run_pressed:
                                             .unique()):
 
                 asst_referrals_col3_filtered = asst_referrals_col3_unpivot[
-                                    asst_referrals_col3_unpivot["variable"]==list_name]
+                                    asst_referrals_col3_unpivot["variable"]==
+                                    list_name]
                 
                 if list_name == 'Accepted Referrals':
                         axis_title = 'Referrals'
@@ -901,9 +1087,9 @@ if button_run_pressed:
                 fig_asst_3.update_traces(line=dict(dash='dot'))
                 
                 # get the average waiting list across all the runs
-                weekly_avg_col3 = asst_referrals_col3_filtered.groupby(['Week Number',
-                                                'variable'])['value'].mean(
-                                                ).reset_index()
+                weekly_avg_col3 = asst_referrals_col3_filtered.groupby([
+                                                'Week Number','variable']
+                                                )['value'].mean().reset_index()
                 
                 fig_asst_3.add_trace(
                             go.Scatter(x=weekly_avg_col3["Week Number"],
@@ -918,7 +1104,8 @@ if button_run_pressed:
                 fig_asst_3.update_layout(title_x=0.3,font=dict(size=10))
                 #fig.
 
-                st.plotly_chart(fig_asst_3, key=f"chart_{list_name}_{a}",use_container_width=True)
+                st.plotly_chart(fig_asst_3, key=f"chart_{list_name}_{a}"
+                                                ,use_container_width=True)
 
                 st.divider()
 
@@ -969,7 +1156,8 @@ if button_run_pressed:
                                             labels={'value': 'Sessions'},
                                             color='Session Type',
                                             color_discrete_map=custom_colors, #custom_colors,
-                                            category_orders={'Session Type': custom_stack_order},
+                                            category_orders={'Session Type': 
+                                                            custom_stack_order},
                                             title=f'Number of Sessions per Week')
                         
                         fig1.update_layout(title_x=0.4,font=dict(size=10),bargap=0.2)
@@ -978,7 +1166,8 @@ if button_run_pressed:
 
                         fig1.update_yaxes(title_text="Sessions")
 
-                        st.plotly_chart(fig1, key=f"pwp_chart_{list_name}_{c}",use_container_width=True)
+                        st.plotly_chart(fig1, key=f"pwp_chart_{list_name}_{c}"
+                                                    ,use_container_width=True)
 
                         st.divider()
 
@@ -1008,7 +1197,7 @@ if button_run_pressed:
                         
                         fig2.add_trace(
                                     go.Scatter(x=weekly_avg_col1["Week Number"],
-                                            y=weekly_avg_col1["value"], name='Average',
+                                            y=weekly_avg_col1["value"],name='Average',
                                             line=dict(width=3,color='blue')))
             
                         
@@ -1019,7 +1208,8 @@ if button_run_pressed:
                         fig2.update_layout(title_x=0.3,font=dict(size=10))
                         #fig.
 
-                        st.plotly_chart(fig2, key=f"pwp_chart_{list_name}_{c}",use_container_width=True)
+                        st.plotly_chart(fig2, key=f"pwp_chart_{list_name}_{c}"
+                                                    ,use_container_width=True)
 
                         st.divider()
 
@@ -1036,10 +1226,12 @@ if button_run_pressed:
                                             .unique()):
 
                     pwp_combined_col2_filtered = pwp_combined_summary[
-                                        pwp_combined_summary["variable"]==list_name]
+                                        pwp_combined_summary["variable"]==
+                                        list_name]
                     
                     pwp_combined_col2_max = pwp_combined_summary[
-                                        pwp_combined_summary["variable"]=='Max Wait']
+                                        pwp_combined_summary["variable"]==
+                                        'Max Wait']
                     
                     if list_name == 'IsDNA':
                         
@@ -1059,7 +1251,8 @@ if button_run_pressed:
 
                         fig3.update_yaxes(title_text="Sessions")
 
-                        st.plotly_chart(fig3, key=f"pwp_chart_{list_name}_{d}",use_container_width=True)
+                        st.plotly_chart(fig3, key=f"pwp_chart_{list_name}_{d}",
+                                                    use_container_width=True)
 
                         st.divider()
 
@@ -1102,7 +1295,6 @@ if button_run_pressed:
                                     go.Scatter(x=weekly_max_col2["Week Number"],
                                             y=weekly_max_col2["value"], name='Maximum',
                                             line=dict(width=3,color='red')))
-            
                         
                         # get rid of 'variable' prefix resulting from df.melt
                         fig4.for_each_annotation(lambda a: a.update(text=a.text.split
@@ -1110,7 +1302,8 @@ if button_run_pressed:
                         
                         fig4.update_layout(title_x=0.3,font=dict(size=10))
 
-                        st.plotly_chart(fig4, key=f"pwp_chart_{list_name}_{d}",use_container_width=True)
+                        st.plotly_chart(fig4, key=f"pwp_chart_{list_name}_{d}",
+                                        use_container_width=True)
 
                         st.divider()
 
@@ -1165,7 +1358,8 @@ if button_run_pressed:
 
                         fig5.update_yaxes(title_text="Sessions")
 
-                        st.plotly_chart(fig5, key=f"group_chart_{list_name}_{e}",use_container_width=True)
+                        st.plotly_chart(fig5, key=f"group_chart_{list_name}_{e}",
+                                        use_container_width=True)
 
                         st.divider()
 
@@ -1176,7 +1370,6 @@ if button_run_pressed:
                                     group_combined_col1_filtered,
                                     x="Week Number",
                                     color="Run Number",
-                                    #line_dash="Run",
                                     y="value",
                                     labels={
                                             "value": 'Patients'
@@ -1189,15 +1382,14 @@ if button_run_pressed:
                         fig6.update_traces(line=dict(dash='dot'))
                         
                         # get the average waiting list across all the runs
-                        weekly_avg_col1 = group_combined_col1_filtered.groupby(['Week Number',
-                                                        'variable'])['value'].mean(
-                                                        ).reset_index()
+                        weekly_avg_col1 = group_combined_col1_filtered.groupby(
+                                                        ['Week Number','variable'
+                                                        ])['value'].mean().reset_index()
                         
                         fig6.add_trace(
                                     go.Scatter(x=weekly_avg_col1["Week Number"],
                                             y=weekly_avg_col1["value"], name='Average',
                                             line=dict(width=3,color='blue')))
-            
                         
                         # get rid of 'variable' prefix resulting from df.melt
                         fig6.for_each_annotation(lambda a: a.update(text=a.text.split
@@ -1206,7 +1398,8 @@ if button_run_pressed:
                         fig6.update_layout(title_x=0.3,font=dict(size=10))
                         #fig.
 
-                        st.plotly_chart(fig6, key=f"group_chart_{list_name}_{e}",use_container_width=True)
+                        st.plotly_chart(fig6, key=f"group_chart_{list_name}_{e}"
+                                        ,use_container_width=True)
 
                         st.divider()
 
@@ -1246,7 +1439,8 @@ if button_run_pressed:
 
                         fig7.update_yaxes(title_text="Sessions")
 
-                        st.plotly_chart(fig7, key=f"group_chart_{list_name}_{f}",use_container_width=True)
+                        st.plotly_chart(fig7, key=f"group_chart_{list_name}_{f}"
+                                        ,use_container_width=True)
 
                         st.divider()
 
@@ -1258,7 +1452,6 @@ if button_run_pressed:
                                     group_combined_col2_filtered,
                                     x="Week Number",
                                     color="Run Number",
-                                    #line_dash="Run",
                                     y="value",
                                     labels={
                                             "value": 'Weeks'
@@ -1271,9 +1464,9 @@ if button_run_pressed:
                         fig8.update_traces(line=dict(dash='dot'))
                         
                         # get the average waiting time across all the runs
-                        weekly_avg_col2 = group_combined_col2_filtered.groupby(['Week Number',
-                                                        'variable'])['value'].mean(
-                                                        ).reset_index()
+                        weekly_avg_col2 = group_combined_col2_filtered.groupby(
+                                                        ['Week Number','variable'
+                                                        ])['value'].mean().reset_index()
                         
                         weekly_max_col2 = group_combined_col2_max.groupby(['Week Number',
                                                         'variable'])['value'].mean(
@@ -1296,11 +1489,12 @@ if button_run_pressed:
                         
                         fig8.update_layout(title_x=0.3,font=dict(size=10))
 
-                        st.plotly_chart(fig8, key=f"group_chart_{list_name}_{f}",use_container_width=True)
+                        st.plotly_chart(fig8, key=f"group_chart_{list_name}_{f}"
+                                        ,use_container_width=True)
 
                         st.divider()
         
-        # ########## step3 Tab ##########
+        ########## step3 Tab ##########
 
         ########## cbt ##########
         with tab3:
@@ -1346,8 +1540,9 @@ if button_run_pressed:
                                             nbins=sim_duration_input,
                                             labels={'value': 'Sessions'},
                                             color='Session Type',
-                                            color_discrete_map=custom_colors, #custom_colors,
-                                            category_orders={'Session Type': custom_stack_order},
+                                            color_discrete_map=custom_colors,
+                                            category_orders={'Session Type':
+                                                            custom_stack_order},
                                             title=f'Number of Sessions per Week')
                         
                         fig9.update_layout(title_x=0.4,font=dict(size=10),bargap=0.2)
@@ -1380,9 +1575,9 @@ if button_run_pressed:
                         fig10.update_traces(line=dict(dash='dot'))
                         
                         # get the average waiting list across all the runs
-                        weekly_avg_col1 = cbt_combined_col1_filtered.groupby(['Week Number',
-                                                        'variable'])['value'].mean(
-                                                        ).reset_index()
+                        weekly_avg_col1 = cbt_combined_col1_filtered.groupby(
+                                                        ['Week Number','variable'
+                                                        ])['value'].mean().reset_index()
                         
                         fig10.add_trace(
                                     go.Scatter(x=weekly_avg_col1["Week Number"],
@@ -1397,7 +1592,8 @@ if button_run_pressed:
                         fig10.update_layout(title_x=0.3,font=dict(size=10))
                         #fig.
 
-                        st.plotly_chart(fig10, key=f"cbt_chart_{list_name}_{g}",use_container_width=True)
+                        st.plotly_chart(fig10, key=f"cbt_chart_{list_name}_{g}"
+                                        ,use_container_width=True)
 
                         st.divider()
 
@@ -1437,7 +1633,8 @@ if button_run_pressed:
 
                         fig11.update_yaxes(title_text="Sessions")
 
-                        st.plotly_chart(fig11, key=f"cbt_chart_{list_name}_{h}",use_container_width=True)
+                        st.plotly_chart(fig11, key=f"cbt_chart_{list_name}_{h}"
+                                        ,use_container_width=True)
 
                         st.divider()
 
@@ -1488,7 +1685,8 @@ if button_run_pressed:
                         
                         fig12.update_layout(title_x=0.3,font=dict(size=10))
 
-                        st.plotly_chart(fig12, key=f"cbt_chart_{list_name}_{h}",use_container_width=True)
+                        st.plotly_chart(fig12, key=f"cbt_chart_{list_name}_{h}"
+                                        ,use_container_width=True)
 
                         st.divider()
 
@@ -1533,8 +1731,9 @@ if button_run_pressed:
                                             nbins=sim_duration_input,
                                             labels={'value': 'Sessions'},
                                             color='Session Type',
-                                            color_discrete_map=custom_colors, #custom_colors,
-                                            category_orders={'Session Type': custom_stack_order},
+                                            color_discrete_map=custom_colors,
+                                            category_orders={'Session Type':
+                                                            custom_stack_order},
                                             title=f'Number of Sessions per Week')
                         
                         fig13.update_layout(title_x=0.4,font=dict(size=10),bargap=0.2)
@@ -1543,7 +1742,8 @@ if button_run_pressed:
 
                         fig13.update_yaxes(title_text="Sessions")
 
-                        st.plotly_chart(fig13, key=f"couns_chart_{list_name}_{i}",use_container_width=True)
+                        st.plotly_chart(fig13, key=f"couns_chart_{list_name}_{i}"
+                                        ,use_container_width=True)
 
                         st.divider()
 
@@ -1554,7 +1754,6 @@ if button_run_pressed:
                                     couns_combined_col1_filtered,
                                     x="Week Number",
                                     color="Run Number",
-                                    #line_dash="Run",
                                     y="value",
                                     labels={
                                             "value": 'Patients'
@@ -1584,7 +1783,8 @@ if button_run_pressed:
                         fig14.update_layout(title_x=0.3,font=dict(size=10))
                         #fig.
 
-                        st.plotly_chart(fig14, key=f"couns_chart_{list_name}_{i}",use_container_width=True)
+                        st.plotly_chart(fig14, key=f"couns_chart_{list_name}_{i}"
+                                        ,use_container_width=True)
 
                         st.divider()
 
@@ -1624,7 +1824,8 @@ if button_run_pressed:
 
                         fig15.update_yaxes(title_text="Sessions")
 
-                        st.plotly_chart(fig15, key=f"couns_chart_{list_name}_{j}",use_container_width=True)
+                        st.plotly_chart(fig15, key=f"couns_chart_{list_name}_{j}"
+                                        ,use_container_width=True)
 
                         st.divider()
 
@@ -1674,7 +1875,8 @@ if button_run_pressed:
                         
                         fig16.update_layout(title_x=0.3,font=dict(size=10))
 
-                        st.plotly_chart(fig16, key=f"couns_chart_{list_name}_{j}",use_container_width=True)
+                        st.plotly_chart(fig16, key=f"couns_chart_{list_name}_{j}"
+                                        ,use_container_width=True)
 
                         st.divider()
 
@@ -1684,15 +1886,25 @@ if button_run_pressed:
             st.header('Job Plans')
 
             custom_colors = {
-                            "CPD Hrs": "#1f77b4",       # Muted blue (better than pure blue)
+                            "CPD Hrs": "#1f77b4",       # Muted blue
                             "Huddle Hrs": "#ffcc00",     # Warm golden yellow
                             "Wellbeing Hrs": "#2ca02c",  # Rich green
                             "Break Hrs": "#17becf",      # Brighter cyan
-                            "Supervision Hrs": "#34495e",# Deep navy (less harsh)
+                            "Supervision Hrs": "#34495e",# Deep navy
                             "TA Hrs": "#d62728",         # Strong red
                             "Session Time": "#20c997",   # Soft turquoise
                             "Admin Time": "#e377c2"      # Gentle pink
                         }
+            
+            category_order={"variable": ["Session Time"
+                                         ,"Admin Time"
+                                         ,"Referral Screen Hrs"
+                                         ,"TA Hrs"
+                                         , "Break Hrs"
+                                         , "Wellbeing Hrs"
+                                         ,"Supervision Hrs"
+                                         ,"Huddle Hrs"
+                                         ,"CPD Hrs"]}
 
             ##### pwp Practitioner #####
 
@@ -1705,7 +1917,8 @@ if button_run_pressed:
                                 labels={'value': 'Hours'
                                         ,'variable':'Time Alloc'},
                                 color='variable',
-                                color_discrete_map=custom_colors, #color_discrete_sequence = px.colors.qualitative.Dark24,
+                                color_discrete_map=custom_colors,
+                                category_orders=category_order,
                                 title=f'Psychological Wellbeing Practitioner Hours by Week')
             
             fig17.update_layout(title_x=0.4,font=dict(size=10),bargap=0.2,legend_traceorder="reversed")
@@ -1718,8 +1931,14 @@ if button_run_pressed:
             fig17.add_trace(
                                 go.Scatter(x=pwp_hours_weekly_summary["Week Number"],
                                         y=np.repeat(total_pwp_hours,sim_duration_input*2),
-                                        name='Avail Hrs',line=dict(width=3,
+                                        name='Total Hrs',line=dict(width=3,
                                         color='green')))
+            
+            fig17.add_trace(
+                                go.Scatter(x=pwp_hours_weekly_summary["Week Number"],
+                                        y=np.repeat(clin_pwp_hours,sim_duration_input*2),
+                                        name='Clin Hrs',line=dict(width=3,
+                                        color='blue')))
 
             st.plotly_chart(fig17, use_container_width=True)
 
@@ -1736,7 +1955,8 @@ if button_run_pressed:
                                 labels={'value': 'Hours'
                                         ,'variable':'Time Alloc'},
                                 color='variable',
-                                color_discrete_map=custom_colors, #color_discrete_sequence=px.colors.qualitative.Dark24,
+                                color_discrete_map=custom_colors,
+                                category_orders=category_order,
                                 title=f'Cognitive Behavioural Therapist Hours by Week')
             
             fig18.update_layout(title_x=0.4,font=dict(size=10),bargap=0.2,legend_traceorder="reversed")
@@ -1749,8 +1969,14 @@ if button_run_pressed:
             fig18.add_trace(
                                 go.Scatter(x=cbt_hours_weekly_summary["Week Number"],
                                         y=np.repeat(total_cbt_hours,sim_duration_input*2),
-                                        name='Avail Hrs',line=dict(width=3,
+                                        name='Total Hrs',line=dict(width=3,
                                         color='green')))
+            
+            fig18.add_trace(
+                                go.Scatter(x=cbt_hours_weekly_summary["Week Number"],
+                                        y=np.repeat(clin_cbt_hours,sim_duration_input*2),
+                                        name='Clin Hrs',line=dict(width=3,
+                                        color='blue')))
 
             st.plotly_chart(fig18, use_container_width=True)
 
@@ -1767,7 +1993,8 @@ if button_run_pressed:
                                 labels={'value': 'Hours'
                                         ,'variable':'Time Alloc'},
                                 color='variable',
-                                color_discrete_map=custom_colors, #color_discrete_sequence=px.colors.qualitative.Dark24,
+                                color_discrete_map=custom_colors,
+                                category_orders=category_order,
                                 title=f'Depression Counselling Therapist Hours by Week')
             
             fig19.update_layout(title_x=0.4,font=dict(size=10),bargap=0.2,legend_traceorder="reversed")
@@ -1780,8 +2007,14 @@ if button_run_pressed:
             fig19.add_trace(
                                 go.Scatter(x=couns_hours_weekly_summary["Week Number"],
                                         y=np.repeat(total_couns_hours,sim_duration_input*2),
-                                        name='Avail Hrs',line=dict(width=3,
+                                        name='Total Hrs',line=dict(width=3,
                                         color='green')))
+            
+            fig19.add_trace(
+                                go.Scatter(x=couns_hours_weekly_summary["Week Number"],
+                                        y=np.repeat(clin_couns_hours,sim_duration_input*2),
+                                        name='Clin Hrs',line=dict(width=3,
+                                        color='blue')))
 
             st.plotly_chart(fig19, use_container_width=True)
 
@@ -1807,7 +2040,8 @@ if button_run_pressed:
                                 color_discrete_sequence=['red'],
                                 title=f'Psychological Wellbeing Practitioner Caseload by Week')
             
-            fig22.update_layout(title_x=0.4,font=dict(size=10),bargap=0.2,legend_traceorder="reversed")
+            fig22.update_layout(title_x=0.4,font=dict(size=10),bargap=0.2,
+                                legend_traceorder="reversed")
             
             fig22.update_traces(marker_line_color='black', marker_line_width=1)
 
@@ -1816,9 +2050,11 @@ if button_run_pressed:
             # add line for available pwp hours
             fig22.add_trace(
                                 go.Scatter(x=pwp_caseload_weekly_summary["Week Number"],
-                                        y=np.repeat(pwp_caseload_max*(pwp_avail_input+pwp_add_input)
-                                                    ,sim_duration_input*(pwp_avail_input+pwp_add_input)),
-                                        name='Avail Slots',line=dict(width=3,
+                                        y=np.repeat(pwp_caseload_max*(
+                                        pwp_avail_input+pwp_add_input)
+                                        ,sim_duration_input*(pwp_avail_input
+                                        +pwp_add_input)),
+                                        name='Maximum Slots',line=dict(width=3,
                                         color='green')))
 
             st.plotly_chart(fig22, use_container_width=True)
@@ -1849,10 +2085,12 @@ if button_run_pressed:
             # add line for available cbt hours
             fig22.add_trace(
                                 go.Scatter(x=cbt_caseload_weekly_summary["Week Number"],
-                                        y=np.repeat(cbt_caseload_max*(cbt_avail_input+cbt_add_input)
-                                                    ,sim_duration_input*(cbt_avail_input+cbt_add_input)),
-                                        name='Avail Slots',line=dict(width=3,
-                                        color='green')))
+                                        y=np.repeat(cbt_caseload_max*(cbt_avail_input
+                                                +cbt_add_input)
+                                                ,sim_duration_input*(
+                                                cbt_avail_input+cbt_add_input)),
+                                                name='Maximum Slots',line=dict(width=3,
+                                                color='green')))
 
             st.plotly_chart(fig22, use_container_width=True)
 
@@ -1882,9 +2120,11 @@ if button_run_pressed:
             # add line for available couns hours
             fig22.add_trace(
                                 go.Scatter(x=couns_caseload_weekly_summary["Week Number"],
-                                        y=np.repeat(couns_caseload_max*(couns_avail_input+couns_add_input)
-                                                    ,sim_duration_input*(couns_avail_input+couns_add_input)),
-                                        name='Avail Slots',line=dict(width=3,
+                                        y=np.repeat(couns_caseload_max*(
+                                                    couns_avail_input+couns_add_input)
+                                                    ,sim_duration_input*(
+                                                    couns_avail_input+couns_add_input)),
+                                        name='Maximum Slots',line=dict(width=3,
                                         color='green')))
 
             st.plotly_chart(fig22, use_container_width=True)
