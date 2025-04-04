@@ -982,9 +982,7 @@ class Model:
 
         self.pwp_counter = 0
        
-        # iterate through the pwp staff accounting for half WTE's
-        # counter only increments by 0.5 so in effect each staff member
-        # will get processed twice each week
+        # iterate through the pwp staff
         while self.pwp_counter < g.number_staff_pwp:
 
             # Increment the staff counter by 1
@@ -1014,9 +1012,7 @@ class Model:
 
         self.cbt_counter = 0
        
-        # iterate through the cbt staff accounting for half WTE's
-        # counter only increments by 0.5 so in effect each staff member
-        # will get processed twice each week
+        # iterate through the cbt staff
         while self.cbt_counter < g.number_staff_cbt:
 
             # Increment the staff counter by 1
@@ -1047,9 +1043,7 @@ class Model:
 
         self.couns_counter = 0
        
-        # iterate through the couns staff accounting for half WTE's
-        # counter only increments by 0.5 so in effect each staff member
-        # will get processed twice each week
+        # iterate through the couns staff
         while self.couns_counter < g.number_staff_couns:
 
             # Increment the staff counter by 1
