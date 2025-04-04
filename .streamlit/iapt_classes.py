@@ -978,7 +978,7 @@ class Model:
 
         yield(self.env.timeout(0))
 
-    def pwp_staff_generator(self,week_number):
+    def pwp_staff_generator(self,staff_week):
 
         self.pwp_counter = 0
        
@@ -997,17 +997,14 @@ class Model:
                 print('')
                 print(f"==== pwp Staff {s.id} Generated ====")
             
-            self.staff_results_df.at[s.id,'Week Number'] = week_number
+            self.staff_results_df.at[s.id,'Week Number'] = staff_week
             self.staff_results_df.at[s.id,'Run Number'] = self.run_number
             self.staff_results_df.at[s.id,'Job Role'] = 'pwp'
-            self.staff_results_df.at[s.id,'Break Mins'] = g.break_time/2
-            
-            # monthly staff activities
-            if self.week_number % 4 == 0:
-                
-                self.staff_results_df.at[s.id,'Supervision Mins'] = g.supervision_time/2
-                self.staff_results_df.at[s.id,'Wellbeing Mins'] = g.wellbeing_time/2
-                self.staff_results_df.at[s.id,'CPD Mins'] = g.cpd_time/2
+            self.staff_results_df.at[s.id,'Break Mins'] = g.break_time
+            # Monthly Activities            
+            self.staff_results_df.at[s.id,'Supervision Mins'] = int(g.supervision_time/4)
+            self.staff_results_df.at[s.id,'Wellbeing Mins'] = int(g.wellbeing_time/4)
+            self.staff_results_df.at[s.id,'CPD Mins'] = int(g.cpd_time/4)
         
         yield(self.env.timeout(0))
         
@@ -1036,15 +1033,11 @@ class Model:
             self.staff_results_df.at[s.id,'Week Number'] = week_number
             self.staff_results_df.at[s.id,'Run Number'] = self.run_number
             self.staff_results_df.at[s.id,'Job Role'] = 'cbt'
-            self.staff_results_df.at[s.id,'Break Mins'] = g.break_time/2
-            #self.staff_results_df.at[s.id,'Huddle Mins'] = g.huddle_time # counsellors only
-            
-            # monthly staff activities
-            if self.week_number % 4 == 0:
-                
-                self.staff_results_df.at[s.id,'Supervision Mins'] = g.supervision_time/2
-                self.staff_results_df.at[s.id,'Wellbeing Mins'] = g.wellbeing_time/2
-                self.staff_results_df.at[s.id,'CPD Mins'] = g.cpd_time/2
+            self.staff_results_df.at[s.id,'Break Mins'] = g.break_time
+            # Monthly Activities
+            self.staff_results_df.at[s.id,'Supervision Mins'] = int(g.supervision_time/4)
+            self.staff_results_df.at[s.id,'Wellbeing Mins'] = int(g.wellbeing_time/4)
+            self.staff_results_df.at[s.id,'CPD Mins'] = int(g.cpd_time/4)
         
         yield(self.env.timeout(0))
         
@@ -1073,15 +1066,12 @@ class Model:
             self.staff_results_df.at[s.id,'Week Number'] = week_number
             self.staff_results_df.at[s.id,'Run Number'] = self.run_number
             self.staff_results_df.at[s.id,'Job Role'] = 'couns'
-            self.staff_results_df.at[s.id,'Break Mins'] = g.break_time/2
-            self.staff_results_df.at[s.id,'Huddle Mins'] = g.counsellors_huddle/2 # couns only
-            
-            # monthly staff activities
-            if self.week_number % 4 == 0:
-                
-                self.staff_results_df.at[s.id,'Supervision Mins'] = g.supervision_time/2
-                self.staff_results_df.at[s.id,'Wellbeing Mins'] = g.wellbeing_time/2
-                self.staff_results_df.at[s.id,'CPD Mins'] = g.cpd_time/2
+            self.staff_results_df.at[s.id,'Break Mins'] = g.break_time
+            self.staff_results_df.at[s.id,'Huddle Mins'] = g.counsellors_huddle # couns only
+            # Monthly Activities
+            self.staff_results_df.at[s.id,'Supervision Mins'] = int(g.supervision_time/4)
+            self.staff_results_df.at[s.id,'Wellbeing Mins'] = int(g.wellbeing_time/4)
+            self.staff_results_df.at[s.id,'CPD Mins'] = int(g.cpd_time/4)
         
         yield(self.env.timeout(0))
         
