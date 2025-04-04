@@ -987,9 +987,8 @@ class Model:
         # will get processed twice each week
         while self.pwp_counter < g.number_staff_pwp:
 
-            # Increment the staff counter by 0.5
-            self.pwp_counter += 0.5
-
+            # Increment the staff counter by 1
+            self.pwp_counter += 1
             # Create a new staff member from Staff Class
             s = Staff(self.pwp_staff_counter+(self.pwp_counter*2))
 
@@ -1020,8 +1019,8 @@ class Model:
         # will get processed twice each week
         while self.cbt_counter < g.number_staff_cbt:
 
-            # Increment the staff counter by 0.5
-            self.cbt_counter += 0.5
+            # Increment the staff counter by 1
+            self.cbt_counter += 1
 
             # Create a new staff member from Staff Class
             s = Staff(self.cbt_staff_counter+(self.cbt_counter*2))
@@ -1053,8 +1052,8 @@ class Model:
         # will get processed twice each week
         while self.couns_counter < g.number_staff_couns:
 
-            # Increment the staff counter by 0.5
-            self.couns_counter += 0.5
+            # Increment the staff counter by 1
+            self.couns_counter += 1
 
             # Create a new staff member from Staff Class
             s = Staff(self.couns_staff_counter+(self.couns_counter*2))
