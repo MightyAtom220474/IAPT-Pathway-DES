@@ -554,29 +554,29 @@ if button_run_pressed:
         # get rid of any sessions recorded beyond the simulation period
         pwp_session_type_summary = pwp_session_type_summary = pwp_session_type_summary[
                                     pwp_session_type_summary["Week Number"
-                                    ] <= sim_duration_input].reset_index()
+                                    ] <= sim_duration_input-1].reset_index()
         group_session_type_summary = group_session_type_summary = group_session_type_summary[
                                     group_session_type_summary["Week Number"
-                                    ] <= sim_duration_input].reset_index()
+                                    ] <= sim_duration_input-1].reset_index()
         cbt_session_type_summary = cbt_session_type_summary = cbt_session_type_summary[
                                     cbt_session_type_summary["Week Number"
-                                    ] <= sim_duration_input].reset_index()
+                                    ] <= sim_duration_input-1].reset_index()
         couns_session_type_summary = couns_session_type_summary = couns_session_type_summary[
                                     couns_session_type_summary["Week Number"
-                                    ] <= sim_duration_input].reset_index()
+                                    ] <= sim_duration_input-1].reset_index()
         # get rid of week zero as no sessions run until week 1 when assessments come through
         pwp_session_type_summary = pwp_session_type_summary = pwp_session_type_summary[
                                     pwp_session_type_summary["Week Number"
-                                    ] <= sim_duration_input]
+                                    ] <= sim_duration_input-1]
         group_session_type_summary = group_session_type_summary = group_session_type_summary[
                                     group_session_type_summary["Week Number"
-                                    ] <= sim_duration_input]
+                                    ] <= sim_duration_input-1]
         cbt_session_type_summary = cbt_session_type_summary = cbt_session_type_summary[
                                     cbt_session_type_summary["Week Number"
                                     ] <= sim_duration_input]
         couns_session_type_summary = couns_session_type_summary = couns_session_type_summary[
                                     couns_session_type_summary["Week Number"
-                                    ] <= sim_duration_input]
+                                    ] <= sim_duration_input-1]
 
         # get rid of weeks beyond sim duration
         pwp_session_type_summary = pwp_session_type_summary = pwp_session_type_summary[
@@ -617,14 +617,14 @@ if button_run_pressed:
                                         ignore_index=True).reset_index()
         # get rid of any sessions recorded beyond the simulation period
         pwp_combined_summary = pwp_combined_summary[pwp_combined_summary[  
-                                "Week Number"] <= sim_duration_input
+                                "Week Number"] <= sim_duration_input-1
                                 ].reset_index()
         group_combined_summary = group_combined_summary[group_combined_summary[
-                                "Week Number"] <= sim_duration_input].reset_index()
+                                "Week Number"] <= sim_duration_input-1].reset_index()
         cbt_combined_summary = cbt_combined_summary[cbt_combined_summary[
-                                "Week Number"] <= sim_duration_input].reset_index()
+                                "Week Number"] <= sim_duration_input-1].reset_index()
         couns_combined_summary = couns_combined_summary[couns_combined_summary[
-                                "Week Number"] <= sim_duration_input].reset_index()
+                                "Week Number"] <= sim_duration_input-1].reset_index()
         # get rid of week zero as no sessions run until week 1 when assessments come through
         pwp_combined_summary = pwp_combined_summary[pwp_combined_summary[
                                                     "Week Number"] != 0]
@@ -838,7 +838,7 @@ if button_run_pressed:
         # get rid of sessions that go beyond sim duration
         pwp_hours_weekly_summary = pwp_hours_weekly_summary[
                                     pwp_hours_weekly_summary[
-                                    "Week Number"] <=sim_duration_input]
+                                    "Week Number"] <=sim_duration_input-1]
            
         cbt_hours_weekly_summary = pd.concat([cbt_sessions_weekly_summary,
                                             cbt_asst_weekly_summary,
@@ -847,7 +847,7 @@ if button_run_pressed:
         # get rid of sessions that go beyond sim duration
         cbt_hours_weekly_summary = cbt_hours_weekly_summary[
                                     cbt_hours_weekly_summary[
-                                    "Week Number"] <=sim_duration_input]
+                                    "Week Number"] <=sim_duration_input-1]
 
         couns_hours_weekly_summary = pd.concat([couns_sessions_weekly_summary,
                                                 couns_asst_weekly_summary
@@ -856,7 +856,7 @@ if button_run_pressed:
         # get rid of sessions that go beyond sim duration
         couns_hours_weekly_summary = couns_hours_weekly_summary[
                                     couns_hours_weekly_summary[
-                                    "Week Number"] <=sim_duration_input]
+                                    "Week Number"] <=sim_duration_input-1]
         
         
         ########## Referrals & Assessments ##########
