@@ -626,14 +626,14 @@ if button_run_pressed:
         couns_combined_summary = couns_combined_summary[couns_combined_summary[
                                 "Week Number"] <= sim_duration_input-1].reset_index()
         # get rid of week zero as no sessions run until week 1 when assessments come through
-        pwp_combined_summary = pwp_combined_summary[pwp_combined_summary[
-                                                    "Week Number"] != 0]
-        group_combined_summary = group_combined_summary[group_combined_summary[
-                                                    "Week Number"] != 0]
-        cbt_combined_summary = cbt_combined_summary[cbt_combined_summary[
-                                                    "Week Number"] != 0]
-        couns_combined_summary = couns_combined_summary[couns_combined_summary[
-                                                    "Week Number"] != 0]
+        # pwp_combined_summary = pwp_combined_summary[pwp_combined_summary[
+        #                                             "Week Number"] != 0]
+        # group_combined_summary = group_combined_summary[group_combined_summary[
+        #                                             "Week Number"] != 0]
+        # cbt_combined_summary = cbt_combined_summary[cbt_combined_summary[
+        #                                             "Week Number"] != 0]
+        # couns_combined_summary = couns_combined_summary[couns_combined_summary[
+        #                                             "Week Number"] != 0]
         
         ##### Staff Non-clinical Activity #####
         # turn into hours and divide by number of sim runs to get average across all the runs
