@@ -209,11 +209,11 @@ g.step2_session_admin = step2_admin_input
 
 ##### Step 3
 g.step3_path_ratios = (step3_path_ratio/100,1-(step3_path_ratio/100))
-g.step3_cbt_1st_mins = step2_first_input
-g.step3_cbt_fup_mins = step2_fup_input
+g.step3_cbt_1st_mins = step3_cbt_first_input
+g.step3_cbt_fup_mins = step3_cbt_fup_input
 g.step3_cbt_dna_rate = step3_cbt_dna_input/100
-g.step3_couns_1st_mins = step2_first_input
-g.step3_couns_fup_mins = step2_fup_input
+g.step3_couns_1st_mins = step3_couns_first_input
+g.step3_couns_fup_mins = step3_couns_fup_input
 g.step3_couns_dna_rate = step3_couns_dna_input/100
 g.step_down_rate = step_down_input/100
 g.step3_session_admin = step3_admin_input
@@ -552,40 +552,40 @@ if button_run_pressed:
                                     'step3_couns_session_type_summary']
 
         # get rid of any sessions recorded beyond the simulation period
-        pwp_session_type_summary = pwp_session_type_summary = pwp_session_type_summary[
+        pwp_session_type_summary = pwp_session_type_summary[
                                     pwp_session_type_summary["Week Number"
                                     ] <= sim_duration_input-1].reset_index()
-        group_session_type_summary = group_session_type_summary = group_session_type_summary[
+        group_session_type_summary = group_session_type_summary[
                                     group_session_type_summary["Week Number"
                                     ] <= sim_duration_input-1].reset_index()
-        cbt_session_type_summary = cbt_session_type_summary = cbt_session_type_summary[
+        cbt_session_type_summary = cbt_session_type_summary[
                                     cbt_session_type_summary["Week Number"
                                     ] <= sim_duration_input-1].reset_index()
-        couns_session_type_summary = couns_session_type_summary = couns_session_type_summary[
+        couns_session_type_summary = couns_session_type_summary[
                                     couns_session_type_summary["Week Number"
                                     ] <= sim_duration_input-1].reset_index()
         # get rid of week zero as no sessions run until week 1 when assessments come through
-        pwp_session_type_summary = pwp_session_type_summary = pwp_session_type_summary[
+        pwp_session_type_summary = pwp_session_type_summary[
                                     pwp_session_type_summary["Week Number"
                                     ] <= sim_duration_input-1]
-        group_session_type_summary = group_session_type_summary = group_session_type_summary[
+        group_session_type_summary = group_session_type_summary[
                                     group_session_type_summary["Week Number"
                                     ] <= sim_duration_input-1]
-        cbt_session_type_summary = cbt_session_type_summary = cbt_session_type_summary[
+        cbt_session_type_summary = cbt_session_type_summary[
                                     cbt_session_type_summary["Week Number"
                                     ] <= sim_duration_input]
-        couns_session_type_summary = couns_session_type_summary = couns_session_type_summary[
+        couns_session_type_summary = couns_session_type_summary[
                                     couns_session_type_summary["Week Number"
                                     ] <= sim_duration_input-1]
 
         # get rid of weeks beyond sim duration
-        pwp_session_type_summary = pwp_session_type_summary = pwp_session_type_summary[
+        pwp_session_type_summary = pwp_session_type_summary[
                                     pwp_session_type_summary["Week Number"] != 0]
-        group_session_type_summary = group_session_type_summary = group_session_type_summary[
+        group_session_type_summary = group_session_type_summary[
                                     group_session_type_summary["Week Number"] != 0]
-        cbt_session_type_summary = cbt_session_type_summary = cbt_session_type_summary[
+        cbt_session_type_summary = cbt_session_type_summary[
                                     cbt_session_type_summary["Week Number"] != 0]
-        couns_session_type_summary = couns_session_type_summary = couns_session_type_summary[
+        couns_session_type_summary = couns_session_type_summary[
                                     couns_session_type_summary["Week Number"] != 0]
         
         pwp_results_summary = aggregated_results['step2_pwp_results_summary']
@@ -620,20 +620,14 @@ if button_run_pressed:
                                 "Week Number"] <= sim_duration_input-1
                                 ].reset_index()
         group_combined_summary = group_combined_summary[group_combined_summary[
-                                "Week Number"] <= sim_duration_input-1].reset_index()
+                                "Week Number"] <= sim_duration_input-1
+                                ].reset_index()
         cbt_combined_summary = cbt_combined_summary[cbt_combined_summary[
-                                "Week Number"] <= sim_duration_input-1].reset_index()
+                                "Week Number"] <= sim_duration_input-1
+                                ].reset_index()
         couns_combined_summary = couns_combined_summary[couns_combined_summary[
-                                "Week Number"] <= sim_duration_input-1].reset_index()
-        # get rid of week zero as no sessions run until week 1 when assessments come through
-        # pwp_combined_summary = pwp_combined_summary[pwp_combined_summary[
-        #                                             "Week Number"] != 0]
-        # group_combined_summary = group_combined_summary[group_combined_summary[
-        #                                             "Week Number"] != 0]
-        # cbt_combined_summary = cbt_combined_summary[cbt_combined_summary[
-        #                                             "Week Number"] != 0]
-        # couns_combined_summary = couns_combined_summary[couns_combined_summary[
-        #                                             "Week Number"] != 0]
+                                "Week Number"] <= sim_duration_input-1
+                                ].reset_index()
         
         ##### Staff Non-clinical Activity #####
         # turn into hours and divide by number of sim runs to get average across all the runs

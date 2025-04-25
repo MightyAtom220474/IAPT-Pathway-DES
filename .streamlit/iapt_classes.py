@@ -99,7 +99,7 @@ class g:
     ta_resource = pwp_avail * 9 # job plan = 3 TA per week per pwp
     pwp_1st_res = pwp_avail * 4 #  4 1st's per PwP per week
     cbt_1st_res = cbt_avail * 2 #  2 1st's per CBT per week
-    couns_1st_res = couns_avail * 2 # 2 1st's per Couns per week
+    couns_1st_res = couns_avail * 10 # 2 1st's per Couns per week
     pwp_caseload = 200
     group_resource = pwp_avail * step2_group_size
     cbt_caseload = 100
@@ -131,8 +131,8 @@ class g:
 
     # bring in past referral data
     
-    # referral_rate_lookup = pd.read_csv('talking_therapies_referral_rates.csv'
-    #                                                            ,index_col=0)
+    referral_rate_lookup = pd.read_csv('talking_therapies_referral_rates.csv'
+                                                               ,index_col=0)
     # #print(referral_rate_lookup)
 # function to vary the number of sessions
 def vary_number_sessions(lower, upper, lambda_val=0.1):
@@ -476,10 +476,6 @@ class Model:
             if g.debug_level == 2:
                     print(f"Staff generator complete")
 
-            
-                # now start generating referrals normally
-            yield self.env.process(self.generator_patient_referrals(self.week_number))
-
             if g.debug_level == 2:
                 print(f"No Waiting Lists. Firing up the referral generator")
             
@@ -511,8 +507,8 @@ class Model:
             elif g.debug_level == 2 and self.week_number == g.sim_duration-1:
                 print(f"Week {self.week_number-1} complete, simulation has now finished")
 
-        # wait a week before moving onto the next week
-        yield self.env.timeout(1)
+            # wait a week before moving onto the next week
+            yield self.env.timeout(1)
 
     def patient_treatment_generator(self,number_of_referrals,treatment_week_number):
 
@@ -781,7 +777,7 @@ class Model:
         if p.asst_already_seen == False and p.asst_wl_added == True:
 
             if g.debug_level >= 1:
-                print(f'Week {self.week_number} Patient number {p.id} coming from {p.patient_source} sent for Assessment, {g.number_on_asst_wl} now waiting')
+                print(f'Week {self.week_number} Patient number {p.id} coming from {p.patient_source} sent for Assessment, {g.number_on_ta_wl} now waiting')
                         
             yield self.env.process(self.telephone_assessment(p))  
         
@@ -805,16 +801,8 @@ class Model:
         elif p.asst_already_seen == True and p.couns_wl_added == True:
             
             if g.debug_level >= 1:
-                        print(f'Week {self.week_number} Patient number {p.id} coming from {p.patient_source} sent down CBT path {g.number_on_couns_wl} now waiting')
+                        print(f'Week {self.week_number} Patient number {p.id} coming from {p.patient_source} sent down Couns path {g.number_on_couns_wl} now waiting')
             yield self.env.process(self.step3_couns_process(p))  
-
-        # otherwise start the patient right at the beginning of the pathway
-        # else:
-        #     if g.debug_level >= 1:
-        #                 print(f'Week {self.week_number} Patient number {p.id} coming from {p.patient_source} sent down Referral path')
-        #     # Increment number of patients in the system by 1
-        #     g.active_patients += 1
-        #     yield self.env.process(self.screen_referral(p)) 
 
     # process to capture all the results we need at the end of each week
     def weekly_stats(self,stats_week_number):
@@ -1921,37 +1909,45 @@ class Model:
         if g.debug_level == 2:
             print(f'Patient sent down {p.step2_path_route}')
 
-        while True:
+        # Loop until a valid caseload slot is found, or explicitly told to give up
+        while self.env.now < g.sim_duration:
             self.result = yield self.env.process(self.find_caseload_slot(p.step2_path_route))
             
-            if self.result and isinstance(self.result, tuple) and len(self.result) == 2:
-                self.pwp_caseload_id, self.pwp_caseload_res = self.result
-                if self.pwp_caseload_res is not None:  # Ensure the resource is valid
-                    break  # Exit the loop when a resource is found
-            else:
-                if g.debug_level == 2:
-                    print("No available resource found for pwp, retrying...")
-            yield self.env.timeout(1)  # Wait a week and retry
-
             if self.result == (None, None):
                 if g.debug_level == 2:
-                    print(f"Stopping retry as no resources are available. Time: {self.env.now}")
-                return  # **Exit function entirely**
+                    print(f"Stopping retry as no caseload resources available. Time: {self.env.now}")
+                return  # Exit the function
 
-        if g.debug_level == 4:
-            print(f"First PwP Appt slot found for patient {p.id}, allocating appt")
-        
-        # check for available first appointment
-        with self.pwp_first_res.get(1) as self.pwp_first:
-            yield self.pwp_first
+            if isinstance(self.result, tuple) and len(self.result) == 2:
+                self.pwp_caseload_id, self.pwp_caseload_res = self.result
+                if self.pwp_caseload_res is not None:
+                    break  # Slot found
 
-        if g.debug_level == 4:
-            print(f"First PwP Appt slot allocated for patient {p.id}")
+            if g.debug_level == 2:
+                print(f"No available caseload resource, patient {p.id} retrying next week...")
 
+            yield self.env.timeout(1)  # 🧠 Let top-up and other processes run
+
+        # Now attempt to get a first appointment slot
+        while self.env.now < g.sim_duration:
+            with self.pwp_first_res.get(1) as req:
+                result = yield req | self.env.timeout(0)
+
+                if req in result:
+                    break
+
+                if g.debug_level == 2:
+                    print(f"Patient {p.id} waiting for 1st pwp Appt. Week: {self.env.now}")
+
+                yield self.env.timeout(1)  # 🧠 Important: give top-up process time to act
+        else:
+            if g.debug_level >= 1:
+                print(f"Patient {p.id} gave up waiting for appointment.")
+
+        # Proceed to request caseload slot once appointment is secured
         if g.debug_level == 4:
-            print(f"Requesting PwP Caseload slot found for patient {p.id}")
-        
-        # check for available caseload slot
+            print(f"Requesting caseload slot for patient {p.id}")
+
         with self.pwp_caseload_res.get(1) as self.pwp_req:
             yield self.pwp_req
 
@@ -2359,39 +2355,45 @@ class Model:
                                             g.number_on_cbt_wl
         self.step3_waiting_list.at[p.id, 'WL Position'] = g.number_on_cbt_wl
 
-        # Check if there is a caseload slot available and return the resource
-        while True:
+        # Loop until a valid caseload slot is found, or explicitly told to give up
+        while self.env.now < g.sim_duration:
             self.result = yield self.env.process(self.find_caseload_slot(p.step3_path_route))
             
-            if self.result and isinstance(self.result, tuple) and len(self.result) == 2:
-                self.cbt_caseload_id, self.cbt_caseload_res = self.result
-                if self.cbt_caseload_res is not None:  # Ensure the resource is valid
-                    break  # Exit the loop when a resource is found
-            else:
-                if g.debug_level == 2:
-                    print("No available resource found for cbt, retrying...")
-
             if self.result == (None, None):
                 if g.debug_level == 2:
-                    print(f"Stopping retry as no resources are available. Time: {self.env.now}")
-                return  # **Exit function entirely**
+                    print(f"Stopping retry as no caseload resources available. Time: {self.env.now}")
+                return  # Exit the function
 
-            yield self.env.timeout(1)  # Wait a week and retry
+            if isinstance(self.result, tuple) and len(self.result) == 2:
+                self.cbt_caseload_id, self.cbt_caseload_res = self.result
+                if self.cbt_caseload_res is not None:
+                    break  # Slot found
 
+            if g.debug_level == 2:
+                print(f"No available caseload resource, patient {p.id} retrying next week...")
+
+            yield self.env.timeout(1)  # 🧠 Let top-up and other processes run
+
+        # Now attempt to get a first appointment slot
+        while self.env.now < g.sim_duration:
+            with self.cbt_first_res.get(1) as req:
+                result = yield req | self.env.timeout(0)
+
+                if req in result:
+                    break
+
+                if g.debug_level == 2:
+                    print(f"Patient {p.id} waiting for 1st cbt Appt. Week: {self.env.now}")
+
+                yield self.env.timeout(1)  # 🧠 Important: give top-up process time to act
+        else:
+            if g.debug_level >= 1:
+                print(f"Patient {p.id} gave up waiting for appointment.")
+
+        # Proceed to request caseload slot once appointment is secured
         if g.debug_level == 4:
-            print(f"First CBT Appt slot found for patient {p.id}, allocating appt")
-        
-        # check for available first appointment
-        with self.cbt_first_res.get(1) as self.cbt_first:
-            yield self.cbt_first
+            print(f"Requesting caseload slot for patient {p.id}")
 
-        if g.debug_level == 4:
-            print(f"First CBT Appt slot allocated for patient {p.id}")
-
-        if g.debug_level == 4:
-            print(f"Requesting CBT Caseload slot found for patient {p.id}")
-        
-        # check for available caseload slot
         with self.cbt_caseload_res.get(1) as self.cbt_req:
             yield self.cbt_req
 
@@ -2617,44 +2619,48 @@ class Model:
                                             g.number_on_couns_wl
         self.step3_waiting_list.at[p.id, 'WL Position'] = g.number_on_couns_wl
 
-        # Check if there is a caseload slot available and return the resource
-        while True:
+        # Loop until a valid caseload slot is found, or explicitly told to give up
+        while self.env.now < g.sim_duration:
             self.result = yield self.env.process(self.find_caseload_slot(p.step3_path_route))
             
-            if self.result and isinstance(self.result, tuple) and len(self.result) == 2:
-                self.couns_caseload_id, self.couns_caseload_res = self.result
-                if self.couns_caseload_res is not None:  # Ensure the resource is valid
-                    break  # Exit the loop when a resource is found
-            else:
-                if g.debug_level == 2:
-                    print("No available resource found for couns, retrying...")
-
             if self.result == (None, None):
                 if g.debug_level == 2:
-                    print(f"Stopping retry as no resources are available. Time: {self.env.now}")
-                return  # **Exit function entirely**
+                    print(f"Stopping retry as no caseload resources available. Time: {self.env.now}")
+                return  # Exit the function
 
-            yield self.env.timeout(1)  # Wait a week and retry
+            if isinstance(self.result, tuple) and len(self.result) == 2:
+                self.couns_caseload_id, self.couns_caseload_res = self.result
+                if self.couns_caseload_res is not None:
+                    break  # Slot found
 
-        with self.couns_first_res.get(1) as req:
-            result = yield req | self.env.timeout(0)  # Try to get the resource immediately
+            if g.debug_level == 2:
+                print(f"No available caseload resource, patient {p.id} retrying next week...")
 
-            if req not in result:  # If resource is unavailable
-                
-                yield self.env.timeout(1)  # Wait until next week
+            yield self.env.timeout(1)  # 🧠 Let top-up and other processes run
 
-                with self.couns_first_res.get(1) as req:  # Retry resource request
-                    yield req  # This will now wait for availability
+        # Now attempt to get a first appointment slot
+        while self.env.now < g.sim_duration:
+            with self.couns_first_res.get(1) as req:
+                result = yield req | self.env.timeout(0)
 
+                if req in result:
+                    break
+
+                if g.debug_level == 2:
+                    print(f"Patient {p.id} waiting for 1st Couns Appt. Week: {self.env.now}")
+
+                yield self.env.timeout(1)  # 🧠 Important: give top-up process time to act
+        else:
+            if g.debug_level >= 1:
+                print(f"Patient {p.id} gave up waiting for appointment.")
+
+        # Proceed to request caseload slot once appointment is secured
         if g.debug_level == 4:
-            print(f"First Couns Appt slot found for patient {p.id}, allocating appt")
-        
-        if g.debug_level == 4:
-            print(f"Requesting Couns Caseload slot found for patient {p.id}")
-        
-        # check for available caseload slot
+            print(f"Requesting caseload slot for patient {p.id}")
+
         with self.couns_caseload_res.get(1) as self.couns_req:
             yield self.couns_req
+
 
         if g.debug_level == 4:
             print(f"Caseload Couns slot found for patient {p.id}")
@@ -2747,9 +2753,12 @@ class Model:
             
             # Now we should have enough weeks
             self.couns_random_weeks = random.sample(available_weeks, self.number_couns_sessions)
-
+            
         # Sort the list to maintain sequential order
         self.couns_random_weeks.sort()
+
+        if g.debug_level == 2:
+            print(f"Random Weeks for Counselling are {self.couns_random_weeks}")
 
         if self.couns_session_counter < len(self.couns_random_weeks):
             p.step3_end_week = p.step3_start_week + self.couns_random_weeks[self.couns_session_counter]
@@ -3022,7 +3031,7 @@ if __name__ == "__main__":
     step2_results_df, step2_sessions_df, step3_results_df, step3_sessions_df, asst_weekly_dfs, step2_waiting_dfs, step3_waiting_dfs, staff_weekly_dfs, caseload_weekly_dfs  = my_trial.run_trial()
     # print(step2_sessions_df.to_string())
     # print(df_trial_results)
-    # step2_sessions_df.to_csv("step2_sessions.csv", index=True)
+    # step3_sessions_df.to_csv("step3_sessions.csv", index=True)
     # step2_waiting_dfs.to_csv("step2_waiters.csv", index=True)
     # step2_results_df.to_csv("step2_results.csv", index=True)
     # caseload_weekly_dfs.to_csv("caseloads.csv", index=True)
