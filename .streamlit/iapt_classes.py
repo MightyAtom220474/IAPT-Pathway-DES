@@ -7,7 +7,7 @@ import math
 class g:
 
     # used for testing
-    debug_level = 0
+    debug_level = 2
 
     # Referrals
     mean_referrals_pw = 100
@@ -23,7 +23,7 @@ class g:
     opt_in_qtime = 4 # longest period a patient will wait for tel assessment based on 4 week window for asst slots
     opt_in_rate = 0.75 # % of referrals that opt-in
     asst_6_weeks = 0.9 # % of referrals that are assessed within 6 weeks
-    asst_waiting_list = 1000 # current number of patients waiting for TA
+    asst_waiting_list = 0 # current number of patients waiting for TA
 
     # TA
     ta_time_mins = 60 # time allocated to each TA
@@ -33,7 +33,7 @@ class g:
     step2_ratio = 0.47 # proportion of patients that go onto step2 vs step3
     step2_routes = ['pwp','group'] # possible step2 routes
     step2_path_ratios = [0.8,0.2] #[0.94,0.06] # step2 proportion for each route
-    pwp_waiting_list = 1000 # current number of patients waiting for PwP
+    pwp_waiting_list = 0 # current number of patients waiting for PwP
     step2_pwp_sessions = 6 # number of pwp sessions at step2
     step2_pwp_dna_rate = 0.15 # ##### assume 15% DNA rate for pwp
     step2_pwp_1st_mins = 45 # minutes allocated for 1st pwp session
@@ -57,14 +57,14 @@ class g:
     step3_ratio = 0.15 # proportion of patients that go onto step3 vs step2
     step3_routes =['cbt','couns'] # full pathway options = ['Pfcbt','group','cbt','EMDR','DepC','DIT','IPT','CDEP']
     step3_path_ratios = [0.368,0.632]# [0.1,0.25,0.25,0.05,0.05,0.1,0.1,0.1] # step3 proportion for each route ##### Need to clarify exact split
-    cbt_waiting_list = 100 # current number of patients waiting for CBT
+    cbt_waiting_list = 0 # current number of patients waiting for CBT
     step3_cbt_sessions = 12 # number of pwp sessions at step2
     step3_cbt_1st_mins = 90 # minutes allocated for 1st cbt session
     step3_cbt_fup_mins = 60 # minutes allocated for cbt follow-up session
     step3_cbt_dna_rate = 0.216 # Wellbeing Workshop attendance 78.6%
     step3_session_admin = 15 # number of mins of clinical admin per session
     step3_cbt_period = 16 # max number of weeks cbt delivered over
-    couns_waiting_list = 1000 # current number of patients waiting for Couns
+    couns_waiting_list = 0 # current number of patients waiting for Couns
     step3_couns_sessions = 8 # number of couns sessions
     step3_couns_1st_mins = 90 # minutes allocated for 1st couns session
     step3_couns_fup_mins = 60 # minutes allocated for couns follow-up session
