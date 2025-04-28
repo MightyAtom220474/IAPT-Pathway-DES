@@ -7,7 +7,7 @@ import math
 class g:
 
     # used for testing
-    debug_level = 0
+    debug_level = 2
 
     # Referrals
     mean_referrals_pw = 100
@@ -119,8 +119,8 @@ class g:
 
     # bring in past referral data
     
-    # referral_rate_lookup = pd.read_csv('talking_therapies_referral_rates.csv'
-    #                                                            ,index_col=0)
+    referral_rate_lookup = pd.read_csv('talking_therapies_referral_rates.csv'
+                                                               ,index_col=0)
     # #print(referral_rate_lookup)
 # function to vary the number of sessions
 def vary_number_sessions(lower, upper, lambda_val=0.1):
@@ -2666,7 +2666,7 @@ if __name__ == "__main__":
     step2_results_df, step2_sessions_df, step3_results_df, step3_sessions_df, asst_weekly_dfs, step2_waiting_dfs, step3_waiting_dfs, staff_weekly_dfs, caseload_weekly_dfs  = my_trial.run_trial()
     # print(step2_sessions_df.to_string())
     # print(df_trial_results)
-    # step2_sessions_df.to_csv("step2_sessions.csv", index=True)
+    # step3_sessions_df.to_csv("step3_sessions.csv", index=True)
     # step3_waiting_dfs.to_csv("step3_waiters.csv", index=True)
     # step2_results_df.to_csv("step2_results.csv", index=True)
     # caseload_weekly_dfs.to_csv("caseloads.csv", index=True)
