@@ -159,6 +159,12 @@ with st.sidebar:
                                             1, 50, g.couns_caseload)
         pwp_caseload_input = st.slider("Number of Patients Allowed on PwP Caseload",
                                             1, 100, g.pwp_caseload)
+        cbt_first_input = st.slider("Number of First Appointments per week per CBT Prac",
+                                            1, 10, 2)
+        couns_first_input = st.slider("Number of First Appointments per week per Couns Prac",
+                                            1, 10, 2)
+        pwp_first_input = st.slider("Number of First Appointments per week per PwP Prac",
+                                            1, 10, 4)
         cbt_hours_avail_input = st.number_input(label="Non-Clinical Hours p/w for CBT Pratitioners",
                                                 min_value=10.0,max_value=25.0,
                                                 step=0.5,value = g.hours_avail_cbt)
