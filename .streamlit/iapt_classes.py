@@ -435,14 +435,23 @@ class Model:
         if g.debug_level >= 1:
             print(f"[Governor] - Asst WL: {g.ta_waiting_list}, PwP WL: {g.pwp_waiting_list}, CBT WL {g.cbt_waiting_list}, DepC WL: {g.couns_waiting_list}")
 
+        
+
         # if waiting lists have been supplied prefill waiting lists first
         # run prefilling of waiting lists first
+        if g.asst_waiting_list + g.pwp_waiting_list + g.cbt_waiting_list + g.couns_waiting_list > 0:
+        
+            yield self.env.process(self.prefill_waiting_lists())
+            
+            yield self.env.process(self.week_runner())
 
-        yield self.env.process(self.prefill_waiting_lists())
+        else:
+            yield self.env.process(self.week_runner())            
 
         if g.debug_level >= 1:
             print(f"[Governor] - Waiting Lists Prefilled. Now returning to normal weekly process")
-
+        
+    def week_runner(self):
         # run for however many times there are weeks in the sim
         while self.week_number < g.sim_duration:
 
