@@ -7,7 +7,7 @@ import math
 class g:
 
     # used for testing
-    debug_level = 0
+    debug_level = 4 # 0 = Off, 1 = Governor, 2 = Main Process, 3 = Sub-process, 4 = Patient Pathway
 
     # Referrals
     mean_referrals_pw = 100
@@ -119,8 +119,8 @@ class g:
 
     # bring in past referral data
     
-    # referral_rate_lookup = pd.read_csv('talking_therapies_referral_rates.csv'
-    #                                                            ,index_col=0)
+    referral_rate_lookup = pd.read_csv('talking_therapies_referral_rates.csv'
+                                                               ,index_col=0)
     # # #print(referral_rate_lookup)
 # function to vary the number of sessions
 def vary_number_sessions(lower, upper, lambda_val=0.1):
@@ -381,6 +381,9 @@ class Model:
     # master process to control the running of all the other processes
     def the_governor(self):
 
+        if g.debug_level >= 1:
+                    print(f"[Governor] - Starting up the Governor Process")
+        
         # start off the governor at week 0
         self.week_number = 0
 
@@ -410,10 +413,20 @@ class Model:
         # list to hold step3 waiting list
         self.step3_waiting_stats = []
 
+        if g.debug_level >= 1:
+                    print(f"[Governor] - Handing Over to the Week Runner Process")
+
+        yield self.env.process(self.week_runner())
+
+    def week_runner(self):
+
+        if g.debug_level >= 1:
+                    print(f"[Week Runner] - Week Runner Process Started")
+
         # run for however many times there are weeks in the sim
         while self.week_number < g.sim_duration:
 
-            if g.debug_level == 2:
+            if g.debug_level >= 1:
 
                 print(f'''
                 #################################
@@ -421,56 +434,68 @@ class Model:
                 #################################
                 ''')
 
-            if g.debug_level == 2:
-                    print(f"Topping Up Resources")
+            if g.debug_level >= 1:
+                print(f"[Week Runner] - Topping Up Weekly Resources")
             # top up the weekly resources ready for next run
             yield self.env.process(self.replenish_weekly_resources(self.week_number))
 
-            if g.debug_level == 2:
-                    print(f"Topping Up Caseloads")
+            if g.debug_level >= 1:
+                print(f"[Week Runner] - Weekly Resources Topped Up")
+
+            if g.debug_level >= 1:
+                print(f"[Week Runner] - Topping Up Caseloads")
             
             # top up the caseload resources ready for next run
             yield self.env.process(self.top_up_caseloads(self.week_number))
+
+            if g.debug_level >= 1:
+                print(f"[Week Runner] - Caseloads Topped Up")
             
-            if g.debug_level == 2:
-                    print(f"Firing up the staff entity generator")
+            if g.debug_level >= 1:
+                print(f"[Week Runner] - Firing up the Staff Generator")
             
             # start up the staff entity generator
             yield self.env.process(self.staff_entity_generator(self.week_number))
 
-            if g.debug_level == 2:
-                    print(f"Staff generator complete")
+            if g.debug_level >= 1:
+                print(f"[Week Runner] - Staff Generator complete")
 
-            if g.debug_level == 2:
-                    print(f"Firing up the referral generator")
+            if g.debug_level >= 1:
+                print(f"[Week Runner] - Firing up the Referral Generator")
             # start up the referral generator
             yield self.env.process(self.generator_patient_referrals(self.week_number))
             
-            if g.debug_level == 2:
-                    print(f"Referral generator has returned {self.referrals_this_week} referrals")
+            if g.debug_level >= 1:
+                    print(f"[Week Runner] - Referral Generator has Returned {self.referrals_this_week} Referrals")
 
-            if g.debug_level == 2:
-                    print(f"Passing {self.referrals_this_week} to the patient treatment generator")
+            if g.debug_level >= 1:
+                print(f"[Week Runner] - Passing {self.referrals_this_week} to the Patient Treatment Generator")
+
+            if g.debug_level >= 1:
+                print('[Week Runner] - Commencing Treatment of Patients') 
 
             # start up the patient treatment generator
             yield self.env.process(self.patient_treatment_generator(self.referrals_this_week,self.week_number))
 
-            if g.debug_level == 2:
-                    print(f"Collecting Weekly Stats")
+            if g.debug_level >= 1:
+                print('[Week Runner] - Patients Have Been Treated!!!!!') 
+
+            if g.debug_level >= 1:
+                print(f"[Week Runner] - Collecting Weekly Stats")
             
             # collect the weekly stats ready for the next week to run
             yield self.env.process(self.weekly_stats(self.week_number))
 
-            if g.debug_level == 2:
-                    print(f"Weekly Stats have been collected")
+            if g.debug_level >= 1:
+                print(f"[Week Runner] - Weekly Stats have been Collected")
         
             # increment the week number by one now everything has been run for this week
             self.week_number += 1
 
-            if g.debug_level == 2 and self.week_number<g.sim_duration:
-                    print(f"Week {self.week_number-1} complete, moving on to Week {self.week_number}")
-            elif g.debug_level == 2 and self.week_number == g.sim_duration-1:
-                print(f"Week {self.week_number-1} complete, simulation has now finished")
+            if g.debug_level >= 1 and self.week_number<g.sim_duration:
+                print(f"[Week Runner] - Week {self.week_number-1} complete, moving on to Week {self.week_number}")
+            elif g.debug_level >= 1 and self.week_number == g.sim_duration-1:
+                print(f"[Week Runner] - Week {self.week_number-1} complete, simulation has now finished")
 
             # wait a week before moving onto the next week
             yield self.env.timeout(1)
