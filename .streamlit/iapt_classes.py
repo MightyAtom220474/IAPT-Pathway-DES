@@ -391,14 +391,14 @@ class Model:
         yield self.env.process(self.caseload_builder())
 
         if g.debug_level == 2:
-                    print(f"Building Sim Resources")
+                    print(f"[Governor] - Building Sim Resources")
                    
         # build the weekly resources needed to run the model
         # pass in 0 for TA resource which is dynamic
         yield self.env.process(self.resource_builder(0))
 
         if g.debug_level == 2:
-                    print(f"Sim Resources Ready")
+                    print(f"[Governor] - Sim Resources Ready")
 
         # list to hold weekly asst statistics
         self.asst_weekly_stats = []
@@ -503,24 +503,27 @@ class Model:
     def patient_treatment_generator(self,number_of_referrals,treatment_week_number):
 
         self.referrals_to_process = number_of_referrals
-        if g.debug_level == 2:
-                print(f'Processing {number_of_referrals} referral through treatment')
+        if g.debug_level >= 1:
+                print(f'[Treatment Gen] - Processing {number_of_referrals} referral through treatment')
         self.treatment_week_number = treatment_week_number
 
         while self.referrals_to_process > 0:
 
-            if g.debug_level == 2:
-                print(f'Processing referral, {self.referrals_to_process} left out of {number_of_referrals}')
+            if g.debug_level >= 1:
+                print(f'[Treatment Gen] - Processing referral, {self.referrals_to_process} left out of {number_of_referrals}')
             yield self.env.timeout(0) 
             self.env.process(self.screen_referral(self.treatment_week_number))
             
             self.referrals_to_process -= 1
             
-            if g.debug_level == 2:
-                print(f'Referral processed, proceeding to next referral, {self.referrals_to_process} left')
+            if g.debug_level >= 1:
+                print(f'[Treatment Gen] - Referral processed, proceeding to next referral, {self.referrals_to_process} left')
 
     # process to capture all the results we need at the end of each week
     def weekly_stats(self,stats_week_number):
+            
+            if g.debug_level >= 1:
+                print('[Weekly Stats] - Starting Collection of Weekly Stats')
           
             self.stats_week_number = stats_week_number
 
@@ -708,7 +711,8 @@ class Model:
                     'Avg Wait': self.step3_waiting_avg,
                     'Max Wait': self.step3_waiting_max
                 })
-
+            if g.debug_level >= 1:
+                print('[Weekly Stats] - Weekly Stats Collected')
             # hand control back to the governor function
             yield self.env.timeout(0)
 
