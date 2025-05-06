@@ -714,8 +714,17 @@ class Model:
 
             if g.debug_level >= 1:
                 print(f'[Treatment Gen] - Processing referral, {self.referrals_to_process} left out of {number_of_referrals}')
-            yield self.env.timeout(0) 
-            self.env.process(self.screen_referral(self.treatment_week_number))
+
+            # Increment the patient counter by 1
+            self.patient_counter += 1
+
+            # Create a new patient from Patient Class
+            p = Patient(self.patient_counter)
+            p.week_added = treatment_week_number
+            if g.debug_level >= 3:
+                print(f"[Screening] - ==== Patient {p.id} Generated ====")
+            #yield self.env.timeout(0) 
+            yield self.env.process(self.screen_referral(p, self.treatment_week_number))
             
             self.referrals_to_process -= 1
             
@@ -1336,25 +1345,18 @@ class Model:
         self.couns_staff_counter = 300
 
     ###### assessment part of the clinical pathway #####
-    def screen_referral(self, asst_week_number):
+    def screen_referral(self,patient,asst_week_number):
 
         if g.debug_level >= 4:
             print("[Screening] - Starting Screening of Referral")
+
+        p = patient
 
         self.asst_week_number = asst_week_number
 
         # decide whether the referral was rejected at screening stage
         self.reject_referral = random.uniform(0,1)
-                        
-        # Increment the patient counter by 1
-        self.patient_counter += 1
-
-        # Create a new patient from Patient Class
-        p = Patient(self.patient_counter)
-        p.week_added = asst_week_number
-        if g.debug_level >= 4:
-            print(f"[Screening] - ==== Patient {p.id} Generated ====")
-
+        
         # all referrals get screened
         self.asst_results_df.at[p.id, 'Referral Time Screen'
                                         ] = self.random_normal(
