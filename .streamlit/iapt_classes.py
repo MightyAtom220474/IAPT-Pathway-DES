@@ -471,6 +471,31 @@ class Model:
             if g.debug_level >= 1:
                 print(f"[Week Runner] - Staff Generator complete")
 
+            # if waiting lists have been supplied, prefill them
+            
+            if g.ta_waiting_list > 0:
+                if g.debug_level >= 1:
+                    print(f"[Week Runner] - Prefilling TA Waiting List")
+                yield self.env.process(self.prefill_waiting_lists(g.ta_waiting_list,'ta'))
+            
+            if g.pwp_waiting_list > 0:
+                if g.debug_level >= 1:
+                    print(f"[Week Runner] - Prefilling PwP Waiting List")
+                yield self.env.process(self.prefill_waiting_lists(g.pwp_waiting_list,'pwp'))
+
+            if g.cbt_waiting_list > 0:
+                if g.debug_level >= 1:
+                    print(f"[Week Runner] - Prefilling CBT Waiting List")
+                yield self.env.process(self.prefill_waiting_lists(g.cbt_waiting_list,'cbt'))
+            
+            if g.couns_waiting_list > 0:
+                if g.debug_level >= 1:
+                    print(f"[Week Runner] - Prefilling DepC Waiting List")
+                yield self.env.process(self.prefill_waiting_lists(g.couns_waiting_list,'couns'))
+
+            if g.debug_level >= 1:
+                    print(f"[Week Runner] - Prefilling of Waiting Lists Complete")
+
             if g.debug_level >= 1:
                 print(f"[Week Runner] - Firing up the Referral Generator")
             # start up the referral generator
@@ -510,6 +535,173 @@ class Model:
 
             # wait a week before moving onto the next week
             yield self.env.timeout(1)
+
+    def prefill_waiting_lists(self,wait_list_size,wait_list_type):
+        
+        if g.debug_level >= 2:
+            print(f'[Prefill] - Starting prefilling process for {wait_list_type}')
+        
+        # prefill waiting list using value from g class
+        for w in range(wait_list_size):
+
+            # Increment patient counter by 1
+            self.patient_counter += 1
+
+            # Increment number of patients in the system by 1
+            g.active_patients += 1
+            
+            # generate a patient from the patient class
+            p = Patient(self.patient_counter)
+
+            if wait_list_type == 'ta':
+                if g.debug_level >= 2:
+                    print(f'[Prefill] - Filling Assessment Waiting list with {wait_list_size} patients')
+                g.number_on_ta_wl += 1
+                p.asst_wl_added = True
+                p.asst_already_seen = False
+            elif wait_list_type == 'pwp':
+                if g.debug_level >= 2:
+                    print(f'[Prefill] - Filling PwP Waiting list with {wait_list_size} patients')
+                g.number_on_pwp_wl += 1
+                p.asst_wl_added = False
+                p.asst_already_seen = True
+                p.pwp_wl_added = True
+                p.pwp_already_seen = False
+                p.step2_path_route = wait_list_type
+                p.patient_source = 'PwP WL'
+                p.week_added = 0
+                p.treat_wait_week = 0
+
+                # Convert Patient ID to int for consistency
+                p_id_int = int(p.id)
+                
+                if p_id_int not in self.step2_waiting_list.index:
+                    pwp_new_row = pd.DataFrame([{
+                        'Source': p.patient_source,
+                        'Run Number': self.run_number,
+                        'Week Number': self.week_number,
+                        'Route Name': 'pwp',
+                        'IsWaiting': 1,
+                        'WL Position': g.number_on_pwp_wl,
+                        'Start Week': 0,
+                        'End Week': -1,
+                        'Wait Time': g.pwp_avg_wait
+                    }], index=[p_id_int])  # Set index during creation
+
+                    # Match column types if DataFrame is non-empty
+                    if not self.step2_waiting_list.empty:
+                        pwp_new_row = pwp_new_row.astype(self.step2_waiting_list.dtypes)
+
+                    # Safely concat only non-empty DataFrames
+                    frames_to_concat = [df for df in [self.step2_waiting_list, pwp_new_row] if not df.empty]
+                    self.step2_waiting_list = pd.concat(frames_to_concat) if frames_to_concat else pwp_new_row
+
+                else:
+                    # Update existing patient data
+                    self.step2_waiting_list.loc[p_id_int, [
+                        'Source', 'Run Number', 'Week Number', 'Route Name', 'IsWaiting',
+                        'WL Position', 'Start Week', 'End Week', 'Wait Time'
+                    ]] = ['PwP WL', self.run_number, self.week_number, 'pwp', 1,
+                        g.number_on_pwp_wl, 0, -1, g.pwp_avg_wait]
+                    
+            elif wait_list_type == 'cbt':
+                if g.debug_level >= 2:
+                    print(f'[Prefill] - Filling CBT Waiting list with {wait_list_size} patients')
+                g.number_on_cbt_wl += 1
+                p.asst_wl_added = False
+                p.asst_already_seen = True
+                p.cbt_wl_added = True
+                p.cbt_already_seen = False
+                p.step3_path_route = wait_list_type
+                p.patient_source = 'CBT WL'
+                p.week_added = 0
+                p.treat_wait_week = 0
+
+                # Convert Patient ID to int for consistency
+                p_id_int = int(p.id)
+
+                # Add or update patient in waiting list
+                if p_id_int not in self.step3_waiting_list.index:
+                    cbt_new_row = pd.DataFrame([{
+                        'Source': 'CBT WL',
+                        'Run Number': self.run_number,
+                        'Week Number': self.week_number,
+                        'Route Name': 'cbt',
+                        'IsWaiting': 1,
+                        'WL Position': g.number_on_cbt_wl,
+                        'Start Week': 0,
+                        'End Week': -1,
+                        'Wait Time': g.cbt_avg_wait
+                    }], index=[p_id_int])  # Set index during creation
+
+                    # Match column types if DataFrame is non-empty
+                    if not self.step3_waiting_list.empty:
+                        cbt_new_row = cbt_new_row.astype(self.step3_waiting_list.dtypes)
+
+                    # Safely concat only non-empty DataFrames
+                    frames_to_concat = [df for df in [self.step3_waiting_list, cbt_new_row] if not df.empty]
+                    self.step3_waiting_list = pd.concat(frames_to_concat) if frames_to_concat else cbt_new_row
+
+                else:
+                    # Update existing patient data
+                    self.step3_waiting_list.loc[p_id_int, [
+                        'Source', 'Run Number', 'Week Number', 'Route Name', 'IsWaiting',
+                        'WL Position', 'Start Week', 'End Week', 'Wait Time'
+                    ]] = ['CBT WL', self.run_number, self.week_number, 'cbt', 1,
+                        g.number_on_cbt_wl, 0, -1, g.cbt_avg_wait]
+            else:
+                if g.debug_level >= 2:
+                    print(f'[Prefill] - Filling DepC Waiting list with {wait_list_size} patients')
+                g.number_on_couns_wl += 1
+                p.asst_wl_added = False
+                p.asst_already_seen = True
+                p.couns_wl_added = True
+                p.couns_already_seen = False
+                p.step3_path_route = wait_list_type
+                p.patient_source = 'Couns WL'
+                p.week_added = 0
+                p.treat_wait_week = 0
+
+                # Convert Patient ID to int for consistency
+                p_id_int = int(p.id)
+
+                # Add or update patient in waiting list
+                if p_id_int not in self.step3_waiting_list.index:
+                    couns_new_row = pd.DataFrame([{
+                        'Source': 'Couns WL',
+                        'Run Number': self.run_number,
+                        'Week Number': self.week_number,
+                        'Route Name': 'couns',
+                        'IsWaiting': 1,
+                        'WL Position': g.number_on_couns_wl,
+                        'Start Week': 0,
+                        'End Week': -1,
+                        'Wait Time': g.couns_avg_wait
+                    }], index=[p_id_int])  # Set index during creation
+
+                    if self.step3_waiting_list.empty:
+                        self.step3_waiting_list = couns_new_row.copy()
+                    else:
+                        self.step3_waiting_list = pd.concat([self.step3_waiting_list, couns_new_row])
+                else:
+                    # Update existing patient data
+                    self.step3_waiting_list.loc[p_id_int, [
+                        'Source', 'Run Number', 'Week Number', 'Route Name', 'IsWaiting',
+                        'WL Position', 'Start Week', 'End Week', 'Wait Time'
+                    ]] = ['Couns WL', self.run_number, self.week_number, 'couns', 1,
+                        g.number_on_couns_wl, 0, -1, g.couns_avg_wait]
+
+            # now start the patient down the pathway
+            self.env.process(self.pathway_start_point(p, self.week_number))
+
+        if g.debug_level >= 2:
+            print('[Prefill] - Waiting Lists now Generated. Passing control back to Governor')
+
+        # move on without waiting
+        yield self.env.timeout(0)
+
+        if g.debug_level >= 2:
+            print(f"[Prefill] - Completed at sim time: {self.env.now}") 
 
     def patient_treatment_generator(self,number_of_referrals,treatment_week_number):
 
