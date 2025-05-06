@@ -7,7 +7,7 @@ import math
 class g:
 
     # used for testing
-    debug_level = 0 # 0 = Off, 1 = Governor, 2 = Main Process, 3 = Sub-process, 4 = Patient Pathway
+    debug_level = 4 # 0 = Off, 1 = Governor, 2 = Main Process, 3 = Sub-process, 4 = Patient Pathway
 
     # Referrals
     mean_referrals_pw = 100
@@ -17,7 +17,8 @@ class g:
     referral_review_rate = 0.4 # % that go to MDT as prev contact with Trust
     mdt_freq = 2 # how often in weeks MDT takes place, longest time a review referral may wait for review
     review_rej_rate = 0.5 # % ref that go to MDT and get rejected
-    base_waiting_list = 2741 # current number of patients on waiting list
+    ta_waiting_list = 100 # current number of patients on TA waiting list
+    ta_avg_wait = 4 # current average TA waiting time in weeks
     referral_screen_time = 20 # average time it takes to screen one referral by a pwp
     opt_in_wait = 1 # no. of weeks patients have to opt in
     opt_in_qtime = 4 # longest period a patient will wait for tel assessment based on 4 week window for asst slots
@@ -33,6 +34,8 @@ class g:
     step2_routes = ['pwp','group'] # possible step2 routes
     step2_path_ratios = [0.8,0.2] #[0.94,0.06] # step2 proportion for each route
     step2_pwp_sessions = 6 # number of pwp sessions at step2
+    pwp_waiting_list = 150 # current number of patients on PwP waiting list
+    pwp_avg_wait = 6 # current average PwP waiting time in weeks
     step2_pwp_dna_rate = 0.15 # ##### assume 15% DNA rate for pwp
     step2_pwp_1st_mins = 45 # minutes allocated for 1st pwp session
     step2_pwp_fup_mins = 30 # minutes allocated for pwp follow-up session
@@ -55,6 +58,10 @@ class g:
     step3_ratio = 0.15 # proportion of patients that go onto step3 vs step2
     step3_routes =['cbt','couns'] # full pathway options = ['Pfcbt','group','cbt','EMDR','DepC','DIT','IPT','CDEP']
     step3_path_ratios = [0.368,0.632]# [0.1,0.25,0.25,0.05,0.05,0.1,0.1,0.1] # step3 proportion for each route ##### Need to clarify exact split
+    cbt_waiting_list = 250 # current number of patients on CBT waiting list
+    cbt_avg_wait = 6 # current average CBT waiting time in weeks
+    couns_waiting_list = 500 # current number of patients on DepC waiting list
+    couns_avg_wait = 20 # current average Couns waiting time in weeks
     step3_cbt_sessions = 12 # number of pwp sessions at step2
     step3_cbt_1st_mins = 90 # minutes allocated for 1st cbt session
     step3_cbt_fup_mins = 60 # minutes allocated for cbt follow-up session
@@ -119,8 +126,8 @@ class g:
 
     # bring in past referral data
     
-    # referral_rate_lookup = pd.read_csv('talking_therapies_referral_rates.csv'
-    #                                                            ,index_col=0)
+    referral_rate_lookup = pd.read_csv('talking_therapies_referral_rates.csv'
+                                                               ,index_col=0)
     # # #print(referral_rate_lookup)
 # function to vary the number of sessions
 def vary_number_sessions(lower, upper, lambda_val=0.1):
@@ -143,8 +150,8 @@ class Patient:
         # Patient
         self.id = p_id
         self.patient_at_risk = 0 # used to determine DNA/Canx policy to apply
-
         self.week_added = None # Week they were added to the waiting list (for debugging purposes)
+        self.patient_source = [] # where the patient was generated from i.e prefill or referral generator
 
         # Referral
         self.referral_rejected = 0 # were they rejected at referral
@@ -157,6 +164,7 @@ class Patient:
         self.opt_in_qtime = 0 # how much of 4 week TA app window was used
         self.ta_wait_start = 0  # when they started waiting for a TA
         self.attended_ta = 0 # did the patient attend TA appointment
+        self.ta_wait_end = 0 # used for prefill to calculate avg wait time
         self.treat_wait_week = 0 # week they started waiting to enter treatment
 
         self.initial_step = [] # string, whether they were step 2 or step 3
@@ -171,7 +179,8 @@ class Patient:
         self.step2_drop_out = 0 # did they drop out during step2
         self.step2_week_number = 0 # counter for which week number they are on
         self.step2_end_week = 0 # the week number when they completed treatment
-
+        self.pwp_wait_end = 0 # used for prefill to calculate avg wait time
+        
         # step3
         self.step3_resource_id = [] # identifier for the staff member allocated to their treatment
         self.step3_path_route = [] # string, which step2 path they took
@@ -182,6 +191,8 @@ class Patient:
         self.step3_drop_out = 0 # did they drop out during step2
         self.step3_week_number = 0 # counter for which week number they are on
         self.step3_end_week = 0
+        self.cbt_wait_end = 0 # used for prefill to calculate avg wait time
+        self.couns_wait_end = 0 # used for prefill to calculate avg wait time
 
 # Staff class to be run weekly by week runner to record staff non-clinical time
 class Staff:
