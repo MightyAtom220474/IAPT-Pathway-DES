@@ -7,7 +7,7 @@ import math
 class g:
 
     # used for testing
-    debug_level = 4 # 0 = Off, 1 = Governor, 2 = Main Process, 3 = Sub-process, 4 = Patient Pathway
+    debug_level = 0 # 0 = Off, 1 = Governor, 2 = Main Process, 3 = Sub-process, 4 = Patient Pathway
 
     # Referrals
     mean_referrals_pw = 100
