@@ -7,7 +7,7 @@ import math
 class g:
 
     # used for testing
-    debug_level = 4 # 0 = Off, 1 = Governor, 2 = Main Process, 3 = Sub-process, 4 = Patient Pathway
+    debug_level = 0 # 0 = Off, 1 = Governor, 2 = Main Process, 3 = Sub-process, 4 = Patient Pathway
 
     # Referrals
     mean_referrals_pw = 100
@@ -126,8 +126,8 @@ class g:
 
     # bring in past referral data
     
-    referral_rate_lookup = pd.read_csv('talking_therapies_referral_rates.csv'
-                                                               ,index_col=0)
+    # referral_rate_lookup = pd.read_csv('talking_therapies_referral_rates.csv'
+    #                                                            ,index_col=0)
     # # #print(referral_rate_lookup)
 # function to vary the number of sessions
 def vary_number_sessions(lower, upper, lambda_val=0.1):
@@ -563,7 +563,7 @@ class Model:
         # if g.debug_level >= 1:
         #             print(f"[Governor] - Handing Over to the Week Runner Process")
 
-        #yield self.env.process(self.week_runner())
+        yield self.env.process(self.week_runner())
 
     def week_runner(self):
 
@@ -1875,7 +1875,7 @@ class Model:
                 self.step2_waiting_list = pd.concat([self.step2_waiting_list, new_row])
             else:
                 # Update existing patient data
-                self.step2_waiting_list.loc[p_id_int, ['Referral Gen',
+                self.step2_waiting_list.loc[p_id_int, ['Source',
                     'Run Number', 'Week Number', 'Route Name', 'IsWaiting',
                     'WL Position', 'Start Week', 'End Week', 'Wait Time'
                 ]] = [p.patient_source, self.run_number, self.week_number, 'pwp', 1,
@@ -1915,7 +1915,7 @@ class Model:
                 self.step2_waiting_list = pd.concat([self.step2_waiting_list, new_row])
             else:
                 # Update existing patient data
-                self.step2_waiting_list.loc[p_id_int, ['Referral Gen',
+                self.step2_waiting_list.loc[p_id_int, ['Source',
                     'Run Number', 'Week Number', 'Route Name', 'IsWaiting',
                     'WL Position', 'Start Week', 'End Week', 'Wait Time'
                 ]] =[p.patient_source, self.run_number, self.week_number, 'group', 1,
@@ -1989,10 +1989,10 @@ class Model:
                 self.step3_waiting_list = pd.concat([self.step3_waiting_list, new_row])
             else:
                 # Update existing patient data
-                self.step3_waiting_list.loc[p_id_int, ['Referral Gen',
+                self.step3_waiting_list.loc[p_id_int, ['Source',
                     'Run Number', 'Week Number', 'Route Name', 'IsWaiting',
                     'WL Position', 'Start Week', 'End Week', 'Wait Time'
-                ]] = [self.run_number, self.week_number, 'cbt', 1,
+                ]] = [p.patient_source, self.run_number, self.week_number, 'cbt', 1,
                     g.number_on_cbt_wl, p.treat_wait_week, -1, 0.0]
 
             yield self.env.process(self.step3_cbt_process(p))
@@ -2026,10 +2026,10 @@ class Model:
                 self.step3_waiting_list = pd.concat([self.step3_waiting_list, new_row])
             else:
                 # Update existing patient data
-                self.step3_waiting_list.loc[p_id_int, ['Referral Gen',
+                self.step3_waiting_list.loc[p_id_int, ['Source',
                     'Run Number', 'Week Number', 'Route Name', 'IsWaiting',
                     'WL Position', 'Start Week', 'End Week', 'Wait Time'
-                ]] = [self.run_number, self.week_number, 'couns', 1,
+                ]] = [p.patient_source, self.run_number, self.week_number, 'couns', 1,
                     g.number_on_couns_wl, p.treat_wait_week, -1, 0.0]
             
             yield self.env.process(self.step3_couns_process(p))
