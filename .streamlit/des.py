@@ -290,7 +290,8 @@ st.session_state.sim_data = {}
 if button_run_pressed:
     with st.spinner('Simulating the system...'):
         # Create an instance of the Trial class
-        my_trial = Trial()
+        env = simpy.Environment()
+        my_trial = Trial(env)
         pd.set_option('display.max_rows', 1000)
 
         # Run the simulation
