@@ -43,6 +43,11 @@ with st.sidebar:
         st.markdown("#### Screening")
         referral_input = st.slider("Average Number of Referrals Per Week", 0, 1500
                                    , g.mean_referrals_pw)
+        ta_wl_input = st.number_input("Current Telephone Assessment Waiting List", min_value=0, max_value=1000, step=1, value=0)
+        if ta_wl_input > 0:
+            ta_wait_input = st.number_input("Current Average TA Waiting Time (weeks)", min_value=0, max_value=52, step=1, value=0)
+        else:
+            ta_wait_input = 0
         referral_reject_input = st.number_input("Referral Rejection Rate (%)",
                         min_value=0.0, max_value=20.0, step=0.25, value=4.25)
         referral_review_input = st.number_input("% of Referrals Sent for Screening",
@@ -73,6 +78,11 @@ with st.sidebar:
         step2_path_ratio = st.number_input("% of Step 2 Allocated to PwP vs Group",
                                            min_value=0.0, max_value=100.0, 
                                            step=1.0, value=47.0)
+        pwp_wl_input = st.number_input("Current PwP 1:1 Waiting List", min_value=0, max_value=1000, step=1, value=0)
+        if pwp_wl_input > 0:
+            pwp_wait_input = st.number_input("Current Average PwP 1:1 Waiting Time (weeks)", min_value=0, max_value=52, step=1, value=0)
+        else:
+            pwp_wait_input = 0
         step2_first_input = st.slider("Number of Mins for First PwP Appointment",
                                             1, 60, 45)
         step2_fup_input = st.slider("Number of Mins for Follow-up PwP Appointment",
@@ -107,6 +117,11 @@ with st.sidebar:
         step_down_input = st.number_input("% of Patients Stepped Down",
                                           min_value=0.0, max_value=20.0,
                                           step=0.5, value=12.0)
+        cbt_wl_input = st.number_input("Current CBT Waiting List", min_value=0, max_value=1000, step=1, value=0)
+        if cbt_wl_input > 0:
+            cbt_wait_input = st.number_input("Current Average CBT Waiting Time (weeks)", min_value=0, max_value=52, step=1, value=0)
+        else:
+            cbt_wait_input = 0
         step3_cbt_first_input = st.slider("Number of Mins for First CBT Appointment",
                                           1, 180, 90)
         step3_cbt_fup_input = st.slider("Number of Mins for Follow-up CBT Appointment",
@@ -114,6 +129,11 @@ with st.sidebar:
         step3_cbt_dna_input = st.number_input("% DNA's for CBT Appointments",
                                               min_value=0.0, max_value=30.0,
                                               step=0.5, value=20.0)
+        couns_wl_input = st.number_input("Current DepC Waiting List", min_value=0, max_value=1000, step=1, value=1000)
+        if couns_wl_input > 0:
+            couns_wait_input = st.number_input("Current Average DepC Waiting Time (weeks)", min_value=0, max_value=52, step=1, value=0)
+        else:
+            couns_wait_input = 0
         step3_couns_first_input = st.slider("Number of Mins for First DepC Appointment",
                                             1, 180, 90)
         step3_couns_fup_input = st.slider("Number of Mins for Follow-up DepC Appointment",
@@ -192,7 +212,8 @@ g.referral_rate_lookup = load_referral_rates()
 
 ##### Screening
 g.mean_referrals_pw = referral_input
-#g.base_waiting_list = 2741
+g.ta_waiting_list = ta_wl_input
+g.ta_avg_wait = ta_wait_input
 g.referral_rejection_rate = referral_reject_input/100
 g.referral_review_rate = referral_review_input
 g.referral_screen_time = referral_screen_input
@@ -202,6 +223,8 @@ g.step2_step3_ratio = (step2_step3_rate_input/100,1-(step2_step3_rate_input/100)
 
 ##### Step 2
 g.step2_path_ratios = (step2_path_ratio/100,1-(step2_path_ratio/100))
+g.pwp_waiting_list = pwp_wl_input
+g.pwp_avg_wait = pwp_wait_input
 g.step2_pwp_1st_mins = step2_first_input
 g.step2_pwp_fup_mins = step2_fup_input
 g.step2_pwp_dna_rate = step2_pwp_dna_input/100
@@ -215,11 +238,15 @@ g.step2_session_admin = step2_admin_input
 
 ##### Step 3
 g.step3_path_ratios = (step3_path_ratio/100,1-(step3_path_ratio/100))
-g.step3_cbt_1st_mins = step2_first_input
-g.step3_cbt_fup_mins = step2_fup_input
+g.cbt_waiting_list = cbt_wl_input
+g.cbt_avg_wait = cbt_wait_input
+g.step3_cbt_1st_mins = step3_cbt_first_input
+g.step3_cbt_fup_mins = step3_cbt_fup_input
 g.step3_cbt_dna_rate = step3_cbt_dna_input/100
-g.step3_couns_1st_mins = step2_first_input
-g.step3_couns_fup_mins = step2_fup_input
+g.couns_waiting_list = couns_wl_input
+g.couns_avg_wait = couns_wait_input
+g.step3_couns_1st_mins = step3_couns_first_input
+g.step3_couns_fup_mins = step3_couns_fup_input
 g.step3_couns_dna_rate = step3_couns_dna_input/100
 g.step_down_rate = step_down_input/100
 g.step3_session_admin = step3_admin_input
