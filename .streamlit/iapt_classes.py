@@ -7,7 +7,7 @@ import math
 class g:
 
     # used for testing
-    debug_level = 4 # 0 = Off, 1 = Governor, 2 = Main Process, 3 = Sub-process, 4 = Patient Pathway
+    debug_level = 0 # 0 = Off, 1 = Governor, 2 = Main Process, 3 = Sub-process, 4 = Patient Pathway
 
     # Referrals
     mean_referrals_pw = 100
@@ -17,7 +17,7 @@ class g:
     referral_review_rate = 0.4 # % that go to MDT as prev contact with Trust
     mdt_freq = 2 # how often in weeks MDT takes place, longest time a review referral may wait for review
     review_rej_rate = 0.5 # % ref that go to MDT and get rejected
-    ta_waiting_list = 100 # current number of patients on TA waiting list
+    ta_waiting_list = 0 # current number of patients on TA waiting list
     ta_avg_wait = 4 # current average TA waiting time in weeks
     referral_screen_time = 20 # average time it takes to screen one referral by a pwp
     opt_in_wait = 1 # no. of weeks patients have to opt in
@@ -34,8 +34,8 @@ class g:
     step2_routes = ['pwp','group'] # possible step2 routes
     step2_path_ratios = [0.8,0.2] #[0.94,0.06] # step2 proportion for each route
     step2_pwp_sessions = 6 # number of pwp sessions at step2
-    pwp_waiting_list = 150 # current number of patients on PwP waiting list
-    pwp_avg_wait = 6 # current average PwP waiting time in weeks
+    pwp_waiting_list = 0 # current number of patients on PwP waiting list
+    pwp_avg_wait = 0 # current average PwP waiting time in weeks
     step2_pwp_dna_rate = 0.15 # ##### assume 15% DNA rate for pwp
     step2_pwp_1st_mins = 45 # minutes allocated for 1st pwp session
     step2_pwp_fup_mins = 30 # minutes allocated for pwp follow-up session
@@ -58,10 +58,10 @@ class g:
     step3_ratio = 0.15 # proportion of patients that go onto step3 vs step2
     step3_routes =['cbt','couns'] # full pathway options = ['Pfcbt','group','cbt','EMDR','DepC','DIT','IPT','CDEP']
     step3_path_ratios = [0.368,0.632]# [0.1,0.25,0.25,0.05,0.05,0.1,0.1,0.1] # step3 proportion for each route ##### Need to clarify exact split
-    cbt_waiting_list = 250 # current number of patients on CBT waiting list
-    cbt_avg_wait = 6 # current average CBT waiting time in weeks
-    couns_waiting_list = 500 # current number of patients on DepC waiting list
-    couns_avg_wait = 20 # current average Couns waiting time in weeks
+    cbt_waiting_list = 0 # current number of patients on CBT waiting list
+    cbt_avg_wait = 0 # current average CBT waiting time in weeks
+    couns_waiting_list = 0 # current number of patients on DepC waiting list
+    couns_avg_wait = 0 #20 # current average Couns waiting time in weeks
     step3_cbt_sessions = 12 # number of pwp sessions at step2
     step3_cbt_1st_mins = 90 # minutes allocated for 1st cbt session
     step3_cbt_fup_mins = 60 # minutes allocated for cbt follow-up session
@@ -126,8 +126,8 @@ class g:
 
     # bring in past referral data
     
-    referral_rate_lookup = pd.read_csv('talking_therapies_referral_rates.csv'
-                                                               ,index_col=0)
+    # referral_rate_lookup = pd.read_csv('talking_therapies_referral_rates.csv'
+    #                                                            ,index_col=0)
     # # #print(referral_rate_lookup)
 # function to vary the number of sessions
 def vary_number_sessions(lower, upper, lambda_val=0.1):
@@ -219,10 +219,10 @@ class Staff:
 class Model:
 # Constructor to set up the model for a run. We pass in a run number when
 # we create a new model
-    def __init__(self, run_number):
+    def __init__(self, run_number, env):
         
         # Create a SimPy environment in which everything will live
-        self.env = simpy.Environment()
+        self.env = env # simpy.Environment()
 
         # used to check that prefill of waiting lists has completed
         self.prefill_done_event = self.env.event() 
@@ -442,6 +442,7 @@ class Model:
         self.step3_waiting_stats = []
 
         # Track which wait_list_types were used
+        # Initialize all flags to False
         self.prefill_completed = {
             'ta': False,
             'pwp': False,
@@ -449,7 +450,7 @@ class Model:
             'couns': False
         }
 
-        # Collect all applicable prefill processes
+        # Setup
         wait_list_configs = [
             ('ta', g.ta_waiting_list),
             ('pwp', g.pwp_waiting_list),
@@ -457,111 +458,32 @@ class Model:
             ('couns', g.couns_waiting_list)
         ]
 
-        # Collect all prefill processes in a list
         prefill_events = []
-        
-        # Track which waiting lists have been generated
-        
+
         for wait_list_type, size in wait_list_configs:
             if size > 0:
                 if g.debug_level >= 1:
                     print(f"[Governor] - Prefilling {wait_list_type.upper()} Waiting List with {size} patients")
-                self.prefill_completed[wait_list_type] = True
+                # Start the prefill process
                 prefill_events.append(self.env.process(self.prefill_waiting_lists(size, wait_list_type)))
             else:
                 if g.debug_level >= 1:
                     print(f"[Governor] - No {wait_list_type.upper()} Waiting List Supplied")
-                # if waiting list is 0 set to True
+                # Manually mark it complete
                 self.prefill_completed[wait_list_type] = True
-        # Wait until all prefill processes have completed
 
-        if g.debug_level >= 1:
-            for key, value in self.prefill_completed.items():
-                print(f"{key}: {value}")
+        # Wait for active prefill processes to finish
         if prefill_events:
             if g.debug_level >= 1:
-                print(f"[Governor] - Waiting for all Prefill Processes to Complete")
-            yield self.env.all_of(prefill_events)
-
-        if g.debug_level >= 1:
-            print(f"[Governor] - All Prefill Processes Complete")
-            print(f"[Governor] - Prefill Status: {self.prefill_completed}")
-        
-                # Wait for all prefills to complete
-        if prefill_events:
+                print("[Governor] - Waiting for all Prefill Processes to Complete")
             yield self.env.all_of(prefill_events)
 
             if g.debug_level >= 1:
-                print(f"[Week Runner] - All Prefilling Complete")
+                print("[Governor] - All Prefill Processes Complete")
+                print(f"[Governor] - Prefill Status: {self.prefill_completed}")
 
-            self.prefill_done_event.succeed()  # signal that it's done
-        # else:
-        #     # No waiting lists specified — still mark as done
-        #     self.prefill_done_event.succeed()
-
-        # if g.ta_waiting_list > 0:
-        #     if g.debug_level >= 1:
-        #         print(f"[Governor] - Prefilling TA Waiting List")
-        #     prefill_events.append(self.env.process(self.prefill_waiting_lists(g.ta_waiting_list, 'ta')))
-
-        # if g.pwp_waiting_list > 0:
-        #     if g.debug_level >= 1:
-        #         print(f"[Governor] - Prefilling PwP Waiting List")
-        #     prefill_events.append(self.env.process(self.prefill_waiting_lists(g.pwp_waiting_list, 'pwp')))
-
-        # if g.cbt_waiting_list > 0:
-        #     if g.debug_level >= 1:
-        #         print(f"[Governor] - Prefilling CBT Waiting List")
-        #     prefill_events.append(self.env.process(self.prefill_waiting_lists(g.cbt_waiting_list, 'cbt')))
-
-        # if g.couns_waiting_list > 0:
-        #     if g.debug_level >= 1:
-        #         print(f"[Governor] - Prefilling DepC Waiting List")
-        #     prefill_events.append(self.env.process(self.prefill_waiting_lists(g.couns_waiting_list, 'couns')))
-
-        # if g.debug_level >= 1:
-        #     for key, value in prefill_events.items():
-        #         print(f"Prefill Event: {key}: {value}")
-            
-        
-        # Wait for all prefills to complete
-        # if prefill_events:
-        #     yield self.env.all_of(prefill_events)
-
-        #     if g.debug_level >= 1:
-        #         print(f"[Week Runner] - All Prefilling Complete")
-
-        #     self.prefill_done_event.succeed()  # signal that it's done
-        # # else:
-        #     # No waiting lists specified — still mark as done
-        #     self.prefill_done_event.succeed()
-        
-        # # if waiting lists have been supplied, prefill them
-        # if g.ta_waiting_list > 0:
-        #     if g.debug_level >= 1:
-        #         print(f"[Week Runner] - Prefilling TA Waiting List")
-        #     yield self.env.process(self.prefill_waiting_lists(g.ta_waiting_list,'ta'))
-        
-        # if g.pwp_waiting_list > 0:
-        #     if g.debug_level >= 1:
-        #         print(f"[Week Runner] - Prefilling PwP Waiting List")
-        #     yield self.env.process(self.prefill_waiting_lists(g.pwp_waiting_list,'pwp'))
-
-        # if g.cbt_waiting_list > 0:
-        #     if g.debug_level >= 1:
-        #         print(f"[Week Runner] - Prefilling CBT Waiting List")
-        #     yield self.env.process(self.prefill_waiting_lists(g.cbt_waiting_list,'cbt'))
-        
-        # if g.couns_waiting_list > 0:
-        #     if g.debug_level >= 1:
-        #         print(f"[Week Runner] - Prefilling DepC Waiting List")
-        #     yield self.env.process(self.prefill_waiting_lists(g.couns_waiting_list,'couns'))
-
-        # if g.debug_level >= 1:
-        #         print(f"[Week Runner] - Prefilling of Waiting Lists Complete")
-
-        # if g.debug_level >= 1:
-        #             print(f"[Governor] - Handing Over to the Week Runner Process")
+        # Trigger event for processes waiting on prefill to complete
+        self.prefill_done_event.succeed()
 
         yield self.env.process(self.week_runner())
 
@@ -1027,8 +949,9 @@ class Model:
             self.step2_waiting_list_clean = self.step2_waiting_list_clean.reset_index(drop=True)
             # get patients that are still waiting at the end of this week
             self.step2_weekly_waiting_stats = self.step2_waiting_list_clean[self.step2_waiting_list_clean['IsWaiting'] == 1].copy()
-            # calculate how long they've been waiting
-            self.step2_weekly_waiting_stats['Weeks Waited'] = self.stats_week_number - self.step2_weekly_waiting_stats['Start Week']
+            # calculate how long they've been waiting for patients not coming from waiting list
+            if self.step2_weekly_waiting_stats['Source'] == 'PwP WL':
+                self.step2_weekly_waiting_stats['Weeks Waited'] = self.stats_week_number - self.step2_weekly_waiting_stats['Start Week']
             #print(self.step2_weekly_waiting_stats)
             # possible options to iterate through
             
@@ -1065,10 +988,12 @@ class Model:
             # get patients that are still waiting at the end of this week
             self.step3_weekly_waiting_stats = self.step3_waiting_list_clean[
                         self.step3_waiting_list_clean['IsWaiting'] == 1].copy()
-            # calculate how long they've been waiting
-            self.step3_weekly_waiting_stats['Weeks Waited'
-                    ] = self.stats_week_number - self.step3_weekly_waiting_stats[
-                    'Start Week']
+            
+            check = self.step2_weekly_waiting_stats['Source'].isin(['PwP WL', 'Some Other Source'])
+            self.step2_weekly_waiting_stats.loc[check, 'Weeks Waited'] = (self.stats_week_number - self.step2_weekly_waiting_stats.loc[check, 'Start Week'])
+            # self.step3_weekly_waiting_stats['Weeks Waited'
+            #         ] = self.stats_week_number - self.step3_weekly_waiting_stats[
+            #         'Start Week']
 
             # possible options to iterate through
             self.waiting_list_path_step3 = ['cbt','couns']
@@ -2776,9 +2701,6 @@ class Model:
         # counter for applying DNA policy
         self.couns_dna_counter = 0
 
-        if g.debug_level >= 4:
-            print(f'[Couns] - {p.step3_path_route} RUNNER: Patient {p.id} added to {p.step3_path_route} waiting list')
-
         # Record where the patient is on the couns WL
         self.step3_results_df.at[p.id, 'WL Posn'] = \
                                             g.number_on_couns_wl
@@ -2803,15 +2725,19 @@ class Model:
 
             yield self.env.timeout(1)  # Wait a week and retry
 
-        with self.couns_first_res.get(1) as req:
-            result = yield req | self.env.timeout(0)  # Try to get the resource immediately
+         # check for available first appointment
+        with self.couns_first_res.get(1) as self.couns_first:
+            yield self.couns_first
+        
+        # with self.couns_first_res.get(1) as req:
+        #     result = yield req | self.env.timeout(0)  # Try to get the resource immediately
 
-            if req not in result:  # If resource is unavailable
+        #     if req not in result:  # If resource is unavailable
                 
-                yield self.env.timeout(1)  # Wait until next week
+        #         yield self.env.timeout(1)  # Wait until next week
 
-                with self.couns_first_res.get(1) as req:  # Retry resource request
-                    yield req  # This will now wait for availability
+        #         with self.couns_first_res.get(1) as req:  # Retry resource request
+        #             yield req  # This will now wait for availability
 
         if g.debug_level >= 4:
             print(f"[Couns] - First Couns Appt slot found for patient {p.id}, allocating appt")
@@ -3111,7 +3037,8 @@ class Trial:
     def run_trial(self):
 
         for run in range(g.number_of_runs):
-            my_model = Model(run)
+            env = simpy.Environment()  # New env per run
+            my_model = Model(run, env)
             my_model.run(print_run_results=False)
 
             self.df_trial_results.loc[run] = [
