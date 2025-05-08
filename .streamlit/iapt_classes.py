@@ -950,7 +950,7 @@ class Model:
             # get patients that are still waiting at the end of this week
             self.step2_weekly_waiting_stats = self.step2_waiting_list_clean[self.step2_waiting_list_clean['IsWaiting'] == 1].copy()
             # calculate how long they've been waiting for patients not coming from waiting list
-            mask = self.step2_weekly_waiting_stats['Source'] == 'PwP WL'
+            mask = self.step2_weekly_waiting_stats['Source'] == 'Referral Gen'
             self.step2_weekly_waiting_stats.loc[mask, 'Weeks Waited'] = self.stats_week_number - self.step2_weekly_waiting_stats.loc[mask, 'Start Week']
             
             #print(self.step2_weekly_waiting_stats)
@@ -990,8 +990,8 @@ class Model:
             self.step3_weekly_waiting_stats = self.step3_waiting_list_clean[
                         self.step3_waiting_list_clean['IsWaiting'] == 1].copy()
             
-            check = self.step3_weekly_waiting_stats['Source'].isin(['CBT WL', 'Couns WL'])
-            self.step3_weekly_waiting_stats.loc[check, 'Weeks Waited'] = (self.stats_week_number - self.step3_weekly_waiting_stats.loc[check, 'Start Week'])
+            mask = self.step3_weekly_waiting_stats['Source'] == 'Referral Gen'
+            self.step3_weekly_waiting_stats.loc[mask, 'Weeks Waited'] = self.stats_week_number - self.step3_weekly_waiting_stats.loc[mask, 'Start Week']
             # self.step3_weekly_waiting_stats['Weeks Waited'
             #         ] = self.stats_week_number - self.step3_weekly_waiting_stats[
             #         'Start Week']
@@ -1637,7 +1637,7 @@ class Model:
         if g.debug_level >= 4:
             print("[Assessment] - Starting Assessment of Patient")
         
-        if p.asst_wl_added:
+        if not p.asst_wl_added:
             g.number_on_ta_wl += 1
 
         # Record where the patient is on the TA WL
