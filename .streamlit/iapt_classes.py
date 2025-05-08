@@ -1636,7 +1636,8 @@ class Model:
         if g.debug_level >= 4:
             print("[Assessment] - Starting Assessment of Patient")
         
-        g.number_on_ta_wl += 1
+        if p.asst_wl_added == True:
+            g.number_on_ta_wl += 1
 
         # Record where the patient is on the TA WL
         self.asst_results_df.at[p.id, "TA WL Posn"] = \
