@@ -43,9 +43,9 @@ with st.sidebar:
         st.markdown("#### Screening")
         referral_input = st.slider("Average Number of Referrals Per Week", 0, 1500
                                    , g.mean_referrals_pw)
-        ta_wl_input = st.number_input("Current Telephone Assessment Waiting List", min_value=0, max_value=1000, step=1, value=0)
+        ta_wl_input = st.number_input("Current Telephone Assessment Waiting List", min_value=0, max_value=1000, step=1, value=200)
         if ta_wl_input > 0:
-            ta_wait_input = st.number_input("Current Average TA Waiting Time (weeks)", min_value=0, max_value=52, step=1, value=0)
+            ta_wait_input = st.number_input("Current Average TA Waiting Time (weeks)", min_value=0, max_value=52, step=1, value=3)
         else:
             ta_wait_input = 0
         referral_reject_input = st.number_input("Referral Rejection Rate (%)",
@@ -78,9 +78,9 @@ with st.sidebar:
         step2_path_ratio = st.number_input("% of Step 2 Allocated to PwP vs Group",
                                            min_value=0.0, max_value=100.0, 
                                            step=1.0, value=47.0)
-        pwp_wl_input = st.number_input("Current PwP 1:1 Waiting List", min_value=0, max_value=1000, step=1, value=0)
+        pwp_wl_input = st.number_input("Current PwP 1:1 Waiting List", min_value=0, max_value=1000, step=1, value=300)
         if pwp_wl_input > 0:
-            pwp_wait_input = st.number_input("Current Average PwP 1:1 Waiting Time (weeks)", min_value=0, max_value=52, step=1, value=0)
+            pwp_wait_input = st.number_input("Current Average PwP 1:1 Waiting Time (weeks)", min_value=0, max_value=52, step=1, value=4)
         else:
             pwp_wait_input = 0
         step2_first_input = st.slider("Number of Mins for First PwP Appointment",
@@ -117,9 +117,9 @@ with st.sidebar:
         step_down_input = st.number_input("% of Patients Stepped Down",
                                           min_value=0.0, max_value=20.0,
                                           step=0.5, value=12.0)
-        cbt_wl_input = st.number_input("Current CBT Waiting List", min_value=0, max_value=1000, step=1, value=0)
+        cbt_wl_input = st.number_input("Current CBT Waiting List", min_value=0, max_value=1000, step=1, value=250)
         if cbt_wl_input > 0:
-            cbt_wait_input = st.number_input("Current Average CBT Waiting Time (weeks)", min_value=0, max_value=52, step=1, value=0)
+            cbt_wait_input = st.number_input("Current Average CBT Waiting Time (weeks)", min_value=0, max_value=52, step=1, value=5)
         else:
             cbt_wait_input = 0
         step3_cbt_first_input = st.slider("Number of Mins for First CBT Appointment",
@@ -131,7 +131,7 @@ with st.sidebar:
                                               step=0.5, value=20.0)
         couns_wl_input = st.number_input("Current DepC Waiting List", min_value=0, max_value=1000, step=1, value=1000)
         if couns_wl_input > 0:
-            couns_wait_input = st.number_input("Current Average DepC Waiting Time (weeks)", min_value=0, max_value=52, step=1, value=0)
+            couns_wait_input = st.number_input("Current Average DepC Waiting Time (weeks)", min_value=0, max_value=52, step=1, value=25)
         else:
             couns_wait_input = 0
         step3_couns_first_input = st.slider("Number of Mins for First DepC Appointment",
@@ -415,9 +415,9 @@ if button_run_pressed:
                                       'Session Number','Session Type','Session Time',
                                       'Admin Time','IsDNA']].reset_index()
         
-        # Define correct aggregation mapping based on the variable name
+        # --- Aggregated Sessions ---
         aggregated_sessions = {}
-        
+
         agg_mapping = {
             'Session Number': 'count',
             'Session Time': 'sum',
@@ -425,7 +425,6 @@ if button_run_pressed:
             'IsDNA': 'sum'
         }
 
-        # Dictionary of DataFrames to process
         aggregated_sessions_dfs = {
             'step2_pwp_sessions_summary': step2_pwp_sessions_summary,
             'step2_group_sessions_summary': step2_group_sessions_summary,
@@ -435,18 +434,25 @@ if button_run_pressed:
 
         for name, df in aggregated_sessions_dfs.items():
             # Melt the DataFrame
-            melted_df = pd.melt(df, id_vars=['Run Number', 'Week Number'
-                        ], var_name='variable', value_name='value')
+            melted_df = pd.melt(
+                df,
+                id_vars=['Run Number', 'Week Number'],
+                var_name='variable',
+                value_name='value'
+            )
 
-            # Apply the aggregation function based on variable
-            aggregated_sessions_df = melted_df.groupby(['Run Number',
-                                    'Week Number','variable'])['value'].agg(
-                                    lambda x: x.sum() if agg_mapping.get(
-                                    x.name, 'sum') == 'sum' else x.count()
-                                    ).reset_index()
+            # Aggregate values by Run, Week, and Variable
+            aggregated_df = melted_df.groupby(
+                ['Run Number', 'Week Number', 'variable'], as_index=False
+            ).agg({'value': 'sum'})  # All are 'sum' because input was already aggregated
 
-            # Store the result
-            aggregated_sessions[name] = aggregated_sessions_df
+            aggregated_sessions[name] = aggregated_df
+
+        # Mean across all runs (result: mean_sessions dict)
+        mean_sessions = {
+            f"{name}_mean": df.groupby(['Week Number', 'variable'], as_index=False)['value'].mean()
+            for name, df in aggregated_sessions.items()
+        }
 
         # get sessions by type
         # Define correct aggregation mapping based on the variable name
@@ -459,7 +465,16 @@ if button_run_pressed:
             'IsDNA': 'sum'
         }
 
-        # Dictionary of DataFrames to process
+        # --- Aggregated Session Types ---
+        aggregated_session_types = {}
+
+        agg_mapping = {
+            'Session Number': 'count',
+            'Session Time': 'sum',
+            'Admin Time': 'sum',
+            'IsDNA': 'sum'
+        }
+
         aggregated_session_types_dfs = {
             'step2_pwp_session_type_summary': step2_pwp_session_type_summary,
             'step2_group_session_type_summary': step2_group_session_type_summary,
@@ -469,20 +484,29 @@ if button_run_pressed:
 
         for name, df in aggregated_session_types_dfs.items():
             # Melt the DataFrame
-            melted_df = pd.melt(df, id_vars=['Run Number','Week Number',
-                        'Session Type'], var_name='variable', value_name='value')
+            melted_df = pd.melt(
+                df,
+                id_vars=['Run Number', 'Week Number', 'Session Type'],
+                var_name='variable',
+                value_name='value'
+            )
 
-            # Apply the aggregation function based on variable
-            aggregated_session_type_df = melted_df.groupby(['Run Number',
-                                        'Week Number','Session Type',
-                                        'variable'])['value'].agg(
-                lambda x: x.count() if agg_mapping.get(x.name, 'count'
-                                            ) == 'count' else x.sum()
-            ).reset_index()
+            # Aggregate by Run, Week, Session Type, and Variable
+            aggregated_df = melted_df.groupby(
+                ['Run Number', 'Week Number', 'Session Type', 'variable'],
+                as_index=False
+            ).agg({'value': 'sum'})  # Again, sum because the input is already aggregated
 
-            # Store the result
-            aggregated_session_types[name] = aggregated_session_type_df
- 
+            aggregated_session_types[name] = aggregated_df
+
+        # Mean across all runs (result: mean_session_types dict)
+        mean_session_types = {
+            f"{name}_mean": df.groupby(
+                ['Week Number', 'Session Type', 'variable'], as_index=False
+            )['value'].mean()
+            for name, df in aggregated_session_types.items()
+        }
+
         ########## repeat above but for results dfs ##########
         # Define correct aggregation mapping based on the variable name
         agg_mapping = {
@@ -571,55 +595,51 @@ if button_run_pressed:
 
         ##### Extract final DataFrames #####
 
-        pwp_sessions_summary = aggregated_sessions['step2_pwp_sessions_summary']
-        group_sessions_summary = aggregated_sessions['step2_group_sessions_summary']
-        cbt_sessions_summary = aggregated_sessions['step3_cbt_sessions_summary']
-        couns_sessions_summary = aggregated_sessions['step3_couns_sessions_summary']
+        pwp_sessions_summary = mean_sessions['step2_pwp_sessions_summary_mean']
+        group_sessions_summary = mean_sessions['step2_pwp_sessions_summary_mean']
+        cbt_sessions_summary = mean_sessions['step2_pwp_sessions_summary_mean']
+        couns_sessions_summary = mean_sessions['step2_pwp_sessions_summary_mean']
 
-        pwp_session_type_summary = aggregated_session_types[
-                                    'step2_pwp_session_type_summary']
-        group_session_type_summary = aggregated_session_types[
-                                    'step2_group_session_type_summary']
-        cbt_session_type_summary = aggregated_session_types[
-                                    'step3_cbt_session_type_summary']
-        couns_session_type_summary = aggregated_session_types[
-                                    'step3_couns_session_type_summary']
-
+        pwp_session_type_summary = mean_session_types['step2_pwp_session_type_summary_mean']
+        group_session_type_summary = mean_session_types['step2_group_session_type_summary_mean']
+        cbt_session_type_summary = mean_session_types['step3_cbt_session_type_summary_mean']
+        couns_session_type_summary = mean_session_types['step3_couns_session_type_summary_mean']
+        
         # get rid of any sessions recorded beyond the simulation period
-        pwp_session_type_summary = pwp_session_type_summary = pwp_session_type_summary[
+        pwp_session_type_summary = pwp_session_type_summary[
                                     pwp_session_type_summary["Week Number"
                                     ] <= sim_duration_input-1].reset_index()
-        group_session_type_summary = group_session_type_summary = group_session_type_summary[
+        group_session_type_summary = group_session_type_summary[
                                     group_session_type_summary["Week Number"
                                     ] <= sim_duration_input-1].reset_index()
-        cbt_session_type_summary = cbt_session_type_summary = cbt_session_type_summary[
+        cbt_session_type_summary = cbt_session_type_summary[
                                     cbt_session_type_summary["Week Number"
                                     ] <= sim_duration_input-1].reset_index()
-        couns_session_type_summary = couns_session_type_summary = couns_session_type_summary[
+        couns_session_type_summary = couns_session_type_summary[
                                     couns_session_type_summary["Week Number"
                                     ] <= sim_duration_input-1].reset_index()
-        # get rid of week zero as no sessions run until week 1 when assessments come through
-        pwp_session_type_summary = pwp_session_type_summary = pwp_session_type_summary[
-                                    pwp_session_type_summary["Week Number"
-                                    ] <= sim_duration_input-1]
-        group_session_type_summary = group_session_type_summary = group_session_type_summary[
-                                    group_session_type_summary["Week Number"
-                                    ] <= sim_duration_input-1]
-        cbt_session_type_summary = cbt_session_type_summary = cbt_session_type_summary[
-                                    cbt_session_type_summary["Week Number"
-                                    ] <= sim_duration_input]
-        couns_session_type_summary = couns_session_type_summary = couns_session_type_summary[
-                                    couns_session_type_summary["Week Number"
-                                    ] <= sim_duration_input-1]
+        # # get rid of week zero as no sessions run until week 1 when assessments come through
+        # pwp_session_type_summary = pwp_session_type_summary = pwp_session_type_summary[
+        #                             pwp_session_type_summary["Week Number"
+        #                             ] <= sim_duration_input-1]
+        # group_session_type_summary = group_session_type_summary = group_session_type_summary[
+        #                             group_session_type_summary["Week Number"
+        #                             ] <= sim_duration_input-1]
+        # cbt_session_type_summary = cbt_session_type_summary = cbt_session_type_summary[
+        #                             cbt_session_type_summary["Week Number"
+        #                             ] <= sim_duration_input]
+        # couns_session_type_summary = couns_session_type_summary = couns_session_type_summary[
+        #                             couns_session_type_summary["Week Number"
+        #                             ] <= sim_duration_input-1]
 
         # get rid of weeks beyond sim duration
-        pwp_session_type_summary = pwp_session_type_summary = pwp_session_type_summary[
+        pwp_session_type_summary = pwp_session_type_summary[
                                     pwp_session_type_summary["Week Number"] != 0]
-        group_session_type_summary = group_session_type_summary = group_session_type_summary[
+        group_session_type_summary = group_session_type_summary[
                                     group_session_type_summary["Week Number"] != 0]
-        cbt_session_type_summary = cbt_session_type_summary = cbt_session_type_summary[
+        cbt_session_type_summary = cbt_session_type_summary[
                                     cbt_session_type_summary["Week Number"] != 0]
-        couns_session_type_summary = couns_session_type_summary = couns_session_type_summary[
+        couns_session_type_summary = couns_session_type_summary[
                                     couns_session_type_summary["Week Number"] != 0]
         
         pwp_results_summary = aggregated_results['step2_pwp_results_summary']
@@ -729,7 +749,7 @@ if button_run_pressed:
         pwp_sessions_weekly_summary = pwp_sessions_summary[pwp_sessions_summary
                                         ['variable'].isin(['Session Time'
                                         ,'Admin Time'])]
-        pwp_sessions_weekly_summary.drop('Run Number', axis=1)
+        #pwp_sessions_weekly_summary.drop('Run Number', axis=1)
         pwp_sessions_weekly_summary[pwp_sessions_weekly_summary.select_dtypes(
                                     include="number").columns.difference(
                                     ["Week Number"])] = pwp_sessions_weekly_summary[
@@ -741,7 +761,7 @@ if button_run_pressed:
         pwp_sessions_weekly_bytype = pwp_session_type_summary[
                                     pwp_session_type_summary['variable'
                                     ].isin(['Session Number','IsDNA'])]
-        pwp_sessions_weekly_bytype.drop('Run Number', axis=1)
+        #pwp_sessions_weekly_bytype.drop('Run Number', axis=1)
         pwp_sessions_weekly_bytype[pwp_sessions_weekly_bytype.select_dtypes(
                     include="number").columns.difference(["Week Number"])] = \
                     pwp_session_type_summary[pwp_session_type_summary.select_dtypes(
@@ -763,7 +783,7 @@ if button_run_pressed:
         group_sessions_weekly_bytype = group_session_type_summary[
                                         group_session_type_summary['variable'
                                         ].isin(['Session Number','IsDNA'])]
-        group_sessions_weekly_bytype.drop('Run Number', axis=1)
+        #group_sessions_weekly_bytype.drop('Run Number', axis=1)
         group_sessions_weekly_bytype[group_sessions_weekly_bytype.select_dtypes(
                         include="number").columns.difference(["Week Number"])] = \
                         group_sessions_weekly_bytype[
@@ -783,7 +803,7 @@ if button_run_pressed:
         cbt_sessions_weekly_bytype = cbt_session_type_summary[
                                     cbt_session_type_summary['variable'
                                     ].isin(['Session Number','IsDNA'])]
-        cbt_sessions_weekly_bytype.drop('Run Number', axis=1)
+        #cbt_sessions_weekly_bytype.drop('Run Number', axis=1)
         cbt_sessions_weekly_bytype[cbt_sessions_weekly_bytype.select_dtypes(
                                     include="number").columns.difference(
                                     ["Week Number"])] = cbt_sessions_weekly_bytype[
@@ -806,7 +826,7 @@ if button_run_pressed:
         couns_sessions_weekly_bytype = couns_session_type_summary[
                                         couns_session_type_summary['variable'
                                         ].isin(['Session Number','IsDNA'])]
-        couns_sessions_weekly_bytype.drop('Run Number', axis=1)
+        #couns_sessions_weekly_bytype.drop('Run Number', axis=1)
         couns_sessions_weekly_bytype[couns_sessions_weekly_bytype.select_dtypes(
                                     include="number").columns.difference(
                                     ["Week Number"])] = couns_sessions_weekly_bytype[
