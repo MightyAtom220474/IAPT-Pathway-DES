@@ -7,7 +7,7 @@ import math
 class g:
 
     # used for testing
-    debug_level = 0 # 0 = Off, 1 = Governor, 2 = Main Process, 3 = Sub-process, 4 = Patient Pathway
+    debug_level = 4 # 0 = Off, 1 = Governor, 2 = Main Process, 3 = Sub-process, 4 = Patient Pathway
 
     # Referrals
     mean_referrals_pw = 100
@@ -17,7 +17,7 @@ class g:
     referral_review_rate = 0.4 # % that go to MDT as prev contact with Trust
     mdt_freq = 2 # how often in weeks MDT takes place, longest time a review referral may wait for review
     review_rej_rate = 0.5 # % ref that go to MDT and get rejected
-    ta_waiting_list = 0 # current number of patients on TA waiting list
+    ta_waiting_list = 100 # current number of patients on TA waiting list
     ta_avg_wait = 4 # current average TA waiting time in weeks
     referral_screen_time = 20 # average time it takes to screen one referral by a pwp
     opt_in_wait = 1 # no. of weeks patients have to opt in
@@ -34,7 +34,7 @@ class g:
     step2_routes = ['pwp','group'] # possible step2 routes
     step2_path_ratios = [0.8,0.2] #[0.94,0.06] # step2 proportion for each route
     step2_pwp_sessions = 6 # number of pwp sessions at step2
-    pwp_waiting_list = 0 # current number of patients on PwP waiting list
+    pwp_waiting_list = 233 # current number of patients on PwP waiting list
     pwp_avg_wait = 0 # current average PwP waiting time in weeks
     step2_pwp_dna_rate = 0.15 # ##### assume 15% DNA rate for pwp
     step2_pwp_1st_mins = 45 # minutes allocated for 1st pwp session
@@ -58,10 +58,10 @@ class g:
     step3_ratio = 0.15 # proportion of patients that go onto step3 vs step2
     step3_routes =['cbt','couns'] # full pathway options = ['Pfcbt','group','cbt','EMDR','DepC','DIT','IPT','CDEP']
     step3_path_ratios = [0.368,0.632]# [0.1,0.25,0.25,0.05,0.05,0.1,0.1,0.1] # step3 proportion for each route ##### Need to clarify exact split
-    cbt_waiting_list = 0 # current number of patients on CBT waiting list
-    cbt_avg_wait = 0 # current average CBT waiting time in weeks
-    couns_waiting_list = 0 # current number of patients on DepC waiting list
-    couns_avg_wait = 0 #20 # current average Couns waiting time in weeks
+    cbt_waiting_list = 314 # current number of patients on CBT waiting list
+    cbt_avg_wait = 6 # current average CBT waiting time in weeks
+    couns_waiting_list = 500 # current number of patients on DepC waiting list
+    couns_avg_wait = 25 #20 # current average Couns waiting time in weeks
     step3_cbt_sessions = 12 # number of pwp sessions at step2
     step3_cbt_1st_mins = 90 # minutes allocated for 1st cbt session
     step3_cbt_fup_mins = 60 # minutes allocated for cbt follow-up session
@@ -126,8 +126,8 @@ class g:
 
     # bring in past referral data
     
-    # referral_rate_lookup = pd.read_csv('talking_therapies_referral_rates.csv'
-    #                                                            ,index_col=0)
+    referral_rate_lookup = pd.read_csv('talking_therapies_referral_rates.csv'
+                                                               ,index_col=0)
     # # #print(referral_rate_lookup)
 # function to vary the number of sessions
 def vary_number_sessions(lower, upper, lambda_val=0.1):
@@ -1618,27 +1618,36 @@ class Model:
             
             yield self.env.process(self.telephone_assessment(p))
             
-    def telephone_assessment(self,patient):
-            
+    def telephone_assessment(self, patient):
+
         p = patient
 
-        # Queue the patient until prefill is done
-        self.queued_ta_patients.append(p)  # Store patients temporarily
+        self.queued_ta_patients.append(p)
 
         if g.debug_level >= 4:
             print(f'[Assessment] - Patient {p.id} added to Assessment waiting list')
 
-        # Initially, patients are queued, but they won't be processed until all waiting lists are generated
-        yield self.prefill_done_event  # Wait for the prefill event to be triggered
+        yield self.prefill_done_event
 
         if g.debug_level >= 4:
             print(f'[Assessment] - Patient {p.id} is starting Assessment after prefill completion')
-            
-        if g.debug_level >= 4:
             print("[Assessment] - Starting Assessment of Patient")
-        
+
         if not p.asst_wl_added:
             g.number_on_ta_wl += 1
+
+        # Ensure row exists in DataFrame
+        if p.id not in self.asst_results_df.index:
+            if g.debug_level >= 3:
+                print(f"[Assessment] - Creating new asst_results_df row for Patient {p.id}")
+            # Copy structure from first row or create default row
+            new_row = self.asst_results_df.iloc[0].copy()
+            new_row.name = p.id
+            self.asst_results_df.loc[p.id] = new_row
+
+        # Now safely update
+        self.asst_results_df.at[p.id, 'Opted In'] = 1
+
 
         # Record where the patient is on the TA WL
         self.asst_results_df.at[p.id, "TA WL Posn"] = \
@@ -1961,35 +1970,42 @@ class Model:
             
             yield self.env.process(self.step3_couns_process(p))
 
-    def step2_pwp_process(self,patient):
-
+    def step2_pwp_process(self, patient):
+        
         p = patient
 
-        # Queue the patient until prefill is done
-        self.queued_pwp_patients.append(p)  # Store patients temporarily
+        self.queued_pwp_patients.append(p)
 
         if g.debug_level >= 4:
             print(f'[PwP] - {p.step2_path_route} RUNNER: Patient {p.id} added to {p.step2_path_route} waiting list')
 
-        # Initially, patients are queued, but they won't be processed until all waiting lists are generated
-        yield self.prefill_done_event  # Wait for the prefill event to be triggered
+        yield self.prefill_done_event
 
         if g.debug_level >= 4:
             print(f'[PwP] - {p.step2_path_route} RUNNER: Patient {p.id} is starting process after prefill completion')
 
-        # counter for number of pwp sessions
         self.pwp_session_counter = 0
-        # counter for applying DNA policy
         self.pwp_dna_counter = 0
-
-        if g.debug_level >= 4:
-            print(f'[PwP] - {p.step2_path_route} RUNNER: Patient {p.id} added to {p.step2_path_route} waiting list')
-
         self.start_q_pwp = self.env.now
 
-        # Record where the patient is on the pwp WL
-        self.step2_results_df.at[p.id, 'WL Posn'] = \
-                                            g.number_on_pwp_wl
+        # Ensure patient exists in step2_results_df
+        if p.id not in self.step2_results_df.index:
+            if g.debug_level >= 3:
+                print(f"[PwP] - Creating new step2_results_df row for Patient {p.id}")
+            new_row = self.step2_results_df.iloc[0].copy()
+            new_row.name = p.id
+            self.step2_results_df.loc[p.id] = new_row
+
+        # Ensure patient exists in step2_waiting_list
+        if p.id not in self.step2_waiting_list.index:
+            if g.debug_level >= 3:
+                print(f"[PwP] - Creating new step2_waiting_list row for Patient {p.id}")
+            new_row = self.step2_waiting_list.iloc[0].copy()
+            new_row.name = p.id
+            self.step2_waiting_list.loc[p.id] = new_row
+
+        # Safe to update now
+        self.step2_results_df.at[p.id, 'WL Posn'] = g.number_on_pwp_wl
         self.step2_waiting_list.at[p.id, 'WL Position'] = g.number_on_pwp_wl
 
         if g.debug_level >= 4:
@@ -2220,38 +2236,47 @@ class Model:
         
         yield self.env.timeout(0)
                
-    def step2_group_process(self,patient):
+    def step2_group_process(self, patient):
 
         p = patient
 
-        # Queue the patient until prefill is done
-        self.queued_group_patients.append(p)  # Store patients temporarily
+        self.queued_group_patients.append(p)
 
         if g.debug_level >= 4:
             print(f'[Group] - {p.step2_path_route} RUNNER: Patient {p.id} added to {p.step2_path_route} waiting list')
 
-        # Initially, patients are queued, but they won't be processed until all waiting lists are generated
-        yield self.prefill_done_event  # Wait for the prefill event to be triggered
+        yield self.prefill_done_event
 
         if g.debug_level >= 4:
-            print(f'[group] - {p.step2_path_route} RUNNER: Patient {p.id} is starting process after prefill completion')
+            print(f'[Group] - {p.step2_path_route} RUNNER: Patient {p.id} is starting process after prefill completion')
 
-        # counter for number of group sessions
         self.group_session_counter = 0
-        # counter for applying DNA policy
         self.group_dna_counter = 0
 
-        # Record where the patient is on the group WL
-        self.step2_results_df.at[p.id, 'WL Posn'] = \
-                                            g.number_on_group_wl
-        self.step2_waiting_list.at[p.id, 'WL Position'] = g.number_on_group_wl
-        
-        g.number_on_group_wl -= 1
-        # record the week that they started treatment
-        p.step2_start_week = self.week_number
+        # ✅ Ensure patient exists in step2_results_df
+        if p.id not in self.step2_results_df.index:
+            if g.debug_level >= 3:
+                print(f"[Group] - Creating new step2_results_df row for Patient {p.id}")
+            new_row = self.step2_results_df.iloc[0].copy()
+            new_row.name = p.id
+            self.step2_results_df.loc[p.id] = new_row
 
-        # update waiting list info
-        p_id = int(p.id)  # Convert to integer
+        # ✅ Ensure patient exists in step2_waiting_list
+        if p.id not in self.step2_waiting_list.index:
+            if g.debug_level >= 3:
+                print(f"[Group] - Creating new step2_waiting_list row for Patient {p.id}")
+            new_row = self.step2_waiting_list.iloc[0].copy()
+            new_row.name = p.id
+            self.step2_waiting_list.loc[p.id] = new_row
+
+        # ✅ Now safe to update
+        self.step2_results_df.at[p.id, 'WL Posn'] = g.number_on_group_wl
+        self.step2_waiting_list.at[p.id, 'WL Position'] = g.number_on_group_wl
+
+        g.number_on_group_wl -= 1
+
+        p.step2_start_week = self.week_number
+        p_id = int(p.id)
 
         self.step2_waiting_list.loc[p_id, 'IsWaiting'] = 0
         self.step2_waiting_list.loc[p_id, 'End Week'] = self.env.now
@@ -2416,36 +2441,46 @@ class Model:
         
         yield self.env.timeout(0)
 
-    def step3_cbt_process(self,patient):
+    def step3_cbt_process(self, patient):
 
         p = patient
 
-        # Queue the patient until prefill is done
-        self.queued_cbt_patients.append(p)  # Store patients temporarily
+        self.queued_cbt_patients.append(p)
 
         if g.debug_level >= 4:
             print(f'[CBT] - {p.step3_path_route} RUNNER: Patient {p.id} added to {p.step3_path_route} waiting list')
 
-        # Initially, patients are queued, but they won't be processed until all waiting lists are generated
-        yield self.prefill_done_event  # Wait for the prefill event to be triggered
+        yield self.prefill_done_event
 
         if g.debug_level >= 4:
             print(f'[CBT] - {p.step3_path_route} RUNNER: Patient {p.id} is starting process after prefill completion')
 
-        # counter for number of couns sessions
         self.cbt_session_counter = 0
-        # counter for applying DNA policy
         self.cbt_dna_counter = 0
 
         if g.debug_level >= 4:
-            print(f'[CBT] - {p.step3_path_route} RUNNER: Patient {p.id} added to \
-                    {p.step3_path_route} waiting list')
+            print(f'[CBT] - {p.step3_path_route} RUNNER: Patient {p.id} added to {p.step3_path_route} waiting list')
 
         start_q_couns = self.env.now
 
-        # Record where the patient is on the couns WL
-        self.step3_results_df.at[p.id, 'WL Posn'] = \
-                                            g.number_on_cbt_wl
+        # Ensure patient exists in step3_results_df
+        if p.id not in self.step3_results_df.index:
+            if g.debug_level >= 3:
+                print(f"[CBT] - Creating new step3_results_df row for Patient {p.id}")
+            new_row = self.step3_results_df.iloc[0].copy()
+            new_row.name = p.id
+            self.step3_results_df.loc[p.id] = new_row
+
+        # Ensure patient exists in step3_waiting_list
+        if p.id not in self.step3_waiting_list.index:
+            if g.debug_level >= 3:
+                print(f"[CBT] - Creating new step3_waiting_list row for Patient {p.id}")
+            new_row = self.step3_waiting_list.iloc[0].copy()
+            new_row.name = p.id
+            self.step3_waiting_list.loc[p.id] = new_row
+
+        # Safe to update
+        self.step3_results_df.at[p.id, 'WL Posn'] = g.number_on_cbt_wl
         self.step3_waiting_list.at[p.id, 'WL Position'] = g.number_on_cbt_wl
 
         # Check if there is a caseload slot available and return the resource
@@ -2682,30 +2717,41 @@ class Model:
         
         yield self.env.timeout(0)
 
-    def step3_couns_process(self,patient):
+    def step3_couns_process(self, patient):
 
         p = patient
 
-        # Queue the patient until prefill is done
-        self.queued_couns_patients.append(p)  # Store patients temporarily
+        self.queued_couns_patients.append(p)
 
         if g.debug_level >= 4:
             print(f'[Couns] - {p.step3_path_route} RUNNER: Patient {p.id} added to {p.step3_path_route} waiting list')
 
-        # Initially, patients are queued, but they won't be processed until all waiting lists are generated
-        yield self.prefill_done_event  # Wait for the prefill event to be triggered
+        yield self.prefill_done_event
 
         if g.debug_level >= 4:
             print(f'[Couns] - {p.step3_path_route} RUNNER: Patient {p.id} is starting process after prefill completion')
 
-        # counter for number of couns sessions
         self.couns_session_counter = 0
-        # counter for applying DNA policy
         self.couns_dna_counter = 0
 
-        # Record where the patient is on the couns WL
-        self.step3_results_df.at[p.id, 'WL Posn'] = \
-                                            g.number_on_couns_wl
+        # Ensure patient exists in step3_results_df
+        if p.id not in self.step3_results_df.index:
+            if g.debug_level >= 3:
+                print(f"[Couns] - Creating new step3_results_df row for Patient {p.id}")
+            new_row = self.step3_results_df.iloc[0].copy()
+            new_row.name = p.id
+            self.step3_results_df.loc[p.id] = new_row
+
+        # Ensure patient exists in step3_waiting_list
+        if p.id not in self.step3_waiting_list.index:
+            if g.debug_level >= 3:
+                print(f"[Couns] - Creating new step3_waiting_list row for Patient {p.id}")
+            new_row = self.step3_waiting_list.iloc[0].copy()
+            new_row.name = p.id
+            self.step3_waiting_list.loc[p.id] = new_row
+
+        # Safe to update
+        self.step3_results_df.at[p.id, 'WL Posn'] = g.number_on_couns_wl
         self.step3_waiting_list.at[p.id, 'WL Position'] = g.number_on_couns_wl
 
         # Check if there is a caseload slot available and return the resource
