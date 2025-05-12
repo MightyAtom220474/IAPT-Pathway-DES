@@ -467,7 +467,9 @@ if button_run_pressed:
 
         # --- Aggregated Session Types ---
         aggregated_session_types = {}
+        mean_session_types = {}
 
+        # Define how to aggregate each field
         agg_mapping = {
             'Session Number': 'count',
             'Session Time': 'sum',
@@ -475,6 +477,7 @@ if button_run_pressed:
             'IsDNA': 'sum'
         }
 
+        # Dictionary of DataFrames to process
         aggregated_session_types_dfs = {
             'step2_pwp_session_type_summary': step2_pwp_session_type_summary,
             'step2_group_session_type_summary': step2_group_session_type_summary,
@@ -482,30 +485,40 @@ if button_run_pressed:
             'step3_couns_session_type_summary': step3_couns_session_type_summary
         }
 
+        # Process each DataFrame
         for name, df in aggregated_session_types_dfs.items():
-            # Melt the DataFrame
-            melted_df = pd.melt(
-                df,
-                id_vars=['Run Number', 'Week Number', 'Session Type'],
-                var_name='variable',
-                value_name='value'
+            # Aggregate by Run, Week, and Session Type
+            aggregated_df = (
+                df.groupby(['Run Number', 'Week Number', 'Session Type'], as_index=False)
+                .agg({
+                    'Session Number': 'count',
+                    'Session Time': 'sum',
+                    'IsDNA': 'sum',
+                    'Admin Time': 'sum'
+                })
+                .rename(columns={
+                    'Session Number': 'Session_Count',
+                    'Session Time': 'Total_Session_Time',
+                    'IsDNA': 'Total_IsDNA',
+                    'Admin Time': 'Total_Admin_Time'
+                })
             )
 
-            # Aggregate by Run, Week, Session Type, and Variable
-            aggregated_df = melted_df.groupby(
-                ['Run Number', 'Week Number', 'Session Type', 'variable'],
-                as_index=False
-            ).agg({'value': 'sum'})  # Again, sum because the input is already aggregated
-
+            # Store the aggregated version
             aggregated_session_types[name] = aggregated_df
 
-        # Mean across all runs (result: mean_session_types dict)
-        mean_session_types = {
-            f"{name}_mean": df.groupby(
-                ['Week Number', 'Session Type', 'variable'], as_index=False
-            )['value'].mean()
-            for name, df in aggregated_session_types.items()
-        }
+            # Calculate the mean across runs
+            mean_df = (
+                aggregated_df.groupby(['Week Number', 'Session Type'], as_index=False)
+                            .agg({
+                                'Session_Count': 'mean',
+                                'Total_Session_Time': 'mean',
+                                'Total_IsDNA': 'mean',
+                                'Total_Admin_Time': 'mean'
+                            })
+            )
+
+            mean_session_types[f"{name}_mean"] = mean_df
 
         ########## repeat above but for results dfs ##########
         # Define correct aggregation mapping based on the variable name
@@ -642,6 +655,8 @@ if button_run_pressed:
         couns_session_type_summary = couns_session_type_summary[
                                     couns_session_type_summary["Week Number"] != 0]
         
+        st.write(pwp_session_type_summary)
+        
         pwp_results_summary = aggregated_results['step2_pwp_results_summary']
         group_results_summary = aggregated_results['step2_group_results_summary']
         cbt_results_summary = aggregated_results['step3_cbt_results_summary']
@@ -760,13 +775,20 @@ if button_run_pressed:
         # get sessions by type and calculate average based on number of runs
         pwp_sessions_weekly_bytype = pwp_session_type_summary[
                                     pwp_session_type_summary['variable'
-                                    ].isin(['Session Number','IsDNA'])]
-        #pwp_sessions_weekly_bytype.drop('Run Number', axis=1)
-        pwp_sessions_weekly_bytype[pwp_sessions_weekly_bytype.select_dtypes(
-                    include="number").columns.difference(["Week Number"])] = \
-                    pwp_session_type_summary[pwp_session_type_summary.select_dtypes(
-                    include="number").columns.difference(["Week Number"]
-                    )].div(number_of_runs_input).round()
+                                    ].isin(['Session_Count','Total_IsDNA'])]
+
+
+        
+        # st.write(pwp_sessions_weekly_bytype)
+
+        # #pwp_sessions_weekly_bytype.drop('Run Number', axis=1)
+        # pwp_sessions_weekly_bytype[pwp_sessions_weekly_bytype.select_dtypes(
+        #             include="number").columns.difference(["Week Number"])] = \
+        #             pwp_session_type_summary[pwp_session_type_summary.select_dtypes(
+        #             include="number").columns.difference(["Week Number"]
+        #             )].div(number_of_runs_input).round()
+        
+        st.write(pwp_sessions_weekly_bytype)
                 
         # group
         group_sessions_weekly_summary = group_sessions_summary[
@@ -1191,6 +1213,8 @@ if button_run_pressed:
 
                     pwp_sessions_weekly_type_filtered = pwp_sessions_weekly_bytype[
                                         pwp_sessions_weekly_bytype["variable"]==list_name]
+                    
+                    st.write(pwp_sessions_weekly_type_filtered)
                     
                     pwp_combined_col1_filtered = pwp_combined_summary[
                                         pwp_combined_summary["variable"]==list_name]
