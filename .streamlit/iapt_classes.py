@@ -255,6 +255,7 @@ class Model:
         self.asst_results_df['Opt-in Wait'] = [0.0] # time between opt-in notification and patient opting in
         self.asst_results_df['Opt-in Q Time'] = [0.0] # time between opting in and actual TA, 4 week window
         self.asst_results_df['TA Q Time'] = [0.0] # time spent queueing for TA
+        self.asst_results_df['TA 6W Pass'] = [1] # were they assessed within 6 weeks target, 1 = Yes, 0 = No
         self.asst_results_df['TA WL Posn'] = [0] # position in queue for TA
         self.asst_results_df['TA Outcome'] = [0] # 1 = Accepted, 0 = Rejected
         self.asst_results_df['TA Mins'] = [0] # time allocated to completing TA
@@ -1681,6 +1682,10 @@ class Model:
         # Record how long patient queued for TA
         self.asst_results_df.at[p.id, 'TA Q Time'] = self.q_time_ta
 
+        if self.q_time_ta <= 6:
+            self.asst_results_df.at[p.id, 'TA 6W Pass'] = 1
+        else:
+            self.asst_results_df.at[p.id, 'TA 6W Pass'] = 0
         if g.debug_level >= 4:
             print(f'[Assessment] - Patient {p.id} waited {self.q_time_ta} for assessment')
 
