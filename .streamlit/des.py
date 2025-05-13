@@ -1407,8 +1407,8 @@ if button_run_pressed:
                                             'First': "#d62728", 
                                             'Follow-Up': "#ff9896"
                                             }
-                        custom_stack_order_red = ["First", "Follow-Up"]
-                          # Order from bottom to top
+                        custom_stack_order_red = ["First", "Follow-Up"] # Order from bottom to top
+                        
                         section_title = ''
                     
                         fig3 = px.histogram(pwp_sessions_weekly_type_filtered, 
@@ -1601,6 +1601,9 @@ if button_run_pressed:
                     for d, list_name in enumerate(group_combined_summary['variable']
                                                 .unique()):
 
+                        group_sessions_weekly_type_filtered = step2_group_type_melt[
+                                            step2_group_type_melt["variable"]==list_name]
+                        
                         group_combined_col4_filtered = group_combined_summary[
                                             group_combined_summary["variable"]==
                                             list_name]
@@ -1610,15 +1613,24 @@ if button_run_pressed:
                                             'Max Wait']
                         
                         if list_name == 'Total_IsDNA':
+
+                            custom_colors_red = {
+                                            'First': "#d62728", 
+                                            'Follow-Up': "#ff9896"
+                                            }
+                            custom_stack_order_red = ["First", "Follow-Up"] # Order from bottom to top
                             
                             section_title = ''
                         
-                            fig3 = px.histogram(group_combined_col4_filtered, 
+                            fig3 = px.histogram(group_sessions_weekly_type_filtered, 
                                                 x='Week Number',
                                                 y='value',
                                                 nbins=sim_duration_input,
                                                 labels={'value': 'Sessions'},
-                                                color_discrete_sequence=['red'],
+                                                color='Session Type',
+                                                color_discrete_map=custom_colors_red, #custom_colors,
+                                                category_orders={'Session Type': 
+                                                                custom_stack_order_red},
                                                 title=f'Number of DNAs per Week')
                             
                             fig3.update_layout(title_x=0.4,font=dict(size=10),bargap=0.2)
@@ -1820,8 +1832,8 @@ if button_run_pressed:
                                             'First': "#d62728", 
                                             'Follow-Up': "#ff9896"
                                             }
-                        custom_stack_order_red = ["First", "Follow-Up"]
-                          # Order from bottom to top
+                        custom_stack_order_red = ["First", "Follow-Up"] # Order from bottom to top
+                        
                         section_title = ''
                     
                         fig3 = px.histogram(cbt_sessions_weekly_type_filtered, 
@@ -2010,6 +2022,9 @@ if button_run_pressed:
                 for d, list_name in enumerate(couns_combined_summary['variable']
                                             .unique()):
 
+                    couns_sessions_weekly_type_filtered = step3_couns_type_melt[
+                                        step3_cbt_type_melt["variable"]==list_name]
+                    
                     couns_combined_col4_filtered = couns_combined_summary[
                                         couns_combined_summary["variable"]==
                                         list_name]
@@ -2020,14 +2035,23 @@ if button_run_pressed:
                     
                     if list_name == 'Total_IsDNA':
                         
+                        custom_colors_red = {
+                                            'First': "#d62728", 
+                                            'Follow-Up': "#ff9896"
+                                            }
+                        custom_stack_order_red = ["First", "Follow-Up"] # Order from bottom to top
+                        
                         section_title = ''
                     
-                        fig3 = px.histogram(couns_combined_col4_filtered, 
+                        fig3 = px.histogram(couns_sessions_weekly_type_filtered, 
                                             x='Week Number',
                                             y='value',
                                             nbins=sim_duration_input,
                                             labels={'value': 'Sessions'},
-                                            color_discrete_sequence=['red'],
+                                            color='Session Type',
+                                            color_discrete_map=custom_colors_red, #custom_colors,
+                                            category_orders={'Session Type': 
+                                                            custom_stack_order_red},
                                             title=f'Number of DNAs per Week')
                         
                         fig3.update_layout(title_x=0.4,font=dict(size=10),bargap=0.2)
