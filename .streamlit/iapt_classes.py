@@ -10,7 +10,7 @@ class g:
     debug_level = 0 # 0 = Off, 1 = Governor, 2 = Main Process, 3 = Sub-process, 4 = Patient Pathway
 
     # Referrals
-    mean_referrals_pw = 100
+    mean_referrals_pw = 125
 
     # Screening
     referral_rej_rate = 0.3 # % of referrals rejected, advised 30%
@@ -85,7 +85,7 @@ class g:
     # Job Plans
     number_staff_cbt = 14 #138
     number_staff_couns = 4 #40
-    number_staff_pwp = 12 #125
+    number_staff_pwp = 6 #125
     pwp_avail = number_staff_pwp
     cbt_avail = number_staff_cbt
     couns_avail = number_staff_couns
@@ -126,8 +126,8 @@ class g:
 
     # bring in past referral data
     
-    # referral_rate_lookup = pd.read_csv('talking_therapies_referral_rates.csv'
-    #                                                            ,index_col=0)
+    referral_rate_lookup = pd.read_csv('talking_therapies_referral_rates.csv'
+                                                               ,index_col=0)
     # # #print(referral_rate_lookup)
 # function to vary the number of sessions
 def vary_number_sessions(lower, upper, lambda_val=0.1):
@@ -256,7 +256,7 @@ class Model:
         self.asst_results_df['Opt-in Wait'] = [0.0] # time between opt-in notification and patient opting in
         self.asst_results_df['Opt-in Q Time'] = [0.0] # time between opting in and actual TA, 4 week window
         self.asst_results_df['TA Q Time'] = [0.0] # time spent queueing for TA
-        self.asst_results_df['TA 6W Pass'] = [1] # were they assessed within 6 weeks target, 1 = Yes, 0 = No
+        self.asst_results_df['TA 6W Pass'] = [0] # were they assessed within 6 weeks target, 1 = Yes, 0 = No
         self.asst_results_df['TA WL Posn'] = [0] # position in queue for TA
         self.asst_results_df['TA Outcome'] = [0] # 1 = Accepted, 0 = Rejected
         self.asst_results_df['TA Mins'] = [0] # time allocated to completing TA
@@ -593,6 +593,7 @@ class Model:
                     print(f'[Prefill] - Filling Assessment Waiting list with {wait_list_size} patients')
                 g.number_on_ta_wl += 1
                 p.patient_source = 'TA WL'
+                p.ta_wait_start = 0-g.ta_avg_wait
                 p.asst_wl_added = True
                 p.asst_already_seen = False
             elif wait_list_type == 'pwp':
@@ -844,9 +845,9 @@ class Model:
             self.asst_optin_delay = self.asst_results_weekly_stats['Opt-in Wait'].mean()
             self.asst_tot_optin = self.asst_results_weekly_stats['Opted In'].sum()
             self.asst_optin_wait = self.asst_results_weekly_stats['Opt-in Q Time'].mean()
-            self.asst_sixweek_pc = (self.asst_results_weekly_stats['TA 6W Pass'].sum() 
-                                    / self.asst_results_weekly_stats 
-                                    ['TA 6W Pass'].count()) * 100
+            self.ta_6w_sum = self.asst_results_df['TA 6W Pass'].sum()
+            self.ta_6w_count = self.asst_results_df['TA 6W Pass'].count()
+            self.asst_sixweek_pc = (self.ta_6w_sum / self.ta_6w_count * 100) if self.ta_6w_count > 0 else 100
             self.asst_waiting_list = g.number_on_ta_wl
             self.asst_avg_wait = self.asst_results_df['TA Q Time'].mean()
             self.asst_max_wait = self.asst_results_df['TA Q Time'].max()

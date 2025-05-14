@@ -334,7 +334,7 @@ if button_run_pressed:
                                     'Accepted Referrals','Referrals Rejected',
                                     'Referrals Reviewed','Reviews Rejected',
                                     'Referrals Opted-in','TA Waiting List',
-                                    'TA Avg Wait','TA Max Wait',
+                                    'TA 6W PC','TA Avg Wait','TA Max Wait',
                                     'TA Total Accept','TA Hrs']].reset_index()
         #st.write(asst_weekly_summary)       
         # asst_weekly_summary = asst_weekly_summary[asst_weekly_summary[
@@ -885,7 +885,7 @@ if button_run_pressed:
         # get sessions by type and calculate average based on number of runs
         group_sessions_weekly_bytype = step2_group_type_melt[
                                         step2_group_type_melt['variable'
-                                        ].isin(['Session Number','IsDNA'])]
+                                        ].isin(['Session_Count','Total_IsDNA'])]
         #group_sessions_weekly_bytype.drop('Run Number', axis=1)
         group_sessions_weekly_bytype[group_sessions_weekly_bytype.select_dtypes(
                         include="number").columns.difference(["Week Number"])] = \
@@ -905,7 +905,7 @@ if button_run_pressed:
         # get sessions by type and calculate average based on number of runs
         cbt_sessions_weekly_bytype = step3_cbt_type_melt[
                                     step3_cbt_type_melt['variable'
-                                    ].isin(['Session Number','IsDNA'])]
+                                    ].isin(['Session_Count','Total_IsDNA'])]
         #cbt_sessions_weekly_bytype.drop('Run Number', axis=1)
         cbt_sessions_weekly_bytype[cbt_sessions_weekly_bytype.select_dtypes(
                                     include="number").columns.difference(
@@ -928,7 +928,7 @@ if button_run_pressed:
         # get sessions by type and calculate average based on number of runs
         couns_sessions_weekly_bytype = step3_couns_type_melt[
                                         step3_couns_type_melt['variable'
-                                        ].isin(['Session Number','IsDNA'])]
+                                        ].isin(['Session_Count','Total_IsDNA'])]
         #couns_sessions_weekly_bytype.drop('Run Number', axis=1)
         couns_sessions_weekly_bytype[couns_sessions_weekly_bytype.select_dtypes(
                                     include="number").columns.difference(
@@ -1050,7 +1050,7 @@ if button_run_pressed:
         
         asst_referrals_col3_unpivot = pd.melt(asst_weekly_summary, value_vars=[
                                                     'Accepted Referrals',
-                                                    'TA Total Accept'],
+                                                    'TA 6W PC'],
                                                     id_vars=['Run Number',
                                                     'Week Number'])
         
@@ -1226,8 +1226,8 @@ if button_run_pressed:
                 
                 if list_name == 'Accepted Referrals':
                         axis_title = 'Referrals'
-                elif list_name == 'TA Accept':
-                    axis_title = 'Patients'
+                elif list_name == 'TA 6W PC':
+                    axis_title = '% Patients'
 
                 st.subheader('') 
                 
@@ -2023,7 +2023,7 @@ if button_run_pressed:
                                             .unique()):
 
                     couns_sessions_weekly_type_filtered = step3_couns_type_melt[
-                                        step3_cbt_type_melt["variable"]==list_name]
+                                        step3_couns_type_melt["variable"]==list_name]
                     
                     couns_combined_col4_filtered = couns_combined_summary[
                                         couns_combined_summary["variable"]==
