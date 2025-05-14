@@ -1256,6 +1256,8 @@ if button_run_pressed:
                             go.Scatter(x=weekly_avg_col3["Week Number"],
                                     y=weekly_avg_col3["value"], name='Average',
                                     line=dict(width=3,color='blue')))
+                
+                fig_asst_3.update_layout(title_text="% TA's Within 6 Weeks")
     
                 
                 # get rid of 'variable' prefix resulting from df.melt
