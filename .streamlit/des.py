@@ -78,9 +78,9 @@ with st.sidebar:
         step2_path_ratio = st.number_input("% of Step 2 Allocated to PwP vs Group",
                                            min_value=0.0, max_value=100.0, 
                                            step=1.0, value=47.0)
-        pwp_wl_input = st.number_input("Current PwP Group Waiting List", min_value=0, max_value=1000, step=1, value=300)
+        pwp_wl_input = st.number_input("Current PwP 1:1 Waiting List", min_value=0, max_value=1000, step=1, value=300)
         if pwp_wl_input > 0:
-            pwp_wait_input = st.number_input("Current Average PwP Group Waiting Time (weeks)", min_value=0, max_value=52, step=1, value=4)
+            pwp_wait_input = st.number_input("Current Average PwP 1:1 Waiting Time (weeks)", min_value=0, max_value=52, step=1, value=4)
         else:
             pwp_wait_input = 0
         step2_first_input = st.slider("Number of Mins for First PwP Appointment",

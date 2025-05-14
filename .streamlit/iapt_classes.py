@@ -34,8 +34,8 @@ class g:
     step2_routes = ['pwp','group'] # possible step2 routes
     step2_path_ratios = [0.8,0.2] #[0.94,0.06] # step2 proportion for each route
     step2_pwp_sessions = 6 # number of pwp sessions at step2
-    pwp_waiting_list = 233 # current number of patients on PwP waiting list
-    pwp_avg_wait = 0 # current average PwP waiting time in weeks
+    pwp_waiting_list = 233 # current number of patients on pwp waiting list
+    pwp_avg_wait = 0 # current average pwp waiting time in weeks
     step2_pwp_dna_rate = 0.15 # ##### assume 15% DNA rate for pwp
     step2_pwp_1st_mins = 45 # minutes allocated for 1st pwp session
     step2_pwp_fup_mins = 30 # minutes allocated for pwp follow-up session
@@ -56,50 +56,50 @@ class g:
     
     # Step 3
     step3_ratio = 0.15 # proportion of patients that go onto step3 vs step2
-    step3_routes =['cbt','couns'] # full pathway options = ['Pfcbt','group','cbt','EMDR','DepC','DIT','IPT','CDEP']
+    step3_routes =['cbt','pwp'] # full pathway options = ['Pfcbt','group','cbt','EMDR','DepC','DIT','IPT','CDEP']
     step3_path_ratios = [0.368,0.632]# [0.1,0.25,0.25,0.05,0.05,0.1,0.1,0.1] # step3 proportion for each route ##### Need to clarify exact split
     cbt_waiting_list = 314 # current number of patients on CBT waiting list
     cbt_avg_wait = 6 # current average CBT waiting time in weeks
-    couns_waiting_list = 500 # current number of patients on DepC waiting list
-    couns_avg_wait = 25 #20 # current average Couns waiting time in weeks
+    pwp_waiting_list = 500 # current number of patients on DepC waiting list
+    pwp_avg_wait = 25 #20 # current average pwp waiting time in weeks
     step3_cbt_sessions = 12 # number of pwp sessions at step2
     step3_cbt_1st_mins = 90 # minutes allocated for 1st cbt session
     step3_cbt_fup_mins = 60 # minutes allocated for cbt follow-up session
     step3_cbt_dna_rate = 0.216 # Wellbeing Workshop attendance 78.6%
     step3_session_admin = 15 # number of mins of clinical admin per session
     step3_cbt_period = 16 # max number of weeks cbt delivered over
-    step3_couns_sessions = 8 # number of couns sessions
-    step3_couns_1st_mins = 90 # minutes allocated for 1st couns session
-    step3_couns_fup_mins = 60 # minutes allocated for couns follow-up session
-    step3_couns_dna_rate = 0.216 # Wellbeing Workshop attendance 78.6%
-    step3_couns_period = 16 # max number of weeks couns delivered over
+    step3_pwp_sessions = 8 # number of pwp sessions
+    step3_pwp_1st_mins = 90 # minutes allocated for 1st pwp session
+    step3_pwp_fup_mins = 60 # minutes allocated for pwp follow-up session
+    step3_pwp_dna_rate = 0.216 # Wellbeing Workshop attendance 78.6%
+    step3_pwp_period = 16 # max number of weeks pwp delivered over
     step3_session_var = 0.15 # % of instances where number sessions goes over standard amount
     
     # Staff
     supervision_time = 120 # 2 hours per month per modality ##### could use modulus for every 4th week
     break_time = 100 # 20 mins per day
     wellbeing_time = 120 # 2 hours allocated per month
-    counsellors_huddle = 30 # 30 mins p/w or 1 hr per fortnight
+    pwpellors_huddle = 30 # 30 mins p/w or 1 hr per fortnight
     cpd_time = 225 # half day per month CPD
     
     # Job Plans
     number_staff_cbt = 14 #138
-    number_staff_couns = 4 #40
+    number_staff_pwp = 4 #40
     number_staff_pwp = 6 #125
     pwp_avail = number_staff_pwp
     cbt_avail = number_staff_cbt
-    couns_avail = number_staff_couns
+    pwp_avail = number_staff_pwp
     hours_avail_cbt = 22.0
-    hours_avail_couns = 22.0
+    hours_avail_pwp = 22.0
     hours_avail_pwp = 21.0
     ta_resource = pwp_avail * 9 # job plan = 3 TA per week per pwp
-    pwp_1st_res = pwp_avail * 4 #  4 1st's per PwP per week
+    pwp_1st_res = pwp_avail * 4 #  4 1st's per pwp per week
     cbt_1st_res = cbt_avail * 2 #  2 1st's per CBT per week
-    couns_1st_res = couns_avail * 2 # 2 1st's per Couns per week
+    pwp_1st_res = pwp_avail * 2 # 2 1st's per pwp per week
     pwp_caseload = 200
     group_resource = pwp_avail * step2_group_size
     cbt_caseload = 100
-    couns_caseload = 100
+    pwp_caseload = 100
     dna_policy = 2 # number of DNA's allowed before discharged
     dna_policy_var = 0.05 # % of cases where the DNA policy is varied
     
@@ -116,13 +116,13 @@ class g:
     number_on_pwp_wl = 0 # used to keep track of pwp WL position
     number_on_group_wl = 0 # used to keep track of groups WL position
     number_on_cbt_wl = 0 # used to keep track of cbt WL position
-    number_on_couns_wl = 0 # used to keep track of couns WL position
+    number_on_pwp_wl = 0 # used to keep track of pwp WL position
 
     # Caseload
     number_on_pwp_cl = 0 # used to keep track of pwp caseload
     number_on_group_cl = 0 # used to keep track of groups caseload
     number_on_cbt_cl = 0 # used to keep track of cbt caseload
-    number_on_couns_cl = 0 # used to keep track of couns caseload
+    number_on_pwp_cl = 0 # used to keep track of pwp caseload
 
     # bring in past referral data
     
@@ -182,7 +182,7 @@ class Patient:
         self.step2_drop_out = 0 # did they drop out during step2
         self.step2_week_number = 0 # counter for which week number they are on
         self.step2_end_week = 0 # the week number when they completed treatment
-        self.pwp_wl_added = False # True = added from PwP waiting list
+        self.pwp_wl_added = False # True = added from pwp waiting list
         self.pwp_wait_end = 0 # used for prefill to calculate avg wait time
         
         # step3
@@ -196,9 +196,9 @@ class Patient:
         self.step3_week_number = 0 # counter for which week number they are on
         self.step3_end_week = 0
         self.cbt_wl_added = False # True = added from CBT waiting list
-        self.couns_wl_added = False # True = added from Couns waiting list
+        self.pwp_wl_added = False # True = added from pwp waiting list
         self.cbt_wait_end = 0 # used for prefill to calculate avg wait time
-        self.couns_wait_end = 0 # used for prefill to calculate avg wait time
+        self.pwp_wait_end = 0 # used for prefill to calculate avg wait time
 
 # Staff class to be run weekly by week runner to record staff non-clinical time
 class Staff:
@@ -207,14 +207,14 @@ class Staff:
         # Staff attributes
         self.id = s_id
         self.week_number = 0 # the week number the staff activity is being recorded for
-        self.staff_type = [] # what type of staff i.e. cbt, pwp, couns
+        self.staff_type = [] # what type of staff i.e. cbt, pwp, pwp
         self.staff_hours_avail = 0 # how many hours p/w they work
         self.staff_band = 0 # what staff band
 
         self.staff_time_wellbg = 0 # staff time for wellbeing
         self.staff_time_superv = 0 # staff time for supervision
         self.staff_time_breaks = 0 # staff time for breaks
-        self.staff_time_huddle = 0 # staff time for counsellor huddle
+        self.staff_time_huddle = 0 # staff time for pwpellor huddle
         self.staff_time_cpd = 0 # staff time for CPD
 
 class Model:
@@ -231,7 +231,7 @@ class Model:
         self.queued_pwp_patients = []
         self.queued_group_patients = []  
         self.queued_cbt_patients = []
-        self.queued_couns_patients = []
+        self.queued_pwp_patients = []
         self.queued_ta_patients = []
 
         # # Create counters for various metrics we want to record
@@ -385,7 +385,7 @@ class Model:
         self.pwp_staff_counter = 100
         #self.group_staff_counter = 200 # not needed as covered by pwp
         self.cbt_staff_counter = 200
-        self.couns_staff_counter = 300
+        self.pwp_staff_counter = 300
 
         self.staff_results_df = pd.DataFrame()
 
@@ -449,7 +449,7 @@ class Model:
             'ta': False,
             'pwp': False,
             'cbt': False,
-            'couns': False
+            'pwp': False
         }
 
         # Setup
@@ -457,7 +457,7 @@ class Model:
             ('ta', g.ta_waiting_list),
             ('pwp', g.pwp_waiting_list),
             ('cbt', g.cbt_waiting_list),
-            ('couns', g.couns_waiting_list)
+            ('pwp', g.pwp_waiting_list)
         ]
 
         prefill_events = []
@@ -579,21 +579,21 @@ class Model:
         # prefill waiting list using value from g class
         for w in range(wait_list_size):
 
-            # Increment patient counter by 1
+            # Increment counters
             self.patient_counter += 1
-
-            # Increment number of patients in the system by 1
             g.active_patients += 1
-            
-            # generate a patient from the patient class
+
+            # Create patient
             p = Patient(self.patient_counter)
 
             if wait_list_type == 'ta':
                 if g.debug_level >= 2:
-                    print(f'[Prefill] - Filling Assessment Waiting list with {wait_list_size} patients')
+                    print(f'[Prefill] - Filling Assessment Waiting List with {wait_list_size} patients')
+
                 g.number_on_ta_wl += 1
                 p.patient_source = 'TA WL'
-                p.ta_wait_start = 0-g.ta_avg_wait
+                p.week_added = 0
+                p.ta_wait_start = -g.ta_avg_wait  # simulate historical wait
                 p.asst_wl_added = True
                 p.asst_already_seen = False
             elif wait_list_type == 'pwp':
@@ -605,9 +605,9 @@ class Model:
                 p.pwp_wl_added = True
                 p.pwp_already_seen = False
                 p.step2_path_route = wait_list_type
-                p.patient_source = 'PwP WL'
+                p.patient_source = 'pwp WL'
                 p.week_added = 0
-                p.treat_wait_week = 0
+                p.treat_wait_week = -g.pwp_avg_wait
 
                 # Convert Patient ID to int for consistency
                 p_id_int = int(p.id)
@@ -638,7 +638,7 @@ class Model:
                     self.step2_waiting_list.loc[p_id_int, [
                         'Source', 'Run Number', 'Week Number', 'Route Name', 'IsWaiting',
                         'WL Position', 'Start Week', 'End Week', 'Wait Time'
-                    ]] = ['PwP WL', self.run_number, self.week_number, 'pwp', 1,
+                    ]] = ['pwp WL', self.run_number, self.week_number, 'pwp', 1,
                         g.number_on_pwp_wl, 0, -1, g.pwp_avg_wait]
                     
             elif wait_list_type == 'cbt':
@@ -649,10 +649,10 @@ class Model:
                 p.asst_already_seen = True
                 p.cbt_wl_added = True
                 p.cbt_already_seen = False
-                p.step3_path_route = wait_list_type
-                p.patient_source = 'CBT WL'
+                p.step2_path_route = wait_list_type
+                p.patient_source = 'cbt WL'
                 p.week_added = 0
-                p.treat_wait_week = 0
+                p.treat_wait_week = -g.cbt_avg_wait
 
                 # Convert Patient ID to int for consistency
                 p_id_int = int(p.id)
@@ -679,54 +679,59 @@ class Model:
                     frames_to_concat = [df for df in [self.step3_waiting_list, cbt_new_row] if not df.empty]
                     self.step3_waiting_list = pd.concat(frames_to_concat) if frames_to_concat else cbt_new_row
 
-                else:
-                    # Update existing patient data
+            
+                else:    # Update existing patient data
                     self.step3_waiting_list.loc[p_id_int, [
                         'Source', 'Run Number', 'Week Number', 'Route Name', 'IsWaiting',
                         'WL Position', 'Start Week', 'End Week', 'Wait Time'
                     ]] = ['CBT WL', self.run_number, self.week_number, 'cbt', 1,
                         g.number_on_cbt_wl, 0, -1, g.cbt_avg_wait]
-            else:
+                    
+            elif wait_list_type == 'couns':
                 if g.debug_level >= 2:
                     print(f'[Prefill] - Filling DepC Waiting list with {wait_list_size} patients')
-                g.number_on_couns_wl += 1
+                g.number_on_pwp_wl += 1
                 p.asst_wl_added = False
                 p.asst_already_seen = True
-                p.couns_wl_added = True
-                p.couns_already_seen = False
-                p.step3_path_route = wait_list_type
-                p.patient_source = 'Couns WL'
+                p.pwp_wl_added = True
+                p.pwp_already_seen = False
+                p.step2_path_route = wait_list_type
+                p.patient_source = 'pwp WL'
                 p.week_added = 0
-                p.treat_wait_week = 0
+                p.treat_wait_week = -g.pwp_avg_wait
 
                 # Convert Patient ID to int for consistency
                 p_id_int = int(p.id)
 
                 # Add or update patient in waiting list
                 if p_id_int not in self.step3_waiting_list.index:
-                    couns_new_row = pd.DataFrame([{
-                        'Source': 'Couns WL',
+                    pwp_new_row = pd.DataFrame([{
+                        'Source': 'pwp WL',
                         'Run Number': self.run_number,
                         'Week Number': self.week_number,
-                        'Route Name': 'couns',
+                        'Route Name': 'pwp',
                         'IsWaiting': 1,
-                        'WL Position': g.number_on_couns_wl,
+                        'WL Position': g.number_on_pwp_wl,
                         'Start Week': 0,
                         'End Week': -1,
-                        'Wait Time': g.couns_avg_wait
+                        'Wait Time': g.pwp_avg_wait
                     }], index=[p_id_int])  # Set index during creation
 
                     if self.step3_waiting_list.empty:
-                        self.step3_waiting_list = couns_new_row.copy()
+                        self.step3_waiting_list = pwp_new_row.copy()
                     else:
-                        self.step3_waiting_list = pd.concat([self.step3_waiting_list, couns_new_row])
+                        self.step3_waiting_list = pd.concat([self.step3_waiting_list, pwp_new_row])
                 else:
                     # Update existing patient data
                     self.step3_waiting_list.loc[p_id_int, [
                         'Source', 'Run Number', 'Week Number', 'Route Name', 'IsWaiting',
                         'WL Position', 'Start Week', 'End Week', 'Wait Time'
-                    ]] = ['Couns WL', self.run_number, self.week_number, 'couns', 1,
-                        g.number_on_couns_wl, 0, -1, g.couns_avg_wait]
+                    ]] = ['pwp WL', self.run_number, self.week_number, 'pwp', 1,
+                        g.number_on_pwp_wl, 0, -1, g.pwp_avg_wait]
+                    
+            else:
+                if g.debug_level >= 2:
+                    print(f"[Prefill] - Unknown wait_list_type: {wait_list_type}")
 
             # now start the patient down the treatment pathway
             yield self.env.process(self.pathway_start_point(p, self.week_number))
@@ -761,11 +766,11 @@ class Model:
     
             self.env.process(self.telephone_assessment(p))  
         
-        # if added from PwP waiting list send them down that path
+        # if added from pwp waiting list send them down that path
         elif p.asst_already_seen == True and p.pwp_wl_added == True:
             
             if g.debug_level >= 3:
-                        print(f'[Pathway] - Week {self.week_number} Patient {p.id} coming from {p.patient_source} sent down PwP path')
+                        print(f'[Pathway] - Week {self.week_number} Patient {p.id} coming from {p.patient_source} sent down pwp path')
 
             self.env.process(self.step2_pwp_process(p))  
                        
@@ -779,12 +784,12 @@ class Model:
             self.env.process(self.step3_cbt_process(p))  
         
         # if added from CBT waiting list send them down that path
-        elif p.asst_already_seen == True and p.couns_wl_added == True:
+        elif p.asst_already_seen == True and p.pwp_wl_added == True:
             
             if g.debug_level >= 3:
-                        print(f'[Pathway] - Week {self.week_number} Patient {p.id} coming from {p.patient_source} sent down Couns path')
+                        print(f'[Pathway] - Week {self.week_number} Patient {p.id} coming from {p.patient_source} sent down pwp path')
 
-            self.env.process(self.step3_couns_process(p))  
+            self.env.process(self.step3_pwp_process(p))  
         # otherwise, if added from referral generator, start them right at the
         # beginning of the pathway
         else:
@@ -874,7 +879,7 @@ class Model:
                                         })
     
             ## Staff
-            self.job_role_list = ['pwp','cbt','couns']
+            self.job_role_list = ['pwp','cbt','pwp']
             # create summary stats for each of the job roles
             for i, job_role in enumerate(self.job_role_list):
                 # filter data for appropriate role
@@ -934,17 +939,17 @@ class Model:
             
             g.caseload_weekly_stats.append(self.weekly_cbt_snapshot)
             
-            self.weekly_couns_snapshot = {'Run Number':self.run_number
+            self.weekly_pwp_snapshot = {'Run Number':self.run_number
                                        ,'Week Number':self.stats_week_number
                                        ,'Data':[]}
             
-            for couns_caseload_id, couns_level in self.couns_resources.items():
-                self.weekly_couns_snapshot['Data'].append({
-                                            'caseload_id':couns_caseload_id
-                                            ,'caseload_level':couns_level.level
-                                            ,'caseload_cap':couns_level.capacity})
+            for pwp_caseload_id, pwp_level in self.pwp_resources.items():
+                self.weekly_pwp_snapshot['Data'].append({
+                                            'caseload_id':pwp_caseload_id
+                                            ,'caseload_level':pwp_level.level
+                                            ,'caseload_cap':pwp_level.capacity})
                 
-            g.caseload_weekly_stats.append(self.weekly_couns_snapshot)
+            g.caseload_weekly_stats.append(self.weekly_pwp_snapshot)
 
             # record weekly waiting list stats
             ##### Step 2 #####
@@ -966,24 +971,29 @@ class Model:
         
             self.waiting_list_path_step2 = ['pwp','group']
 
-            # Create summary stats for each of the routes
-            for pathway in self.waiting_list_path_step2:
-                # filter for appropriate pathway
-                self.step2_weekly_waiting_filtered = self.step2_weekly_waiting_stats[self.step2_weekly_waiting_stats['Route Name'] == pathway].reset_index()
-                # calculate required values
-                self.step2_waiting_count = self.step2_weekly_waiting_filtered['IsWaiting'].sum()
-                self.step2_waiting_avg = self.step2_weekly_waiting_filtered['Weeks Waited'].mean()
-                self.step2_waiting_max = self.step2_weekly_waiting_filtered['Weeks Waited'].max()
+            self.waiting_list_source_step2 = ['PwP WL','Referral Gen']
 
-                # append data
-                self.step2_waiting_stats.append({
-                    'Run Number': self.run_number,
-                    'Week Number': self.stats_week_number,
-                    'Route Name': pathway,
-                    'Num Waiting': self.step2_waiting_count,
-                    'Avg Wait': self.step2_waiting_avg,
-                    'Max Wait': self.step2_waiting_max
-                })
+            # Create summary stats for each of the pathways and sources
+            for pathway in self.waiting_list_path_step2:
+                for source in self.waiting_list_source_step2:
+                    # filter for appropriate pathway
+                    self.step2_weekly_waiting_pathway = self.step2_weekly_waiting_stats[self.step2_weekly_waiting_stats['Route Name'] == pathway].reset_index()
+                    self.step2_weekly_waiting_filtered = self.step2_weekly_waiting_pathway[self.step2_weekly_waiting_pathway['Source'] == source].reset_index()
+                    # calculate required values
+                    self.step2_waiting_count = self.step2_weekly_waiting_filtered['IsWaiting'].sum()
+                    self.step2_waiting_avg = self.step2_weekly_waiting_filtered['Weeks Waited'].mean()
+                    self.step2_waiting_max = self.step2_weekly_waiting_filtered['Weeks Waited'].max()
+
+                    # append data
+                    self.step2_waiting_stats.append({
+                        'Source': source,
+                        'Run Number': self.run_number,
+                        'Week Number': self.stats_week_number,
+                        'Route Name': pathway,
+                        'Num Waiting': self.step2_waiting_count,
+                        'Avg Wait': self.step2_waiting_avg,
+                        'Max Wait': self.step2_waiting_max
+                    })
 
             # get rid of records that didn't get to the stage of deciding which path to go down
             self.step3_waiting_list_clean = self.step3_waiting_list.dropna(
@@ -1002,12 +1012,15 @@ class Model:
             #         'Start Week']
 
             # possible options to iterate through
-            self.waiting_list_path_step3 = ['cbt','couns']
+            self.waiting_list_path_step3 = ['cbt','pwp']
 
-            # Create summary stats for each of the routes
+            self.waiting_list_source_step3 = ['CBT WL','Couns WL','Referral Gen']
+
+            # Create summary stats for each of the pathways and sources
             for pathway in self.waiting_list_path_step3:
                 # filter for appropriate pathway
-                self.step3_weekly_waiting_filtered = self.step3_weekly_waiting_stats[self.step3_weekly_waiting_stats['Route Name'] == pathway].reset_index()
+                self.step3_weekly_waiting_pathway = self.step3_weekly_waiting_stats[self.step3_weekly_waiting_stats['Route Name'] == pathway].reset_index()
+                self.step3_weekly_waiting_filtered = self.step3_weekly_waiting_pathway[self.step3_weekly_waiting_pathway['Source'] == source].reset_index()
                 # calculate required values
                 self.step3_waiting_count = self.step3_weekly_waiting_filtered['IsWaiting'].sum()
                 self.step3_waiting_avg = self.step3_weekly_waiting_filtered['Weeks Waited'].mean()
@@ -1015,6 +1028,7 @@ class Model:
 
                 # append data
                 self.step3_waiting_stats.append({
+                    'Source': source,
                     'Run Number': self.run_number,
                     'Week Number': self.stats_week_number,
                     'Route Name': pathway,
@@ -1050,13 +1064,13 @@ class Model:
     def ta_resource_selector(self, resource_week):
         
         # this function works out how many TA slots are available based on
-        # pwp = 9 per week, cbt = 1 every fortnight, couns = 1 every 4 weeks
+        # pwp = 9 per week, cbt = 1 every fortnight, pwp = 1 every 4 weeks
         
         self.cbt_ta_res = 0  
-        self.couns_ta_res = 0  
+        self.pwp_ta_res = 0  
 
         if resource_week % 4 == 0:  # Every 4th week
-            self.couns_ta_res = g.couns_avail
+            self.pwp_ta_res = g.pwp_avail
             self.cbt_ta_res = g.cbt_avail  # Since 4 is also a multiple of 2
 
         elif resource_week % 2 == 0:  # Every 2nd week
@@ -1064,7 +1078,7 @@ class Model:
 
         self.pwp_ta_res = g.ta_resource  # Always included
 
-        self.tot_ta_res = self.cbt_ta_res + self.couns_ta_res + self.pwp_ta_res
+        self.tot_ta_res = self.cbt_ta_res + self.pwp_ta_res + self.pwp_ta_res
         if g.debug_level >= 3:
             print(f'[TA Resource] - Total TA Resource Returned is {self.tot_ta_res}')
         return self.tot_ta_res
@@ -1081,7 +1095,7 @@ class Model:
             init=self.ta_resource_selector(res_week) ## resources at week 0
             )
         
-        ##### PwP 1st Appt #####
+        ##### pwp 1st Appt #####
         self.pwp_first_res = simpy.Container(
             self.env,capacity=g.pwp_1st_res,
             init=g.pwp_1st_res ## resources at week 0
@@ -1093,10 +1107,10 @@ class Model:
             init=g.cbt_1st_res ## resources at week 0
             )
         
-        ##### Couns 1st Appt #####
-        self.couns_first_res = simpy.Container(
-            self.env,capacity = g.couns_1st_res,
-            init=g.couns_1st_res ## resources at week 0
+        ##### pwp 1st Appt #####
+        self.pwp_first_res = simpy.Container(
+            self.env,capacity = g.pwp_1st_res,
+            init=g.pwp_1st_res ## resources at week 0
             )
         
         ##### group #####
@@ -1142,18 +1156,18 @@ class Model:
         
         if g.debug_level == 2:
             print(self.cbt_restore)
-        ##### couns #####
-        self.s_type = 'couns'
-        # dictionary to hold couns caseload resources
-        self.couns_resources = {f'{self.s_type}_{s}':simpy.Container(self.env,
-                    capacity=g.couns_caseload,
-                    init=g.couns_caseload) for s in range(g.couns_avail)}
+        ##### pwp #####
+        self.s_type = 'pwp'
+        # dictionary to hold pwp caseload resources
+        self.pwp_resources = {f'{self.s_type}_{s}':simpy.Container(self.env,
+                    capacity=g.pwp_caseload,
+                    init=g.pwp_caseload) for s in range(g.pwp_avail)}
 
         # dictionary to keep track of resources to be restored
-        self.couns_restore = {f'{self.s_type}_{s}':{} for s in range(g.couns_avail)}
+        self.pwp_restore = {f'{self.s_type}_{s}':{} for s in range(g.pwp_avail)}
 
         if g.debug_level == 2:
-            print(self.couns_restore)
+            print(self.pwp_restore)
 
         if g.debug_level >= 1:
             print('[Caseload Builder] - Caseload Builder has Finished')
@@ -1172,8 +1186,8 @@ class Model:
             self.resources_used = self.pwp_restore
         elif r_type == 'cbt':
             self.resources_used = self.cbt_restore
-        elif r_type == 'couns':
-            self.resources_used = self.couns_restore
+        elif r_type == 'pwp':
+            self.resources_used = self.pwp_restore
         
         if r_id not in self.resources_used:
             
@@ -1207,7 +1221,7 @@ class Model:
             group_amount_to_fill = g.group_resource - self.group_res.level
             pwp_first_to_fill = g.pwp_1st_res - self.pwp_first_res.level
             cbt_first_to_fill = g.cbt_1st_res - self.cbt_first_res.level
-            couns_first_to_fill = g.couns_1st_res - self.couns_first_res.level
+            pwp_first_to_fill = g.pwp_1st_res - self.pwp_first_res.level
 
             if ta_amount_to_fill > 0:
                 if g.debug_level >= 3:
@@ -1231,13 +1245,13 @@ class Model:
 
             if pwp_first_to_fill > 0:
                 if g.debug_level >= 3:
-                    print(f"[Replenish Resources] - PwP First Level: {self.pwp_first_res.level}")
+                    print(f"[Replenish Resources] - pwp First Level: {self.pwp_first_res.level}")
                     print(f"[Replenish Resources] - Putting in {pwp_first_to_fill}")
 
                 self.pwp_first_res.put(pwp_first_to_fill)
 
                 if g.debug_level >= 3:
-                    print(f"[Replenish Resources] - New PwP First Level: {self.pwp_first_res.level}")
+                    print(f"[Replenish Resources] - New pwp First Level: {self.pwp_first_res.level}")
 
             if cbt_first_to_fill > 0:
                 if g.debug_level >= 3:
@@ -1249,15 +1263,15 @@ class Model:
                 if g.debug_level >= 3:
                     print(f"[Replenish Resources] - New CBT First Level: {self.cbt_first_res.level}")
 
-            if couns_first_to_fill > 0:
+            if pwp_first_to_fill > 0:
                 if g.debug_level >= 3:
-                    print(f"[Replenish Resources] - Couns First Level: {self.couns_first_res.level}")
-                    print(f"[Replenish Resources] - Putting in {couns_first_to_fill}")
+                    print(f"[Replenish Resources] - pwp First Level: {self.pwp_first_res.level}")
+                    print(f"[Replenish Resources] - Putting in {pwp_first_to_fill}")
 
-                self.couns_first_res.put(couns_first_to_fill)
+                self.pwp_first_res.put(pwp_first_to_fill)
 
                 if g.debug_level >= 3:
-                    print(f"[Replenish Resources] - New Couns First Level: {self.couns_first_res.level}")
+                    print(f"[Replenish Resources] - New pwp First Level: {self.pwp_first_res.level}")
 
             if g.debug_level >= 1:
                 print('[Replenish Resources] - Weekly Resources have been Replenished')
@@ -1292,16 +1306,16 @@ class Model:
                 if g.debug_level >= 2:
                     print(f"[Caseload TopUp] - cbt Caseload {self.cbt_restore_id} now at: {self.cbt_resources[self.cbt_restore_id].level}")
                       
-            for self.couns_restore_id, week_data in self.couns_restore.items():
+            for self.pwp_restore_id, week_data in self.pwp_restore.items():
                 if self.week_num in week_data and week_data[self.week_num]['res_topup'] > 0:
-                    self.couns_topup_value = week_data[self.week_num]['res_topup']
+                    self.pwp_topup_value = week_data[self.week_num]['res_topup']
                     if g.debug_level >= 2:
-                            print(f"[Caseload TopUp] - couns Caseload {self.couns_restore_id} at week {self.week_num}: {self.couns_resources[self.couns_restore_id].level}, {self.couns_topup_value} available to restore")
+                            print(f"[Caseload TopUp] - pwp Caseload {self.pwp_restore_id} at week {self.week_num}: {self.pwp_resources[self.pwp_restore_id].level}, {self.pwp_topup_value} available to restore")
 
-                    self.couns_resources[self.couns_restore_id].put(self.couns_topup_value)
+                    self.pwp_resources[self.pwp_restore_id].put(self.pwp_topup_value)
 
                 if g.debug_level >= 2:
-                    print(f"[Caseload TopUp] - couns Caseload {self.couns_restore_id} now at: {self.couns_resources[self.couns_restore_id].level}")
+                    print(f"[Caseload TopUp] - pwp Caseload {self.pwp_restore_id} now at: {self.pwp_resources[self.pwp_restore_id].level}")
             # don't wait, go to the next step
             yield self.env.timeout(0)
             
@@ -1316,8 +1330,8 @@ class Model:
             self.resources = self.pwp_resources
         elif self.r_type == 'cbt':
             self.resources = self.cbt_resources
-        elif self.r_type == 'couns':
-            self.resources = self.couns_resources
+        elif self.r_type == 'pwp':
+            self.resources = self.pwp_resources
 
         self.available_caseloads = {k: v for k, v in self.resources.items() if v.level > 0}
 
@@ -1345,7 +1359,7 @@ class Model:
 
         yield self.env.process(self.pwp_staff_generator(week_number))
         yield self.env.process(self.cbt_staff_generator(week_number))
-        yield self.env.process(self.couns_staff_generator(week_number))
+        yield self.env.process(self.pwp_staff_generator(week_number))
 
         if g.debug_level >= 1:
             print("[Staff Generator] - Staff Generator has Finished")
@@ -1411,28 +1425,28 @@ class Model:
         # reset the staff counter back to original level once all staff have been processed
         self.cbt_staff_counter = 200
 
-    def couns_staff_generator(self,week_number):
+    def pwp_staff_generator(self,week_number):
 
-        self.couns_counter = 0
+        self.pwp_counter = 0
        
-        # iterate through the couns staff
-        while self.couns_counter < g.number_staff_couns:
+        # iterate through the pwp staff
+        while self.pwp_counter < g.number_staff_pwp:
 
             # Increment the staff counter by 1
-            self.couns_counter += 1
+            self.pwp_counter += 1
 
             # Create a new staff member from Staff Class
-            s = Staff(self.couns_staff_counter+(self.couns_counter*2))
+            s = Staff(self.pwp_staff_counter+(self.pwp_counter*2))
 
             if g.debug_level >= 2:
                 print('')
-                print(f"[Staff Generator] - ==== couns Staff {s.id} Generated ====")
+                print(f"[Staff Generator] - ==== pwp Staff {s.id} Generated ====")
             
             self.staff_results_df.at[s.id,'Week Number'] = week_number
             self.staff_results_df.at[s.id,'Run Number'] = self.run_number
-            self.staff_results_df.at[s.id,'Job Role'] = 'couns'
+            self.staff_results_df.at[s.id,'Job Role'] = 'pwp'
             self.staff_results_df.at[s.id,'Break Mins'] = g.break_time
-            self.staff_results_df.at[s.id,'Huddle Mins'] = g.counsellors_huddle # couns only
+            self.staff_results_df.at[s.id,'Huddle Mins'] = g.pwpellors_huddle # pwp only
             # Monthly Activities
             self.staff_results_df.at[s.id,'Supervision Mins'] = int(g.supervision_time/4)
             self.staff_results_df.at[s.id,'Wellbeing Mins'] = int(g.wellbeing_time/4)
@@ -1441,7 +1455,7 @@ class Model:
         yield(self.env.timeout(0))
         
         # reset the staff counter back to original level once all staff have been processed
-        self.couns_staff_counter = 300
+        self.pwp_staff_counter = 300
 
     ###### assessment part of the clinical pathway #####
     def screen_referral(self,patient,asst_week_number):
@@ -1792,7 +1806,7 @@ class Model:
         # Ensure index is integer type
         self.step2_waiting_list.index = self.step2_waiting_list.index.astype(int)
 
-        # Determine pathway (PWP or Group)
+        # Determine pathway (pwp or Group)
         if self.selected_step2_pathway == 'pwp':
             g.number_on_pwp_wl += 1
             if g.debug_level >= 3:
@@ -1906,7 +1920,7 @@ class Model:
         # Ensure index is integer type
         self.step3_waiting_list.index = self.step3_waiting_list.index.astype(int)
 
-        # Determine pathway (cbt or couns)
+        # Determine pathway (cbt or pwp)
         if self.selected_step3_pathway == 'cbt':
             g.number_on_cbt_wl += 1
             if g.debug_level >= 3:
@@ -1942,12 +1956,12 @@ class Model:
 
             yield self.env.process(self.step3_cbt_process(p))
 
-        elif self.selected_step3_pathway == 'couns':
+        elif self.selected_step3_pathway == 'pwp':
             
-            g.number_on_couns_wl += 1
+            g.number_on_pwp_wl += 1
 
             if g.debug_level >= 3:
-                print(f"[Step 3] - Week {self.env.now}. {g.number_on_couns_wl} on the {p.step3_path_route} waiting list.")
+                print(f"[Step 3] - Week {self.env.now}. {g.number_on_pwp_wl} on the {p.step3_path_route} waiting list.")
 
             # Add or update patient in waiting list
             if p_id_int not in self.step3_waiting_list.index:
@@ -1955,9 +1969,9 @@ class Model:
                     'Source': 'Referral Gen',
                     'Run Number': self.run_number,
                     'Week Number': self.week_number,
-                    'Route Name': 'couns',
+                    'Route Name': 'pwp',
                     'IsWaiting': 1,
-                    'WL Position': g.number_on_couns_wl,
+                    'WL Position': g.number_on_pwp_wl,
                     'Start Week': p.treat_wait_week,
                     'End Week': -1,
                     'Wait Time': 0.0
@@ -1974,10 +1988,10 @@ class Model:
                 self.step3_waiting_list.loc[p_id_int, ['Source',
                     'Run Number', 'Week Number', 'Route Name', 'IsWaiting',
                     'WL Position', 'Start Week', 'End Week', 'Wait Time'
-                ]] = [p.patient_source, self.run_number, self.week_number, 'couns', 1,
-                    g.number_on_couns_wl, p.treat_wait_week, -1, 0.0]
+                ]] = [p.patient_source, self.run_number, self.week_number, 'pwp', 1,
+                    g.number_on_pwp_wl, p.treat_wait_week, -1, 0.0]
             
-            yield self.env.process(self.step3_couns_process(p))
+            yield self.env.process(self.step3_pwp_process(p))
 
     def step2_pwp_process(self, patient):
         
@@ -1986,12 +2000,12 @@ class Model:
         self.queued_pwp_patients.append(p)
 
         if g.debug_level >= 4:
-            print(f'[PwP] - {p.step2_path_route} RUNNER: Patient {p.id} added to {p.step2_path_route} waiting list')
+            print(f'[pwp] - {p.step2_path_route} RUNNER: Patient {p.id} added to {p.step2_path_route} waiting list')
 
         yield self.prefill_done_event
 
         if g.debug_level >= 4:
-            print(f'[PwP] - {p.step2_path_route} RUNNER: Patient {p.id} is starting process after prefill completion')
+            print(f'[pwp] - {p.step2_path_route} RUNNER: Patient {p.id} is starting process after prefill completion')
 
         self.pwp_session_counter = 0
         self.pwp_dna_counter = 0
@@ -2000,7 +2014,7 @@ class Model:
         # Ensure patient exists in step2_results_df
         if p.id not in self.step2_results_df.index:
             if g.debug_level >= 3:
-                print(f"[PwP] - Creating new step2_results_df row for Patient {p.id}")
+                print(f"[pwp] - Creating new step2_results_df row for Patient {p.id}")
             new_row = self.step2_results_df.iloc[0].copy()
             new_row.name = p.id
             self.step2_results_df.loc[p.id] = new_row
@@ -2008,7 +2022,7 @@ class Model:
         # Ensure patient exists in step2_waiting_list
         if p.id not in self.step2_waiting_list.index:
             if g.debug_level >= 3:
-                print(f"[PwP] - Creating new step2_waiting_list row for Patient {p.id}")
+                print(f"[pwp] - Creating new step2_waiting_list row for Patient {p.id}")
             new_row = self.step2_waiting_list.iloc[0].copy()
             new_row.name = p.id
             self.step2_waiting_list.loc[p.id] = new_row
@@ -2018,7 +2032,7 @@ class Model:
         self.step2_waiting_list.at[p.id, 'WL Position'] = g.number_on_pwp_wl
 
         if g.debug_level >= 4:
-            print(f'[PwP] - Patient sent down {p.step2_path_route}')
+            print(f'[pwp] - Patient sent down {p.step2_path_route}')
 
         while True:
             self.result = yield self.env.process(self.find_caseload_slot(p.step2_path_route))
@@ -2034,37 +2048,37 @@ class Model:
 
             if self.result == (None, None):
                 if g.debug_level >= 4:
-                    print(f"[PwP] - Stopping retry as no resources are available. Time: {self.env.now}")
+                    print(f"[pwp] - Stopping retry as no resources are available. Time: {self.env.now}")
                 return  # **Exit function entirely**
 
         if g.debug_level >= 4:
-            print(f"[PwP] - First PwP Appt slot found for patient {p.id}, allocating appt")
+            print(f"[pwp] - First pwp Appt slot found for patient {p.id}, allocating appt")
         
         # check for available first appointment
         with self.pwp_first_res.get(1) as self.pwp_first:
             yield self.pwp_first
 
         if g.debug_level >= 4:
-            print(f"[PwP] - First PwP Appt slot allocated for patient {p.id}")
+            print(f"[pwp] - First pwp Appt slot allocated for patient {p.id}")
 
         if g.debug_level >= 4:
-            print(f"[PwP] - Requesting PwP Caseload slot found for patient {p.id}")
+            print(f"[pwp] - Requesting pwp Caseload slot found for patient {p.id}")
         
         # check for available caseload slot
         with self.pwp_caseload_res.get(1) as self.pwp_req:
             yield self.pwp_req
 
         if g.debug_level >= 4:
-            print(f"[PwP] - Caseload PwP slot found for patient {p.id}")
+            print(f"[pwp] - Caseload pwp slot found for patient {p.id}")
 
         # assign the caseload to the patient
         p.step2_resource_id = self.pwp_caseload_id
 
         if g.debug_level >= 4:
-            print(f'[PwP] - Resource {self.pwp_caseload_id} with a caseload remaining of {self.pwp_caseload_res.level} allocated to patient {p.id}')
+            print(f'[pwp] - Resource {self.pwp_caseload_id} with a caseload remaining of {self.pwp_caseload_res.level} allocated to patient {p.id}')
 
         if g.debug_level >= 4:
-            print(f'[PwP] - Patient {p.id} added to caseload {p.step2_resource_id} spaces left')
+            print(f'[pwp] - Patient {p.id} added to caseload {p.step2_resource_id} spaces left')
 
         # add to caseload
         g.number_on_pwp_cl += 1
@@ -2081,15 +2095,15 @@ class Model:
         self.step2_waiting_list.loc[p_id, 'End Week'] = self.env.now
         
         if g.debug_level >= 4:
-            print(f'[PwP] - {p.step2_path_route} RUNNER: Patient {p.id} removed from {p.step2_path_route} waiting list')
+            print(f'[pwp] - {p.step2_path_route} RUNNER: Patient {p.id} removed from {p.step2_path_route} waiting list')
 
         if g.debug_level >= 4:
-            print(f'[PwP] - FUNC PROCESS step2_pwp_process: Week {self.env.now}: Patient {p.id} (added week {p.week_added}) put through {p.step2_path_route}')
+            print(f'[pwp] - FUNC PROCESS step2_pwp_process: Week {self.env.now}: Patient {p.id} (added week {p.week_added}) put through {p.step2_path_route}')
 
         # record how long they have waited to start treatment      
         self.q_time_pwp = p.step2_start_week - p.treat_wait_week
         if g.debug_level >= 4:
-            print(f'[PwP] - Patient {p.id} Week {self.env.now} waited {self.q_time_pwp} weeks from {p.treat_wait_week} weeks to {p.step2_start_week} to enter {p.step2_path_route} treatment')
+            print(f'[pwp] - Patient {p.id} Week {self.env.now} waited {self.q_time_pwp} weeks from {p.treat_wait_week} weeks to {p.step2_start_week} to enter {p.step2_path_route} treatment')
 
         self.step2_results_df.at[p.id, 'Route Name'] = p.step2_path_route
         self.step2_results_df.at[p.id, 'Run Number'] = self.run_number
@@ -2138,10 +2152,10 @@ class Model:
         self.pwp_random_weeks.sort()
 
         if g.debug_level >= 4:
-            print(f'[PwP] - Random Session week {len(self.pwp_random_weeks)} numbers are {self.pwp_random_weeks}')
+            print(f'[pwp] - Random Session week {len(self.pwp_random_weeks)} numbers are {self.pwp_random_weeks}')
 
         if g.debug_level >= 4:
-            print(f'[PwP] - Number of sessions is {g.step2_pwp_sessions}')
+            print(f'[pwp] - Number of sessions is {g.step2_pwp_sessions}')
 
         # decide whether the DNA policy had been followed or not
         self.vary_dna_policy = random.uniform(0,1)
@@ -2154,7 +2168,7 @@ class Model:
         while self.pwp_session_counter < g.step2_pwp_sessions and self.pwp_dna_counter < self.dnas_allowed:
 
             if g.debug_level >= 4:
-                print(f'[PwP] - FUNC PROCESS step2_pwp_process: Week {self.env.now}: Patient {p.id} '
+                print(f'[pwp] - FUNC PROCESS step2_pwp_process: Week {self.env.now}: Patient {p.id} '
                     f'(added week {p.week_added}) on {p.step2_path_route} '
                     f'Session {self.pwp_session_counter} on Week {self.pwp_random_weeks[self.pwp_session_counter]}')
           
@@ -2214,14 +2228,14 @@ class Model:
                 p.treat_wait_week = self.env.now
             
                 if g.debug_level >= 4:
-                    print(f'[PwP] - ### STEPPED UP ###: Patient {p.id} has been stepped up, running step3 route selector')
+                    print(f'[pwp] - ### STEPPED UP ###: Patient {p.id} has been stepped up, running step3 route selector')
                 yield self.env.process(self.patient_step3_pathway(p))
 
             # Handle dropout logic
             if is_dropout:
                 self.step2_results_df.at[p.id, 'IsDropOut'] = 1
                 if g.debug_level >= 4:
-                    print(f'[PwP] - Patient {p.id} dropped out of {p.step2_path_route} treatment')
+                    print(f'[pwp] - Patient {p.id} dropped out of {p.step2_path_route} treatment')
                 p.step2_end_week = p.step2_start_week + self.pwp_random_weeks[self.pwp_session_counter]
                 break  # Stop the loop if patient drops out
 
@@ -2470,7 +2484,7 @@ class Model:
         if g.debug_level >= 4:
             print(f'[CBT] - {p.step3_path_route} RUNNER: Patient {p.id} added to {p.step3_path_route} waiting list')
 
-        start_q_couns = self.env.now
+        start_q_pwp = self.env.now
 
         # Ensure patient exists in step3_results_df
         if p.id not in self.step3_results_df.index:
@@ -2661,7 +2675,7 @@ class Model:
             is_step_down = 1 if self.cbt_session_counter >= g.step3_cbt_sessions - 1 and self.step_patient_down <= g.step_down_rate else 0
             if is_step_down == 1:
                 if g.debug_level >= 4:
-                    print(f'[Couns] - Patient {p.id} has been Stepped Down')
+                    print(f'[pwp] - Patient {p.id} has been Stepped Down')
                 self.step3_results_df.at[p.id, 'IsStep'] = 1
             else:
                 self.step3_results_df.at[p.id, 'IsStep'] = 0
@@ -2726,27 +2740,27 @@ class Model:
         
         yield self.env.timeout(0)
 
-    def step3_couns_process(self, patient):
+    def step3_pwp_process(self, patient):
 
         p = patient
 
-        self.queued_couns_patients.append(p)
+        self.queued_pwp_patients.append(p)
 
         if g.debug_level >= 4:
-            print(f'[Couns] - {p.step3_path_route} RUNNER: Patient {p.id} added to {p.step3_path_route} waiting list')
+            print(f'[pwp] - {p.step3_path_route} RUNNER: Patient {p.id} added to {p.step3_path_route} waiting list')
 
         yield self.prefill_done_event
 
         if g.debug_level >= 4:
-            print(f'[Couns] - {p.step3_path_route} RUNNER: Patient {p.id} is starting process after prefill completion')
+            print(f'[pwp] - {p.step3_path_route} RUNNER: Patient {p.id} is starting process after prefill completion')
 
-        self.couns_session_counter = 0
-        self.couns_dna_counter = 0
+        self.pwp_session_counter = 0
+        self.pwp_dna_counter = 0
 
         # Ensure patient exists in step3_results_df
         if p.id not in self.step3_results_df.index:
             if g.debug_level >= 3:
-                print(f"[Couns] - Creating new step3_results_df row for Patient {p.id}")
+                print(f"[pwp] - Creating new step3_results_df row for Patient {p.id}")
             new_row = self.step3_results_df.iloc[0].copy()
             new_row.name = p.id
             self.step3_results_df.loc[p.id] = new_row
@@ -2754,91 +2768,91 @@ class Model:
         # Ensure patient exists in step3_waiting_list
         if p.id not in self.step3_waiting_list.index:
             if g.debug_level >= 3:
-                print(f"[Couns] - Creating new step3_waiting_list row for Patient {p.id}")
+                print(f"[pwp] - Creating new step3_waiting_list row for Patient {p.id}")
             new_row = self.step3_waiting_list.iloc[0].copy()
             new_row.name = p.id
             self.step3_waiting_list.loc[p.id] = new_row
 
         # Safe to update
-        self.step3_results_df.at[p.id, 'WL Posn'] = g.number_on_couns_wl
-        self.step3_waiting_list.at[p.id, 'WL Position'] = g.number_on_couns_wl
+        self.step3_results_df.at[p.id, 'WL Posn'] = g.number_on_pwp_wl
+        self.step3_waiting_list.at[p.id, 'WL Position'] = g.number_on_pwp_wl
 
         # Check if there is a caseload slot available and return the resource
         while True:
             self.result = yield self.env.process(self.find_caseload_slot(p.step3_path_route))
             
             if self.result and isinstance(self.result, tuple) and len(self.result) == 2:
-                self.couns_caseload_id, self.couns_caseload_res = self.result
-                if self.couns_caseload_res is not None:  # Ensure the resource is valid
+                self.pwp_caseload_id, self.pwp_caseload_res = self.result
+                if self.pwp_caseload_res is not None:  # Ensure the resource is valid
                     break  # Exit the loop when a resource is found
             else:
                 if g.debug_level >= 4:
-                    print("[Couns] - No available resource found for couns, retrying...")
+                    print("[pwp] - No available resource found for pwp, retrying...")
 
             if self.result == (None, None):
                 if g.debug_level >= 4:
-                    print(f"[Couns] - Stopping retry as no resources are available. Time: {self.env.now}")
+                    print(f"[pwp] - Stopping retry as no resources are available. Time: {self.env.now}")
                 return  # **Exit function entirely**
 
             yield self.env.timeout(1)  # Wait a week and retry
 
          # check for available first appointment
-        with self.couns_first_res.get(1) as self.couns_first:
-            yield self.couns_first
+        with self.pwp_first_res.get(1) as self.pwp_first:
+            yield self.pwp_first
         
-        # with self.couns_first_res.get(1) as req:
+        # with self.pwp_first_res.get(1) as req:
         #     result = yield req | self.env.timeout(0)  # Try to get the resource immediately
 
         #     if req not in result:  # If resource is unavailable
                 
         #         yield self.env.timeout(1)  # Wait until next week
 
-        #         with self.couns_first_res.get(1) as req:  # Retry resource request
+        #         with self.pwp_first_res.get(1) as req:  # Retry resource request
         #             yield req  # This will now wait for availability
 
         if g.debug_level >= 4:
-            print(f"[Couns] - First Couns Appt slot found for patient {p.id}, allocating appt")
+            print(f"[pwp] - First pwp Appt slot found for patient {p.id}, allocating appt")
         
         if g.debug_level >= 4:
-            print(f"[Couns] - Requesting Couns Caseload slot found for patient {p.id}")
+            print(f"[pwp] - Requesting pwp Caseload slot found for patient {p.id}")
         
         # check for available caseload slot
-        with self.couns_caseload_res.get(1) as self.couns_req:
-            yield self.couns_req
+        with self.pwp_caseload_res.get(1) as self.pwp_req:
+            yield self.pwp_req
 
         if g.debug_level >= 4:
-            print(f"[Couns] - Caseload Couns slot found for patient {p.id}")
+            print(f"[pwp] - Caseload pwp slot found for patient {p.id}")
 
         # assign the caseload to the patient
-        p.step3_resource_id = self.couns_caseload_id
+        p.step3_resource_id = self.pwp_caseload_id
 
         # add to overall caseload
-        g.number_on_couns_cl +=1
+        g.number_on_pwp_cl +=1
 
-        # as each patient reaches this stage take them off couns WL
-        g.number_on_couns_wl -= 1
-
-        if g.debug_level >= 4:
-            print(f'[Couns] - {p.step3_path_route} RUNNER: Patient {p.id} removed from {p.step3_path_route} waiting list')
+        # as each patient reaches this stage take them off pwp WL
+        g.number_on_pwp_wl -= 1
 
         if g.debug_level >= 4:
-            print(f'[Couns] - FUNC PROCESS step3_couns_process: Week {self.env.now}: Patient {p.id} (added week {p.week_added}) put through {p.step3_path_route}')
+            print(f'[pwp] - {p.step3_path_route} RUNNER: Patient {p.id} removed from {p.step3_path_route} waiting list')
+
+        if g.debug_level >= 4:
+            print(f'[pwp] - FUNC PROCESS step3_pwp_process: Week {self.env.now}: Patient {p.id} (added week {p.week_added}) put through {p.step3_path_route}')
 
         p.step3_start_week = self.week_number
 
         self.step3_waiting_list.loc[p.id, 'IsWaiting'] = 0
         self.step3_waiting_list.loc[p.id, 'End Week'] = self.env.now
 
-        # Calculate how long patient queued for couns
-        self.q_time_couns = p.step3_start_week - p.treat_wait_week
+        # Calculate how long patient queued for pwp
+        self.q_time_pwp = p.step3_start_week - p.treat_wait_week
 
         if g.debug_level >= 4:
-            print(f'[Couns] - Patient {p.id} Week {self.env.now} waited {self.q_time_couns} weeks from {p.treat_wait_week} weeks to {p.step3_start_week} to enter {p.step3_path_route} treatment')
+            print(f'[pwp] - Patient {p.id} Week {self.env.now} waited {self.q_time_pwp} weeks from {p.treat_wait_week} weeks to {p.step3_start_week} to enter {p.step3_path_route} treatment')
         self.step3_results_df.at[p.id, 'Route Name'] = p.step3_path_route
         self.step3_results_df.at[p.id, 'Run Number'] = self.run_number
         self.step3_results_df.at[p.id, 'Week Number'] = self.week_number
-        # Calculate how long patient queued for couns
-        self.step3_results_df.at[p.id, 'Q Time'] = self.q_time_couns
+        # Calculate how long patient queued for pwp
+        self.step3_results_df.at[p.id, 'Q Time'] = self.q_time_pwp
         
         # decide whether the DNA policy had been followed or not
         self.vary_dna_policy = random.uniform(0,1)
@@ -2856,161 +2870,161 @@ class Model:
         self.random_num_sessions += vary_number_sessions(8,22)
 
         if self.vary_step3_sessions >= g.step3_session_var:
-            self.number_couns_sessions = g.step3_couns_sessions
-            self.step3_couns_period = g.step3_couns_period
+            self.number_pwp_sessions = g.step3_pwp_sessions
+            self.step3_pwp_period = g.step3_pwp_period
         else:
-            self.number_couns_sessions = self.random_num_sessions
-            self.step3_couns_period = g.step3_couns_period+(self.random_num_sessions*2)
+            self.number_pwp_sessions = self.random_num_sessions
+            self.step3_pwp_period = g.step3_pwp_period+(self.random_num_sessions*2)
 
         # Generate a list of week numbers the patient is going to attend
         # Determine the number of sessions and treatment period based on session variability
         if self.vary_step3_sessions >= g.step3_session_var:
-            self.number_couns_sessions = g.step3_couns_sessions
-            self.step3_couns_period = g.step3_couns_period
+            self.number_pwp_sessions = g.step3_pwp_sessions
+            self.step3_pwp_period = g.step3_pwp_period
         else:
-            self.number_couns_sessions = self.random_num_sessions
+            self.number_pwp_sessions = self.random_num_sessions
             # Ensure that the treatment period is at least enough to accommodate the sessions
-            self.step3_couns_period = g.step3_couns_period + (self.random_num_sessions * 2)
+            self.step3_pwp_period = g.step3_pwp_period + (self.random_num_sessions * 2)
 
         # Generate a list of week numbers the patient is going to attend
         if random.choice([True, False]):
             # Weeks based on parity (even or odd week based on PatientID)
-            available_weeks = [w for w in range(self.week_number, self.week_number + self.step3_couns_period + 2) if w % 2 == p.id % 2]
+            available_weeks = [w for w in range(self.week_number, self.week_number + self.step3_pwp_period + 2) if w % 2 == p.id % 2]
         else:
             # All weeks within the period
-            available_weeks = list(range(self.week_number, self.week_number + self.step3_couns_period + 2))
+            available_weeks = list(range(self.week_number, self.week_number + self.step3_pwp_period + 2))
 
         # Ensure there are enough available weeks for the number of sessions
-        if len(available_weeks) >= self.number_couns_sessions:
+        if len(available_weeks) >= self.number_pwp_sessions:
             # Generate a random sample if enough weeks are available
-            self.couns_random_weeks = random.sample(available_weeks, self.number_couns_sessions)
+            self.pwp_random_weeks = random.sample(available_weeks, self.number_pwp_sessions)
         else:
-            # Adjust step3_couns_period to ensure enough weeks are available
-            extra_needed = self.number_couns_sessions - len(available_weeks)
+            # Adjust step3_pwp_period to ensure enough weeks are available
+            extra_needed = self.number_pwp_sessions - len(available_weeks)
             # Extend the period to add enough weeks for the sessions
-            self.step3_couns_period += extra_needed * 2  # Adjust as needed, this is just an example
+            self.step3_pwp_period += extra_needed * 2  # Adjust as needed, this is just an example
             # Recalculate the available weeks with the new period
             if random.choice([True, False]):
-                available_weeks = [w for w in range(self.week_number, self.week_number + self.step3_couns_period + 2) if w % 2 == p.id % 2]
+                available_weeks = [w for w in range(self.week_number, self.week_number + self.step3_pwp_period + 2) if w % 2 == p.id % 2]
             else:
-                available_weeks = list(range(self.week_number, self.week_number + self.step3_couns_period + 2))
+                available_weeks = list(range(self.week_number, self.week_number + self.step3_pwp_period + 2))
             
             # Now we should have enough weeks
-            self.couns_random_weeks = random.sample(available_weeks, self.number_couns_sessions)
+            self.pwp_random_weeks = random.sample(available_weeks, self.number_pwp_sessions)
 
         # Sort the list to maintain sequential order
-        self.couns_random_weeks.sort()
+        self.pwp_random_weeks.sort()
 
-        if self.couns_session_counter < len(self.couns_random_weeks):
-            p.step3_end_week = p.step3_start_week + self.couns_random_weeks[self.couns_session_counter]
+        if self.pwp_session_counter < len(self.pwp_random_weeks):
+            p.step3_end_week = p.step3_start_week + self.pwp_random_weeks[self.pwp_session_counter]
         else:
             if g.debug_level >= 4:
-                print(f"[Couns] - Warning: Index {self.couns_session_counter} out of range for couns_random_weeks.")
+                print(f"[pwp] - Warning: Index {self.pwp_session_counter} out of range for pwp_random_weeks.")
 
         if g.debug_level >= 4:
-            print(f'[Couns] - Random Session week {len(self.couns_random_weeks)} numbers are {self.couns_random_weeks}')
+            print(f'[pwp] - Random Session week {len(self.pwp_random_weeks)} numbers are {self.pwp_random_weeks}')
 
         if g.debug_level >= 4:
-            print(f'[Couns] - Number of sessions is {self.number_couns_sessions}')
+            print(f'[pwp] - Number of sessions is {self.number_pwp_sessions}')
 
         # print(self.random_weeks)
 
-        while self.couns_session_counter < g.step3_couns_sessions and self.couns_dna_counter < self.dnas_allowed:
+        while self.pwp_session_counter < g.step3_pwp_sessions and self.pwp_dna_counter < self.dnas_allowed:
 
             if g.debug_level >= 4:
-                print(f'[Couns] - FUNC PROCESS step3_couns_process: Week {self.env.now}: Patient {p.id} '
+                print(f'[pwp] - FUNC PROCESS step3_pwp_process: Week {self.env.now}: Patient {p.id} '
                     f'(added week {p.week_added}) on {p.step3_path_route} '
-                    f'Session {self.couns_session_counter} on Week {self.couns_random_weeks[self.couns_session_counter]}')
+                    f'Session {self.pwp_session_counter} on Week {self.pwp_random_weeks[self.pwp_session_counter]}')
                 
-            self.couns_session_type = pd.NA
+            self.pwp_session_type = pd.NA
             
-            if self.couns_session_counter == 0:
-                self.couns_session_type = 'First'
+            if self.pwp_session_counter == 0:
+                self.pwp_session_type = 'First'
             else:
-                self.couns_session_type = 'Follow-Up'
+                self.pwp_session_type = 'Follow-Up'
 
             # Determine whether the session was DNA'd
-            self.dna_couns_session = random.uniform(0, 1)
-            is_dna = 1 if self.dna_couns_session <= g.step3_couns_dna_rate else 0
+            self.dna_pwp_session = random.uniform(0, 1)
+            is_dna = 1 if self.dna_pwp_session <= g.step3_pwp_dna_rate else 0
 
             if is_dna:
-                self.couns_dna_counter += 1
+                self.pwp_dna_counter += 1
                 session_time = 0  # No session time if DNA'd
                 admin_time = g.step3_session_admin
             else:
-                session_time = g.step3_couns_1st_mins if self.couns_session_counter == 0 else g.step3_couns_fup_mins
+                session_time = g.step3_pwp_1st_mins if self.pwp_session_counter == 0 else g.step3_pwp_fup_mins
                 admin_time = g.step3_session_admin
 
             # Determine if the patient is stepped up
             self.step_patient_down = random.uniform(0, 1)
-            is_step_down = 1 if self.couns_session_counter >= g.step3_couns_sessions - 1 and self.step_patient_down <= g.step_down_rate else 0
+            is_step_down = 1 if self.pwp_session_counter >= g.step3_pwp_sessions - 1 and self.step_patient_down <= g.step_down_rate else 0
             if is_step_down == 1:
                 if g.debug_level >= 4:
-                    print(f'[Couns] - Patient {p.id} has been Stepped Down')
+                    print(f'[pwp] - Patient {p.id} has been Stepped Down')
                 self.step3_results_df.at[p.id, 'IsStep'] = 1
             else:
                 self.step3_results_df.at[p.id, 'IsStep'] = 0
             # Determine if the patient dropped out
-            is_dropout = 1 if self.couns_dna_counter >= self.dnas_allowed else 0
+            is_dropout = 1 if self.pwp_dna_counter >= self.dnas_allowed else 0
             if is_dropout == 1:
                 self.step3_results_df.at[p.id, 'IsDropOut'] = 1
             else:
                 self.step3_results_df.at[p.id, 'IsDropOut'] = 0
 
             # Store session results as a dictionary
-            new_couns_row = {
+            new_pwp_row = {
                         'PatientID': p.id,
-                        'Week Number': p.step3_start_week + self.couns_random_weeks[self.couns_session_counter],
+                        'Week Number': p.step3_start_week + self.pwp_random_weeks[self.pwp_session_counter],
                         'Run Number': self.run_number,
                         'Route Name': p.step3_path_route,
-                        'Session Number': self.couns_session_counter,
-                        'Session Type': self.couns_session_type,
+                        'Session Number': self.pwp_session_counter,
+                        'Session Type': self.pwp_session_type,
                         'Session Time': session_time,
                         'Admin Time': admin_time,
                         'IsDNA': is_dna
                     }
 
             # Append the session data to the DataFrame
-            self.step3_sessions_df = pd.concat([self.step3_sessions_df, pd.DataFrame([new_couns_row])], ignore_index=False)
+            self.step3_sessions_df = pd.concat([self.step3_sessions_df, pd.DataFrame([new_pwp_row])], ignore_index=False)
 
             # Handle step-up logic
             if is_step_down:
                 self.step3_results_df.at[p.id, 'IsStep'] = 1
-                self.couns_session_counter = 0
-                self.couns_dna_counter = 0  # Reset counters for the next step
+                self.pwp_session_counter = 0
+                self.pwp_dna_counter = 0  # Reset counters for the next step
                 p.treat_wait_week = self.env.now
                 if g.debug_level >= 4:
-                    print(f'[Couns] - ### STEPPED DOWN ###: Patient {p.id} has been stepped down, running step2 route selector')
+                    print(f'[pwp] - ### STEPPED DOWN ###: Patient {p.id} has been stepped down, running step2 route selector')
                 yield self.env.process(self.patient_step2_pathway(p))
 
             # Handle dropout logic
             if is_dropout:
                 self.step3_results_df.at[p.id, 'IsDropOut'] = 1
                 if g.debug_level >= 4:
-                    print(f'[Couns] - Patient {p.id} dropped out of {p.step3_path_route} treatment')
-                p.step3_end_week = p.step3_start_week + self.couns_random_weeks[self.couns_session_counter]
+                    print(f'[pwp] - Patient {p.id} dropped out of {p.step3_path_route} treatment')
+                p.step3_end_week = p.step3_start_week + self.pwp_random_weeks[self.pwp_session_counter]
                 break  # Stop the loop if patient drops out
 
             # Move to the next session
-            self.couns_session_counter += 1
+            self.pwp_session_counter += 1
 
         # # remove from this specific caseload
-        # self.couns_caseload_posn -=1
+        # self.pwp_caseload_posn -=1
 
-        if self.couns_dna_counter >= self.dnas_allowed:
+        if self.pwp_dna_counter >= self.dnas_allowed:
 
-            self.env.process(self.record_caseload_use(p.step3_path_route,self.couns_caseload_id,self.couns_random_weeks[self.couns_session_counter]))
+            self.env.process(self.record_caseload_use(p.step3_path_route,self.pwp_caseload_id,self.pwp_random_weeks[self.pwp_session_counter]))
             
         else:
             # record when the caseload resource can be restored
-            self.env.process(self.record_caseload_use(p.step3_path_route,self.couns_caseload_id,max(self.couns_random_weeks)))
+            self.env.process(self.record_caseload_use(p.step3_path_route,self.pwp_caseload_id,max(self.pwp_random_weeks)))
         
-        # reset counters for couns sessions
-        self.couns_session_counter = 0
-        self.couns_dna_counter = 0
+        # reset counters for pwp sessions
+        self.pwp_session_counter = 0
+        self.pwp_dna_counter = 0
         
         # take off caseload
-        g.number_on_couns_cl -=1
+        g.number_on_pwp_cl -=1
         
         yield self.env.timeout(0)
 
@@ -3028,12 +3042,12 @@ class Model:
         g.number_on_pwp_wl = 0
         g.number_on_group_wl = 0
         g.number_on_cbt_wl = 0
-        g.number_on_couns_wl = 0
+        g.number_on_pwp_wl = 0
         g.number_on_ta_wl = 0
         g.number_on_pwp_cl = 0
         g.number_on_group_cl = 0
         g.number_on_cbt_cl = 0
-        g.number_on_couns_cl = 0
+        g.number_on_pwp_cl = 0
 
     # The run method starts up the DES entity generators, runs the simulation,
     # and in turns calls anything we need to generate results for the run
@@ -3182,7 +3196,7 @@ if __name__ == "__main__":
     # print(step2_sessions_df.to_string())
     # print(df_trial_results)
     # step3_sessions_df.to_csv("step3_sessions.csv", index=True)
-    # step3_waiting_dfs.to_csv("step3_waiters.csv", index=True)
+    # step2_waiting_dfs.to_csv("step2_waiters.csv", index=True)
     # step2_results_df.to_csv("step2_results.csv", index=True)
     # caseload_weekly_dfs.to_csv("caseloads.csv", index=True)
     #step2_results_df, step3_results_df, df_trial_results, asst_weekly_dfs, step2_weekly_dfs, step3_weekly_dfs, staff_weekly_dfs, caseload_weekly_dfs  = my_trial.run_trial()
