@@ -150,8 +150,9 @@ class Patient:
         # Patient
         self.id = p_id
         self.patient_at_risk = 0 # used to determine DNA/Canx policy to apply
-        self.week_added = None # Week they were added to the waiting list (for debugging purposes)
-        self.patient_source = [] # where the patient was generated from i.e prefill or referral generator
+        self.week_added = None # Week they were added to the waiting list
+        self.patient_source = [] # where the patient was generated from i.e 
+                                 # prefill or referral generator
 
         # Referral
         self.referral_rejected = 0 # were they rejected at referral
@@ -843,31 +844,33 @@ class Model:
             self.asst_optin_delay = self.asst_results_weekly_stats['Opt-in Wait'].mean()
             self.asst_tot_optin = self.asst_results_weekly_stats['Opted In'].sum()
             self.asst_optin_wait = self.asst_results_weekly_stats['Opt-in Q Time'].mean()
+            self.asst_sixweek_pc = (self.asst_results_weekly_stats['TA 6W Pass'].sum() 
+                                    / self.asst_results_weekly_stats 
+                                    ['TA 6W Pass'].count()) * 100
             self.asst_waiting_list = g.number_on_ta_wl
             self.asst_avg_wait = self.asst_results_df['TA Q Time'].mean()
             self.asst_max_wait = self.asst_results_df['TA Q Time'].max()
             self.asst_tot_accept = self.asst_results_df['TA Outcome'].sum()
             self.asst_time_total = self.asst_results_weekly_stats['TA Mins'].sum()
 
-            self.asst_weekly_stats.append(
-                {'Run Number': self.run_number,
-                 'Week Number':self.stats_week_number,
-                 'Referrals Received':self.referrals_recvd,
-                 'Referral Screen Mins':self.asst_tot_screen,
-                 'Referrals Accepted':self.asst_tot_accept,
-                 'Referrals Rejected':self.asst_tot_reject,
-                 'Referrals Reviewed':self.asst_tot_revwd,
-                 'Reviews Rejected':self.asst_revw_reject,
-                 'Referrals Delay Opt-in':self.asst_optin_delay,
-                 'Referrals Opted-in':self.asst_tot_optin,
-                 'Referrals Wait Opt-in':self.asst_optin_wait,
-                 'TA Waiting List':self.asst_waiting_list,
-                 'TA Avg Wait':self.asst_avg_wait,
-                 'TA Max Wait':self.asst_max_wait,
-                 'TA Total Accept':self.asst_tot_accept,
-                 'TA Mins':self.asst_time_total
-                }
-                )
+            self.asst_weekly_stats.append({'Run Number': self.run_number,
+                                        'Week Number':self.stats_week_number,
+                                        'Referrals Received':self.referrals_recvd,
+                                        'Referral Screen Mins':self.asst_tot_screen,
+                                        'Referrals Accepted':self.asst_tot_accept,
+                                        'Referrals Rejected':self.asst_tot_reject,
+                                        'Referrals Reviewed':self.asst_tot_revwd,
+                                        'Reviews Rejected':self.asst_revw_reject,
+                                        'Referrals Delay Opt-in':self.asst_optin_delay,
+                                        'Referrals Opted-in':self.asst_tot_optin,
+                                        'Referrals Wait Opt-in':self.asst_optin_wait,
+                                        'TA Waiting List':self.asst_waiting_list,
+                                        'TA Avg Wait':self.asst_avg_wait,
+                                        'TA 6W PC':self.asst_sixweek_pc,
+                                        'TA Max Wait':self.asst_max_wait,
+                                        'TA Total Accept':self.asst_tot_accept,
+                                        'TA Mins':self.asst_time_total
+                                        })
     
             ## Staff
             self.job_role_list = ['pwp','cbt','couns']
