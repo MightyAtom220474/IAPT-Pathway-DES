@@ -452,6 +452,21 @@ if button_run_pressed:
             var_name='variable',
             value_name='value'
         )
+        
+        # convert minutes to hours
+        step2_pwp_sessions_summary_mean['Total_Session_Time'] /= 60
+        step2_pwp_sessions_summary_mean['Total_Admin_Time'] /= 60
+
+        pwp_hours_weekly = pd.melt(
+            step2_pwp_sessions_summary_mean,
+            id_vars=['Week Number'],
+            value_vars=['Total_Session_Time', 'Total_Admin_Time'],
+            var_name='variable',
+            value_name='value')
+
+        pwp_hours_weekly['variable'] = pwp_hours_weekly['variable'].replace({
+        'Total_Session_Time': 'Session Time',
+        'Total_Admin_Time': 'Admin Time'})
 
         # --- STEP 2 GROUP ---
         step2_group_agg = step2_group_sessions_summary.copy()
@@ -467,6 +482,8 @@ if button_run_pressed:
             .mean(numeric_only=True)
         )
 
+        
+
         group_sessions_weekly = pd.melt(
             step2_group_sessions_summary_mean,
             id_vars=['Week Number'],
@@ -474,6 +491,22 @@ if button_run_pressed:
             var_name='variable',
             value_name='value'
         )
+
+        # convert minutes to hours
+        step2_group_sessions_summary_mean['Total_Session_Time'] /= 60
+        step2_group_sessions_summary_mean['Total_Admin_Time'] /= 60
+
+        group_hours_weekly = pd.melt(
+            step2_group_sessions_summary_mean,
+            id_vars=['Week Number'],
+            value_vars=['Total_Session_Time', 'Total_Admin_Time'],
+            var_name='variable',
+            value_name='value'
+        )
+
+        group_hours_weekly['variable'] = pwp_hours_weekly['variable'].replace({
+        'Total_Session_Time': 'Session Time',
+        'Total_Admin_Time': 'Admin Time'})
 
         # --- STEP 3 CBT ---
         step3_cbt_agg = step3_cbt_sessions_summary.copy()
@@ -497,6 +530,22 @@ if button_run_pressed:
             value_name='value'
         )
 
+        # convert minutes to hours
+        step3_cbt_sessions_summary_mean['Total_Session_Time'] /= 60
+        step3_cbt_sessions_summary_mean['Total_Admin_Time'] /= 60
+
+        cbt_hours_weekly = pd.melt(
+            step3_cbt_sessions_summary_mean,
+            id_vars=['Week Number'],
+            value_vars=['Total_Session_Time', 'Total_Admin_Time'],
+            var_name='variable',
+            value_name='value'
+        )
+
+        cbt_hours_weekly['variable'] = cbt_hours_weekly['variable'].replace({
+        'Total_Session_Time': 'Session Time',
+        'Total_Admin_Time': 'Admin Time'})
+
         # --- STEP 3 COUNS ---
         step3_couns_agg = step3_couns_sessions_summary.copy()
         if 'index' in step3_couns_agg.columns:
@@ -518,6 +567,22 @@ if button_run_pressed:
             var_name='variable',
             value_name='value'
         )
+
+        # convert minutes to hours
+        step3_couns_sessions_summary_mean['Total_Session_Time'] /= 60
+        step3_couns_sessions_summary_mean['Total_Admin_Time'] /= 60
+
+        couns_hours_weekly = pd.melt(
+            step3_couns_sessions_summary_mean,
+            id_vars=['Week Number'],
+            value_vars=['Total_Session_Time', 'Total_Admin_Time'],
+            var_name='variable',
+            value_name='value'
+        )
+
+        couns_hours_weekly['variable'] = couns_hours_weekly['variable'].replace({
+        'Total_Session_Time': 'Session Time',
+        'Total_Admin_Time': 'Admin Time'})
       
         # --- Session Type Aggregation and Melt ---
 
@@ -988,7 +1053,8 @@ if button_run_pressed:
                                             'Week Number'])
       
         ##### bring all the clinical and non-clinical activity data together
-        pwp_hours_weekly_summary = pd.concat([pwp_sessions_weekly_summary
+        pwp_hours_weekly_summary = pd.concat([pwp_hours_weekly
+                                            ,group_hours_weekly
                                             ,pwp_asst_weekly_summary
                                             ,pwp_weekly_activity
                                             ],ignore_index=True)
@@ -997,7 +1063,7 @@ if button_run_pressed:
                                     pwp_hours_weekly_summary[
                                     "Week Number"] <=sim_duration_input-1]
            
-        cbt_hours_weekly_summary = pd.concat([cbt_sessions_weekly_summary,
+        cbt_hours_weekly_summary = pd.concat([cbt_hours_weekly,
                                             cbt_asst_weekly_summary,
                                             cbt_weekly_activity]
                                             ,ignore_index=True)
@@ -1006,7 +1072,7 @@ if button_run_pressed:
                                     cbt_hours_weekly_summary[
                                     "Week Number"] <=sim_duration_input-1]
 
-        couns_hours_weekly_summary = pd.concat([couns_sessions_weekly_summary,
+        couns_hours_weekly_summary = pd.concat([couns_hours_weekly,
                                                 couns_asst_weekly_summary
                                                 ,couns_weekly_activity]
                                                 ,ignore_index=True)
