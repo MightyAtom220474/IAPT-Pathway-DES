@@ -1257,8 +1257,8 @@ if button_run_pressed:
                                     y=weekly_avg_col3["value"], name='Average',
                                     line=dict(width=3,color='blue')))
                 
-                fig_asst_3.update_layout(title_text="% TA's Within 6 Weeks")
-    
+                if list_name == 'TA 6W PC':
+                    fig_asst_3.update_layout(title_text="% TA's Within 6 Weeks")
                 
                 # get rid of 'variable' prefix resulting from df.melt
                 fig_asst_3.for_each_annotation(lambda a: a.update(text=a.text.split
