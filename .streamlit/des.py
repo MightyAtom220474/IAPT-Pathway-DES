@@ -346,7 +346,8 @@ if button_run_pressed:
         
         step2_pwp_waiting_summary = step2_waiting_dfs.loc[step2_waiting_dfs[
                 'Route Name'] == 'pwp',['Run Number', 'Week Number', 
-                                      'Num Waiting','Avg Wait','Max Wait']].reset_index(drop=True)
+                                      'Num Waiting','Avg Wait','Max Wait'
+                                      ,'Avg RTT','Max RTT']].reset_index(drop=True)
 
         step2_pwp_sessions_summary = step2_sessions_df.loc[step2_sessions_df[
                 'Route Name'] == 'pwp', ['Run Number', 'Week Number', 
@@ -366,7 +367,8 @@ if button_run_pressed:
         
         step2_group_waiting_summary = step2_waiting_dfs.loc[step2_waiting_dfs[
                 'Route Name'] == 'group',['Run Number', 'Week Number', 
-                                      'Num Waiting','Avg Wait','Max Wait']].reset_index(drop=True)
+                                      'Num Waiting','Avg Wait','Max Wait'
+                                      ,'Avg RTT','Max RTT']].reset_index(drop=True)
         
         step2_group_sessions_summary = step2_sessions_df.loc[step2_sessions_df[
                 'Route Name'] == 'group', ['Run Number', 'Week Number', 
@@ -386,7 +388,8 @@ if button_run_pressed:
         
         step3_cbt_waiting_summary = step3_waiting_dfs.loc[step3_waiting_dfs[
                 'Route Name'] == 'cbt',['Run Number', 'Week Number', 
-                                      'Num Waiting','Avg Wait','Max Wait']].reset_index(drop=True)
+                                      'Num Waiting','Avg Wait','Max Wait'
+                                      ,'Avg RTT','Max RTT']].reset_index(drop=True)
         
         step3_cbt_sessions_summary = step3_sessions_df.loc[step3_sessions_df[
                 'Route Name'] == 'cbt', ['Run Number', 'Week Number', 
@@ -405,7 +408,8 @@ if button_run_pressed:
         
         step3_couns_waiting_summary = step3_waiting_dfs.loc[step3_waiting_dfs[
                 'Route Name'] == 'couns',['Run Number', 'Week Number', 
-                                      'Num Waiting','Avg Wait','Max Wait']].reset_index(drop=True)
+                                      'Num Waiting','Avg Wait','Max Wait'
+                                      ,'Avg RTT','Max RTT']].reset_index(drop=True)
         
         step3_couns_sessions_summary = step3_sessions_df.loc[step3_sessions_df[
                 'Route Name'] == 'couns', ['Run Number', 'Week Number', 
@@ -481,8 +485,6 @@ if button_run_pressed:
             step2_group_agg.groupby('Week Number', as_index=False)
             .mean(numeric_only=True)
         )
-
-        
 
         group_sessions_weekly = pd.melt(
             step2_group_sessions_summary_mean,
@@ -737,8 +739,10 @@ if button_run_pressed:
         agg_mapping = {
             'Num Waiting': 'max',
             'Avg Wait': 'mean',
-            'Max Wait': 'max'
-        }
+            'Max Wait': 'max',
+            'Avg RTT': 'mean',
+            'Max RTT': 'max'
+            }
 
         # Dictionary of DataFrames to process
         aggregated_waiting_dfs = {
@@ -782,51 +786,66 @@ if button_run_pressed:
         cbt_sessions_summary = cbt_sessions_weekly #mean_sessions['step3_cbt_sessions_summary_mean']
         couns_sessions_summary = couns_sessions_weekly #mean_sessions['step3_couns_sessions_summary_mean']
 
-        
-        # group_session_type_summary = group_session_type_summary[
-        #                             group_session_type_summary["Week Number"
-        #                             ] <= sim_duration_input-1].reset_index(drop=True)
-        # cbt_session_type_summary = cbt_session_type_summary[
-        #                             cbt_session_type_summary["Week Number"
-        #                             ] <= sim_duration_input-1].reset_index(drop=True)
-        # couns_session_type_summary = couns_session_type_summary[
-        #                             couns_session_type_summary["Week Number"
-        #                             ] <= sim_duration_input-1].reset_index(drop=True)
-        # # get rid of week zero as no sessions run until week 1 when assessments come through
-        # pwp_session_type_summary = pwp_session_type_summary = pwp_session_type_summary[
-        #                             pwp_session_type_summary["Week Number"
-        #                             ] <= sim_duration_input-1]
-        # group_session_type_summary = group_session_type_summary = group_session_type_summary[
-        #                             group_session_type_summary["Week Number"
-        #                             ] <= sim_duration_input-1]
-        # cbt_session_type_summary = cbt_session_type_summary = cbt_session_type_summary[
-        #                             cbt_session_type_summary["Week Number"
-        #                             ] <= sim_duration_input]
-        # couns_session_type_summary = couns_session_type_summary = couns_session_type_summary[
-        #                             couns_session_type_summary["Week Number"
-        #                             ] <= sim_duration_input-1]
-
-        # get rid of weeks beyond sim duration
-        # pwp_session_type_summary = pwp_session_type_summary[
-        #                             pwp_session_type_summary["Week Number"] != 0]
-        # group_session_type_summary = group_session_type_summary[
-        #                             group_session_type_summary["Week Number"] != 0]
-        # cbt_session_type_summary = cbt_session_type_summary[
-        #                             cbt_session_type_summary["Week Number"] != 0]
-        # couns_session_type_summary = couns_session_type_summary[
-        #                             couns_session_type_summary["Week Number"] != 0]
-        
-        # st.write(pwp_session_type_summary)
-        
         pwp_results_summary = aggregated_results['step2_pwp_results_summary']
         group_results_summary = aggregated_results['step2_group_results_summary']
         cbt_results_summary = aggregated_results['step3_cbt_results_summary']
         couns_results_summary = aggregated_results['step3_couns_results_summary']
 
+        ##### Waiting Lists #####
+        
         pwp_waiting_summary = aggregated_waiting['step2_pwp_waiting_summary']
+
+        # pivot to get mean across all runs
+        pwp_waiting_summary = (
+            pwp_waiting_summary.groupby(['Week Number', 'variable'], as_index=False)
+            .mean(numeric_only=True))
+        
+        # isolate RTT data
+        pwp_rtt_summary = pwp_waiting_summary[pwp_waiting_summary[
+                        'variable'].isin(['Avg RTT','Max RTT'])]
+
+        # isolate waiting list data
+        pwp_waiting_summary = pwp_waiting_summary[pwp_waiting_summary[
+                                'variable'].isin(['Avg Wait','Max Wait'])]
+        
         group_waiting_summary = aggregated_waiting['step2_group_waiting_summary']
+
+        # pivot to get mean across all runs
+        group_waiting_summary = (
+            group_waiting_summary.groupby(['Week Number', 'variable'], as_index=False)
+            .mean(numeric_only=True))
+                
+        group_rtt_summary = group_waiting_summary[group_waiting_summary[
+                        'variable'].isin(['Avg RTT','Max RTT'])]
+
+        group_waiting_summary = group_waiting_summary[group_waiting_summary[
+                                'variable'].isin(['Avg Wait','Max Wait'])]
+        
         cbt_waiting_summary = aggregated_waiting['step3_cbt_waiting_summary']
+
+        # pivot to get mean across all runs
+        cbt_waiting_summary = (
+            cbt_waiting_summary.groupby(['Week Number', 'variable'], as_index=False)
+            .mean(numeric_only=True))
+                
+        cbt_rtt_summary = cbt_waiting_summary[cbt_waiting_summary[
+                        'variable'].isin(['Avg RTT','Max RTT'])]
+
+        cbt_waiting_summary = cbt_waiting_summary[cbt_waiting_summary[
+                                'variable'].isin(['Avg Wait','Max Wait'])]
+        
         couns_waiting_summary = aggregated_waiting['step3_couns_waiting_summary']
+
+        # pivot to get mean across all runs
+        couns_waiting_summary = (
+            couns_waiting_summary.groupby(['Week Number', 'variable'], as_index=False)
+            .mean(numeric_only=True))
+                
+        couns_rtt_summary = couns_waiting_summary[couns_waiting_summary[
+                        'variable'].isin(['Avg RTT','Max RTT'])]
+
+        couns_waiting_summary = couns_waiting_summary[couns_waiting_summary[
+                                'variable'].isin(['Avg Wait','Max Wait'])]
  
         ##### merge results and sessions #####
         pwp_combined_summary = pd.concat([pwp_sessions_summary,
@@ -1143,13 +1162,13 @@ if button_run_pressed:
         ## Dashboard Starts Here ##
         ###########################
         
-        tab1, tab2, tab3, tab4, tab5 = st.tabs(["Screening & Assessment"
-                                                ,"Step 2","Step 3"
+        tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(["Screening & Assessment"
+                                                ,"Step 2","Step 3",'RTT'
                                                 ,"Job Plans","Caseloads"])
         
         # ########## Screening & Assessment Tab ##########
         
-        with tab1:    
+        with tab1:
 
             col1, col2, col3 = st.columns(3)
 
@@ -1541,6 +1560,13 @@ if button_run_pressed:
                                             y=weekly_max_col2["value"], name='Maximum',
                                             line=dict(width=3,color='red')))
                         
+                        # add line for 18 week target
+                        fig4.add_trace(
+                                go.Scatter(x=weekly_avg_col2["Week Number"],
+                                        y=np.repeat(18,sim_duration_input*2),
+                                        name='18 Week RTT',line=dict(width=3,
+                                        color='green')))
+                        
                         # get rid of 'variable' prefix resulting from df.melt
                         fig4.for_each_annotation(lambda a: a.update(text=a.text.split
                                                                 ("=")[1]))
@@ -1751,6 +1777,13 @@ if button_run_pressed:
                                         go.Scatter(x=weekly_max_col4["Week Number"],
                                                 y=weekly_max_col4["value"], name='Maximum',
                                                 line=dict(width=3,color='red')))
+                            
+                            # add line for 18 week RTT
+                            fig4.add_trace(
+                                go.Scatter(x=weekly_avg_col2["Week Number"],
+                                        y=np.repeat(18,sim_duration_input*2),
+                                        name='18 Week RTT',line=dict(width=3,
+                                        color='green')))
                             
                             # get rid of 'variable' prefix resulting from df.melt
                             fig4.for_each_annotation(lambda a: a.update(text=a.text.split
@@ -1965,6 +1998,13 @@ if button_run_pressed:
                                     go.Scatter(x=weekly_max_col2["Week Number"],
                                             y=weekly_max_col2["value"], name='Maximum',
                                             line=dict(width=3,color='red')))
+
+                        # add line for 18 week RTT
+                        fig4.add_trace(
+                                go.Scatter(x=weekly_avg_col2["Week Number"],
+                                        y=np.repeat(18,sim_duration_input*2),
+                                        name='18 Week RTT',line=dict(width=3,
+                                        color='green')))
                         
                         # get rid of 'variable' prefix resulting from df.melt
                         fig4.for_each_annotation(lambda a: a.update(text=a.text.split
@@ -2173,6 +2213,13 @@ if button_run_pressed:
                                             y=weekly_max_col4["value"], name='Maximum',
                                             line=dict(width=3,color='red')))
                         
+                        # add line for 18 week RTT
+                        fig4.add_trace(
+                                go.Scatter(x=weekly_avg_col2["Week Number"],
+                                        y=np.repeat(18,sim_duration_input*2),
+                                        name='18 Week RTT',line=dict(width=3,
+                                        color='green')))
+                        
                         # get rid of 'variable' prefix resulting from df.melt
                         fig4.for_each_annotation(lambda a: a.update(text=a.text.split
                                                                 ("=")[1]))
@@ -2184,8 +2231,190 @@ if button_run_pressed:
 
                         st.divider()
 
-        ########## Job Plans ##########
+        ########## RTT Tab ##########
+        
         with tab4:
+
+            col1, col2 = st.columns(2)
+
+            with col1:
+
+                st.subheader('Psychological Wellbeing Practitioner - 1:1')
+            
+                for r, list_name in enumerate(pwp_rtt_summary['variable']
+                                            .unique()):
+                  
+                    if list_name == 'Avg RTT':
+
+                        pwp_rtt_filtered = pwp_rtt_summary[pwp_rtt_summary['variable'] == list_name]
+                    
+                        fig1 = px.line(
+                                    pwp_rtt_filtered,
+                                    x="Week Number",
+                                    y="value",
+                                    labels={
+                                            "value": 'Weeks'
+                                        },
+                                    height=500,
+                                    width=350,
+                                    title='Referral To Treatment Waits'
+                                    )
+                        
+                        fig1.update_traces(line=dict(color='blue'))  # Set a fixed color
+
+                        # get rid of 'variable' prefix resulting from df.melt
+                        fig1.for_each_annotation(lambda a: a.update(text=a.text.split
+                                                                ("=")[1]))
+                       
+                        fig1.update_layout(title_x=0.3,font=dict(size=10))
+                        #fig.
+
+                        st.plotly_chart(fig1, key=f"pwp_chart_{list_name}_{r}"
+                                                    ,use_container_width=True)
+                        
+                    elif list_name == 'Max RTT':
+
+                        fig1.add_trace(
+                                    go.Scatter(x=pwp_rtt_filtered["Week Number"],
+                                            y=pwp_rtt_filtered["value"],name='Max RTT',
+                                            line=dict(width=3,color='red')))
+
+                        st.divider()
+
+                st.subheader('Psychological Wellbeing Practitioner - Groups')
+            
+                for g, list_name in enumerate(group_rtt_summary['variable']
+                                            .unique()):
+                  
+                    if list_name == 'Avg RTT':
+                        section_title = 'Sessions'
+
+                        group_rtt_filtered = group_rtt_summary[group_rtt_summary['variable'] == list_name]
+                    
+                        fig2 = px.line(
+                                    group_rtt_filtered,
+                                    x="Week Number",
+                                    y="value",
+                                    labels={
+                                            "value": 'Weeks'
+                                        },
+                                    height=500,
+                                    width=350,
+                                    title='Referral To Treatment Waits'
+                                    )
+
+                        fig2.update_traces(line=dict(color='blue'))  # Set a fixed color
+                        
+                        # get rid of 'variable' prefix resulting from df.melt
+                        fig2.for_each_annotation(lambda a: a.update(text=a.text.split
+                                                                ("=")[1]))
+                       
+                        fig2.update_layout(title_x=0.3,font=dict(size=10))
+                        #fig.
+
+                        st.plotly_chart(fig2, key=f"group_chart_{list_name}_{g}"
+                                                    ,use_container_width=True)
+                        
+                    elif list_name == 'Max RTT':
+                        section_title = 'Waiting List'
+
+                        fig2.add_trace(
+                                    go.Scatter(x=group_rtt_filtered["Week Number"],
+                                            y=group_rtt_filtered["value"],name='Max RTT',
+                                            line=dict(width=3,color='red')))
+
+                        st.divider()
+
+            with col2:
+
+                st.subheader('Cognitive Behavioural Therapy')
+            
+                for t, list_name in enumerate(cbt_rtt_summary['variable']
+                                            .unique()):
+                  
+                    if list_name == 'Avg RTT':
+
+                        cbt_rtt_filtered = cbt_rtt_summary[cbt_rtt_summary['variable'] == list_name]
+                    
+                        fig1 = px.line(
+                                    cbt_rtt_filtered,
+                                    x="Week Number",
+                                    y="value",
+                                    labels={
+                                            "value": 'Weeks'
+                                        },
+                                    height=500,
+                                    width=350,
+                                    title='Referral To Treatment Waits'
+                                    )
+
+                        fig1.update_traces(line=dict(color='blue'))  # Set a fixed color
+                        
+                        # get rid of 'variable' prefix resulting from df.melt
+                        fig1.for_each_annotation(lambda a: a.update(text=a.text.split
+                                                                ("=")[1]))
+                       
+                        fig1.update_layout(title_x=0.3,font=dict(size=10))
+                        #fig.
+
+                        st.plotly_chart(fig1, key=f"cbt_chart_{list_name}_{t}"
+                                                    ,use_container_width=True)
+                        
+                    elif list_name == 'Max RTT':
+
+                        fig1.add_trace(
+                                    go.Scatter(x=cbt_rtt_filtered["Week Number"],
+                                            y=cbt_rtt_filtered["value"],name='Max RTT',
+                                            line=dict(width=3,color='red')))
+
+                        st.divider()
+
+                st.subheader('Depression Counselling')
+            
+                for u, list_name in enumerate(couns_rtt_summary['variable']
+                                            .unique()):
+                  
+                    if list_name == 'Avg RTT':
+                        section_title = 'Sessions'
+
+                        couns_rtt_filtered = couns_rtt_summary[couns_rtt_summary['variable'] == list_name]
+                    
+                        fig2 = px.line(
+                                    couns_rtt_filtered,
+                                    x="Week Number",
+                                    y="value",
+                                    labels={
+                                            "value": 'Weeks'
+                                        },
+                                    height=500,
+                                    width=350,
+                                    title='Referral To Treatment Waits'
+                                    )
+
+                        fig1.update_traces(line=dict(color='blue'))  # Set a fixed color
+                        
+                        # get rid of 'variable' prefix resulting from df.melt
+                        fig2.for_each_annotation(lambda a: a.update(text=a.text.split
+                                                                ("=")[1]))
+                       
+                        fig2.update_layout(title_x=0.3,font=dict(size=10))
+                        #fig.
+
+                        st.plotly_chart(fig2, key=f"couns_chart_{list_name}_{u}"
+                                                    ,use_container_width=True)
+                        
+                    elif list_name == 'Max RTT':
+                        section_title = 'Waiting List'
+
+                        fig2.add_trace(
+                                    go.Scatter(x=couns_rtt_filtered["Week Number"],
+                                            y=couns_rtt_filtered["value"],name='Max RTT',
+                                            line=dict(width=3,color='red')))
+
+                        st.divider()
+        #
+        # ########## Job Plans ##########
+        with tab5:
             
             st.header('Job Plans')
 
@@ -2325,7 +2554,7 @@ if button_run_pressed:
             st.divider()
 
         ########## Caseloads ##########
-        with tab5:
+        with tab6:
 
             st.header('Caseloads')
 
