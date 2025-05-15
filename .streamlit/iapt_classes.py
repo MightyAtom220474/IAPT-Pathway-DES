@@ -84,8 +84,8 @@ class g:
     
     # Job Plans
     number_staff_cbt = 14 #138
-    number_staff_pwp = 4 #40
-    number_staff_couns = 6 #125
+    number_staff_pwp = 12 #40
+    number_staff_couns = 4 #125
     pwp_avail = number_staff_pwp
     cbt_avail = number_staff_cbt
     couns_avail = number_staff_couns
@@ -152,7 +152,7 @@ class Patient:
         self.patient_at_risk = 0 # used to determine DNA/Canx policy to apply
         self.week_added = None # Week they were added to the waiting list
         self.patient_source = [] # where the patient was generated from i.e 
-                                 # prefill or referral generator
+                                 # prefill or referral_generator
 
         # Referral
         self.referral_rejected = 0 # were they rejected at referral
@@ -458,7 +458,7 @@ class Model:
             ('ta', g.ta_waiting_list),
             ('pwp', g.pwp_waiting_list),
             ('cbt', g.cbt_waiting_list),
-            ('pwp', g.couns_waiting_list)
+            ('couns', g.couns_waiting_list)
         ]
 
         prefill_events = []
@@ -533,12 +533,12 @@ class Model:
                 print(f"[Week Runner] - Staff Generator complete")
 
             if g.debug_level >= 1:
-                print(f"[Week Runner] - Firing up the Referral Generator")
-            # start up the referral generator
+                print(f"[Week Runner] - Firing up the referral_generator")
+            # start up the referral_generator
             yield self.env.process(self.generator_patient_referrals(self.week_number))
             
             if g.debug_level >= 1:
-                    print(f"[Week Runner] - Referral Generator has Returned {self.referrals_this_week} Referrals")
+                    print(f"[Week Runner] - referral_generator has Returned {self.referrals_this_week} Referrals")
 
             if g.debug_level >= 1:
                 print(f"[Week Runner] - Passing {self.referrals_this_week} to the Patient Treatment Generator")
@@ -606,7 +606,7 @@ class Model:
                 p.pwp_wl_added = True
                 p.pwp_already_seen = False
                 p.step2_path_route = wait_list_type
-                p.patient_source = 'PwP WL'
+                p.patient_source = 'pwp_wl'
                 p.week_added = 0
                 p.treat_wait_week = -g.pwp_avg_wait
 
@@ -639,7 +639,7 @@ class Model:
                     self.step2_waiting_list.loc[p_id_int, [
                         'Source', 'Run Number', 'Week Number', 'Route Name', 'IsWaiting',
                         'WL Position', 'Start Week', 'End Week', 'Wait Time'
-                    ]] = ['PwP WL', self.run_number, self.week_number, 'pwp', 1,
+                    ]] = ['pwp_wl', self.run_number, self.week_number, 'pwp', 1,
                         g.number_on_pwp_wl, 0, -1, g.pwp_avg_wait]
                     
             elif wait_list_type == 'cbt':
@@ -650,8 +650,8 @@ class Model:
                 p.asst_already_seen = True
                 p.cbt_wl_added = True
                 p.cbt_already_seen = False
-                p.step2_path_route = wait_list_type
-                p.patient_source = 'CBT WL'
+                p.step3_path_route = wait_list_type
+                p.patient_source = 'cbt_wl'
                 p.week_added = 0
                 p.treat_wait_week = -g.cbt_avg_wait
 
@@ -661,7 +661,7 @@ class Model:
                 # Add or update patient in waiting list
                 if p_id_int not in self.step3_waiting_list.index:
                     cbt_new_row = pd.DataFrame([{
-                        'Source': 'CBT WL',
+                        'Source': 'cbt_wl',
                         'Run Number': self.run_number,
                         'Week Number': self.week_number,
                         'Route Name': 'cbt',
@@ -679,13 +679,12 @@ class Model:
                     # Safely concat only non-empty DataFrames
                     frames_to_concat = [df for df in [self.step3_waiting_list, cbt_new_row] if not df.empty]
                     self.step3_waiting_list = pd.concat(frames_to_concat) if frames_to_concat else cbt_new_row
-
             
                 else:    # Update existing patient data
                     self.step3_waiting_list.loc[p_id_int, [
                         'Source', 'Run Number', 'Week Number', 'Route Name', 'IsWaiting',
                         'WL Position', 'Start Week', 'End Week', 'Wait Time'
-                    ]] = ['CBT WL', self.run_number, self.week_number, 'cbt', 1,
+                    ]] = ['cbt_wl', self.run_number, self.week_number, 'cbt', 1,
                         g.number_on_cbt_wl, 0, -1, g.cbt_avg_wait]
                     
             elif wait_list_type == 'couns':
@@ -696,8 +695,8 @@ class Model:
                 p.asst_already_seen = True
                 p.couns_wl_added = True
                 p.couns_already_seen = False
-                p.step2_path_route = wait_list_type
-                p.patient_source = 'Couns WL'
+                p.step3_path_route = wait_list_type
+                p.patient_source = 'couns_wl'
                 p.week_added = 0
                 p.treat_wait_week = -g.couns_avg_wait
 
@@ -707,7 +706,7 @@ class Model:
                 # Add or update patient in waiting list
                 if p_id_int not in self.step3_waiting_list.index:
                     couns_new_row = pd.DataFrame([{
-                        'Source': 'Couns WL',
+                        'Source': 'couns_wl',
                         'Run Number': self.run_number,
                         'Week Number': self.week_number,
                         'Route Name': 'couns',
@@ -727,7 +726,7 @@ class Model:
                     self.step3_waiting_list.loc[p_id_int, [
                         'Source', 'Run Number', 'Week Number', 'Route Name', 'IsWaiting',
                         'WL Position', 'Start Week', 'End Week', 'Wait Time'
-                    ]] = ['Couns WL', self.run_number, self.week_number, 'couns', 1,
+                    ]] = ['couns_wl', self.run_number, self.week_number, 'couns', 1,
                         g.number_on_couns_wl, 0, -1, g.couns_avg_wait]
                     
             else:
@@ -791,7 +790,7 @@ class Model:
                         print(f'[Pathway] - Week {self.week_number} Patient {p.id} coming from {p.patient_source} sent down Couns path')
 
             self.env.process(self.step3_couns_process(p))  
-        # otherwise, if added from referral generator, start them right at the
+        # otherwise, if added from referral_generator, start them right at the
         # beginning of the pathway
         else:
             if g.debug_level >= 3:
@@ -818,7 +817,7 @@ class Model:
 
             # Create a new patient from Patient Class
             p = Patient(self.patient_counter)
-            p.patient_source = 'Referral Gen'
+            p.patient_source = 'referral_gen'
             p.week_added = self.treatment_week_number
             if g.debug_level >= 3:
                 print(f"[Treatment Gen] - ==== Patient {p.id} Generated ====")
@@ -960,9 +959,32 @@ class Model:
             self.step2_waiting_list_clean = self.step2_waiting_list_clean.reset_index(drop=True)
             # get patients that are still waiting at the end of this week
             self.step2_weekly_waiting_stats = self.step2_waiting_list_clean[self.step2_waiting_list_clean['IsWaiting'] == 1].copy()
+            
+            #print(self.step2_weekly_waiting_stats)
+
             # calculate how long they've been waiting for patients not coming from waiting list
-            mask = self.step2_weekly_waiting_stats['Source'] == 'Referral Gen'
-            self.step2_weekly_waiting_stats.loc[mask, 'Weeks Waited'] = self.stats_week_number - self.step2_weekly_waiting_stats.loc[mask, 'Start Week']
+            mask = self.step2_weekly_waiting_stats['Source'] == 'referral_gen'
+            # set weeks waited based on patient source
+            df = self.step2_weekly_waiting_stats  # for readability
+
+            # Define boolean masks
+            is_referral = self.step2_weekly_waiting_stats['Source'] == 'referral_gen'
+            is_cbt = self.step2_weekly_waiting_stats['Source'] == 'cbt_wl'
+            is_couns = self.step2_weekly_waiting_stats['Source'] == 'couns_wl'
+
+            # Define choices for each condition
+            weeks_waited_referral = self.stats_week_number - df['Start Week']
+            weeks_waited_cbt = g.cbt_avg_wait
+            weeks_waited_couns = g.couns_avg_wait
+
+            # Use np.select to apply conditional logic
+            self.step2_weekly_waiting_stats['Weeks Waited'] = np.select(
+                condlist=[is_referral, is_cbt, is_couns],
+                choicelist=[weeks_waited_referral, weeks_waited_cbt, weeks_waited_couns],
+                default=np.nan  # optional fallback for other sources
+            )
+            
+            #print(self.step2_weekly_waiting_stats)
             
             #print(self.step2_weekly_waiting_stats)
             # possible options to iterate through
@@ -972,29 +994,33 @@ class Model:
         
             self.waiting_list_path_step2 = ['pwp','group']
 
-            self.waiting_list_source_step2 = ['PwP WL','Referral Gen']
+            #self.waiting_list_source_step2 = ['pwp_wl','referral_gen']
 
             # Create summary stats for each of the pathways and sources
             for pathway in self.waiting_list_path_step2:
-                for source in self.waiting_list_source_step2:
+                    #for source in self.waiting_list_source_step2:
                     # filter for appropriate pathway
-                    self.step2_weekly_waiting_pathway = self.step2_weekly_waiting_stats[self.step2_weekly_waiting_stats['Route Name'] == pathway].reset_index()
-                    self.step2_weekly_waiting_filtered = self.step2_weekly_waiting_pathway[self.step2_weekly_waiting_pathway['Source'] == source].reset_index()
-                    # calculate required values
-                    self.step2_waiting_count = self.step2_weekly_waiting_filtered['IsWaiting'].sum()
-                    self.step2_waiting_avg = self.step2_weekly_waiting_filtered['Weeks Waited'].mean()
-                    self.step2_waiting_max = self.step2_weekly_waiting_filtered['Weeks Waited'].max()
+                self.step2_weekly_waiting_filtered = self.step2_weekly_waiting_stats[self.step2_weekly_waiting_stats['Route Name'] == pathway].reset_index()
+                #self.step2_weekly_waiting_filtered = self.step2_weekly_waiting_pathway[self.step2_weekly_waiting_pathway['Source'] == source].reset_index()
+                # calculate required values
+                self.step2_waiting_count = self.step2_weekly_waiting_filtered['IsWaiting'].sum()
+                self.step2_waiting_avg = self.step2_weekly_waiting_filtered['Weeks Waited'].mean()
+                self.step2_waiting_max = self.step2_weekly_waiting_filtered['Weeks Waited'].max()
+                self.step2_rtt_avg = self.step2_weekly_waiting_filtered['Wait Time'].mean()
+                self.step2_rtt_max = self.step2_weekly_waiting_filtered['Wait Time'].max()
 
-                    # append data
-                    self.step2_waiting_stats.append({
-                        'Source': source,
-                        'Run Number': self.run_number,
-                        'Week Number': self.stats_week_number,
-                        'Route Name': pathway,
-                        'Num Waiting': self.step2_waiting_count,
-                        'Avg Wait': self.step2_waiting_avg,
-                        'Max Wait': self.step2_waiting_max
-                    })
+                # append data
+                self.step2_waiting_stats.append({
+                    #'Source': source,
+                    'Run Number': self.run_number,
+                    'Week Number': self.stats_week_number,
+                    'Route Name': pathway,
+                    'Num Waiting': self.step2_waiting_count,
+                    'Avg Wait': self.step2_waiting_avg,
+                    'Max Wait': self.step2_waiting_max,
+                    'Avg RTT': self.step2_rtt_avg,
+                    'Max RTT': self.step2_rtt_max
+                })
 
             # get rid of records that didn't get to the stage of deciding which path to go down
             self.step3_waiting_list_clean = self.step3_waiting_list.dropna(
@@ -1005,37 +1031,64 @@ class Model:
             # get patients that are still waiting at the end of this week
             self.step3_weekly_waiting_stats = self.step3_waiting_list_clean[
                         self.step3_waiting_list_clean['IsWaiting'] == 1].copy()
+
+            #print(self.step3_weekly_waiting_stats)
             
-            mask = self.step3_weekly_waiting_stats['Source'] == 'Referral Gen'
-            self.step3_weekly_waiting_stats.loc[mask, 'Weeks Waited'] = self.stats_week_number - self.step3_weekly_waiting_stats.loc[mask, 'Start Week']
+            mask = self.step3_weekly_waiting_stats['Source'] == 'referral_gen'
+            conditions = [
+                            self.step3_weekly_waiting_stats.loc[mask, 'Source'] == 'referral_gen',
+                            self.step3_weekly_waiting_stats.loc[mask, 'Source'] == 'cbt_wl',
+                            self.step3_weekly_waiting_stats.loc[mask, 'Source'] == 'couns_wl'
+                        ]
+
+            # set weeks waited based on patient source
+            choices = [
+                self.stats_week_number - self.step3_weekly_waiting_stats.loc[mask, 'Start Week'],
+                g.cbt_avg_wait,
+                g.couns_avg_wait
+            ]
+
+            # Apply the logic
+            self.step3_weekly_waiting_stats.loc[mask, 'Weeks Waited'] = np.select(
+                conditions,
+                choices,
+                default=0  # A fallback if no conditions match
+                )
             # self.step3_weekly_waiting_stats['Weeks Waited'
             #         ] = self.stats_week_number - self.step3_weekly_waiting_stats[
             #         'Start Week']
 
+            #print(self.step3_weekly_waiting_stats)
+
             # possible options to iterate through
             self.waiting_list_path_step3 = ['cbt','couns']
 
-            self.waiting_list_source_step3 = ['CBT WL','Couns WL','Referral Gen']
+            #self.waiting_list_source_step3 = ['cbt_wl','couns_wl','referral_gen']
 
             # Create summary stats for each of the pathways and sources
             for pathway in self.waiting_list_path_step3:
+                #for source in self.waiting_list_source_step3:
                 # filter for appropriate pathway
-                self.step3_weekly_waiting_pathway = self.step3_weekly_waiting_stats[self.step3_weekly_waiting_stats['Route Name'] == pathway].reset_index()
-                self.step3_weekly_waiting_filtered = self.step3_weekly_waiting_pathway[self.step3_weekly_waiting_pathway['Source'] == source].reset_index()
+                self.step3_weekly_waiting_filtered = self.step3_weekly_waiting_stats[self.step3_weekly_waiting_stats['Route Name'] == pathway].reset_index()
+                #self.step3_weekly_waiting_filtered = self.step3_weekly_waiting_pathway[self.step3_weekly_waiting_pathway['Source'] == source].reset_index()
                 # calculate required values
                 self.step3_waiting_count = self.step3_weekly_waiting_filtered['IsWaiting'].sum()
                 self.step3_waiting_avg = self.step3_weekly_waiting_filtered['Weeks Waited'].mean()
                 self.step3_waiting_max = self.step3_weekly_waiting_filtered['Weeks Waited'].max()
+                self.step3_rtt_avg = self.step3_weekly_waiting_filtered['Wait Time'].mean()
+                self.step3_rtt_max = self.step3_weekly_waiting_filtered['Wait Time'].max()
 
                 # append data
                 self.step3_waiting_stats.append({
-                    'Source': source,
+                    #'Source': source,
                     'Run Number': self.run_number,
                     'Week Number': self.stats_week_number,
                     'Route Name': pathway,
                     'Num Waiting': self.step3_waiting_count,
                     'Avg Wait': self.step3_waiting_avg,
-                    'Max Wait': self.step3_waiting_max
+                    'Max Wait': self.step3_waiting_max,
+                    'Avg RTT': self.step2_rtt_avg,
+                    'Max RTT': self.step2_rtt_max
                 })
             if g.debug_level >= 1:
                 print('[Weekly Stats] - Weekly Stats Collected')
@@ -1046,7 +1099,7 @@ class Model:
     def generator_patient_referrals(self,ref_week_number):
 
         if g.debug_level >= 1:
-            print('[Referral Gen] - Starting Up Referral Generator')
+            print('[referral_gen] - Starting Up referral_generator')
         
         self.ref_week_number = ref_week_number
 
@@ -1057,7 +1110,7 @@ class Model:
                                     self.ref_week_number+1,'PCVar'])) # weeks start at 1
 
         if g.debug_level >= 1:
-            print(f'[Referral Gen] - Week {self.week_number}: {self.referrals_this_week}'
+            print(f'[referral_gen] - Week {self.week_number}: {self.referrals_this_week}'
                                                     ' referrals generated')
         
         yield self.env.timeout(0)   
@@ -1246,13 +1299,13 @@ class Model:
 
             if pwp_first_to_fill > 0:
                 if g.debug_level >= 3:
-                    print(f"[Replenish Resources] - pwp First Level: {self.pwp_first_res.level}")
+                    print(f"[Replenish Resources] - PwP First Level: {self.pwp_first_res.level}")
                     print(f"[Replenish Resources] - Putting in {pwp_first_to_fill}")
 
                 self.pwp_first_res.put(pwp_first_to_fill)
 
                 if g.debug_level >= 3:
-                    print(f"[Replenish Resources] - New pwp First Level: {self.pwp_first_res.level}")
+                    print(f"[Replenish Resources] - New PwP First Level: {self.pwp_first_res.level}")
 
             if cbt_first_to_fill > 0:
                 if g.debug_level >= 3:
@@ -1816,7 +1869,7 @@ class Model:
             # Add or update patient in waiting list
             if p_id_int not in self.step2_waiting_list.index:
                 new_row = pd.DataFrame([{
-                    'Source': 'Referral Gen',
+                    'Source': 'referral_gen',
                     'Run Number': self.run_number,
                     'Week Number': self.week_number,
                     'Route Name': 'pwp',
@@ -1856,7 +1909,7 @@ class Model:
             # Add or update patient in waiting list
             if p_id_int not in self.step2_waiting_list.index:
                 new_row = pd.DataFrame([{
-                    'Source': 'Referral Gen',
+                    'Source': 'referral_gen',
                     'Run Number': self.run_number,
                     'Week Number': self.week_number,
                     'Route Name': 'group',
@@ -1930,7 +1983,7 @@ class Model:
             # Add or update patient in waiting list
             if p_id_int not in self.step3_waiting_list.index:
                 new_row = pd.DataFrame([{
-                    'Source': 'Referral Gen',
+                    'Source': 'referral_gen',
                     'Run Number': self.run_number,
                     'Week Number': self.week_number,
                     'Route Name': 'cbt',
@@ -1967,7 +2020,7 @@ class Model:
             # Add or update patient in waiting list
             if p_id_int not in self.step3_waiting_list.index:
                 new_row = pd.DataFrame([{
-                    'Source': 'Referral Gen',
+                    'Source': 'referral_gen',
                     'Run Number': self.run_number,
                     'Week Number': self.week_number,
                     'Route Name': 'couns',
