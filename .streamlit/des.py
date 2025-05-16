@@ -1465,6 +1465,8 @@ if button_run_pressed:
                                     )
                         
                         fig2.update_traces(line=dict(dash='dot'))
+
+                        fig1.update_layout(showlegend=False)
                         
                         # get the average waiting list across all the runs
                         weekly_avg_col1 = pwp_combined_col1_filtered.groupby(['Week Number',
@@ -1683,6 +1685,8 @@ if button_run_pressed:
                                         )
                             
                             fig2.update_traces(line=dict(dash='dot'))
+
+                            fig1.update_layout(showlegend=False)
                             
                             # get the average waiting list across all the runs
                             weekly_avg_col3 = group_combined_col3_filtered.groupby(['Week Number',
@@ -1904,6 +1908,8 @@ if button_run_pressed:
                                     )
                         
                         fig2.update_traces(line=dict(dash='dot'))
+
+                        fig2.update_layout(showlegend=False)
                         
                         # get the average waiting list across all the runs
                         weekly_avg_col1 = cbt_combined_col1_filtered.groupby(['Week Number',
@@ -2118,6 +2124,8 @@ if button_run_pressed:
                                         )
                             
                             fig2.update_traces(line=dict(dash='dot'))
+
+                            fig1.update_layout(showlegend=False)
                             
                             # get the average waiting list across all the runs
                             weekly_avg_col3 = couns_combined_col3_filtered.groupby(['Week Number',
