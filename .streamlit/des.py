@@ -1450,10 +1450,15 @@ if button_run_pressed:
                     elif list_name == 'Num Waiting':
                         section_title = 'Waiting List'
 
+                        # get the average waiting list across all the runs
+                        weekly_avg_col1 = pwp_combined_col1_filtered.groupby(['Week Number',
+                                                        'variable'])['value'].mean(
+                                                        ).reset_index()
+                        
                         fig2 = px.line(
-                                    pwp_combined_col1_filtered,
+                                    weekly_avg_col1,
                                     x="Week Number",
-                                    color="Run Number",
+                                    #color="Run Number",
                                     #line_dash="Run",
                                     y="value",
                                     labels={
@@ -1464,21 +1469,12 @@ if button_run_pressed:
                                     title='Number of Patients Waiting by Week'
                                     )
                         
-                        fig2.update_traces(line=dict(dash='dot'))
+                        #fig2.update_traces(line=dict(dash='dot'))
 
-                        fig1.update_layout(showlegend=False)
-                        
-                        # get the average waiting list across all the runs
-                        weekly_avg_col1 = pwp_combined_col1_filtered.groupby(['Week Number',
-                                                        'variable'])['value'].mean(
-                                                        ).reset_index()
-                        
-                        fig2.add_trace(
-                                    go.Scatter(x=weekly_avg_col1["Week Number"],
-                                            y=weekly_avg_col1["value"],name='Average',
-                                            line=dict(width=3,color='blue')))
-            
-                        
+                        fig2.update_layout(showlegend=False)
+
+                        fig2.update_traces(line=dict(width=3, color='blue'))
+                                            
                         # get rid of 'variable' prefix resulting from df.melt
                         fig2.for_each_annotation(lambda a: a.update(text=a.text.split
                                                                 ("=")[1]))
@@ -1550,10 +1546,15 @@ if button_run_pressed:
 
                         section_title = ''
 
+                        # get the average waiting time across all the runs
+                        weekly_avg_col2 = pwp_combined_col2_filtered.groupby(['Week Number',
+                                                        'variable'])['value'].mean(
+                                                        ).reset_index()
+
                         fig4 = px.line(
-                                    pwp_combined_col2_filtered,
+                                    weekly_avg_col2,
                                     x="Week Number",
-                                    color="Run Number",
+                                    #color="Run Number",
                                     #line_dash="Run",
                                     y="value",
                                     labels={
@@ -1564,23 +1565,14 @@ if button_run_pressed:
                                     title='Waiting Time by Week'
                                     )
                         
-                        fig4.update_traces(line=dict(dash='dot'))
-                        
-                        # get the average waiting time across all the runs
-                        weekly_avg_col2 = pwp_combined_col2_filtered.groupby(['Week Number',
-                                                        'variable'])['value'].mean(
-                                                        ).reset_index()
-                        
+                        # Force the first trace to appear in the legend
+                        fig4.update_traces(name='Average', showlegend=True, line=dict(width=3, color='blue'))
+
                         # get the average waiting time across all the runs
                         weekly_max_col2 = pwp_combined_col2_max.groupby(['Week Number',
                                                         'variable'])['value'].mean(
                                                         ).reset_index()
-                        
-                        fig4.add_trace(
-                                    go.Scatter(x=weekly_avg_col2["Week Number"],
-                                            y=weekly_avg_col2["value"], name='Average',
-                                            line=dict(width=3,color='blue')))
-                        
+                                                
                         fig4.add_trace(
                                     go.Scatter(x=weekly_max_col2["Week Number"],
                                             y=weekly_max_col2["value"], name='Maximum',
@@ -1670,10 +1662,15 @@ if button_run_pressed:
                         elif list_name == 'Num Waiting':
                             section_title = 'Waiting List'
 
+                            # get the average waiting list across all the runs
+                            weekly_avg_col3 = group_combined_col3_filtered.groupby(['Week Number',
+                                                            'variable'])['value'].mean(
+                                                            ).reset_index()
+                            
                             fig2 = px.line(
-                                        group_combined_col3_filtered,
+                                        weekly_avg_col3,
                                         x="Week Number",
-                                        color="Run Number",
+                                        #color="Run Number",
                                         #line_dash="Run",
                                         y="value",
                                         labels={
@@ -1684,21 +1681,12 @@ if button_run_pressed:
                                         title='Number of Patients Waiting by Week'
                                         )
                             
-                            fig2.update_traces(line=dict(dash='dot'))
+                            #fig2.update_traces(line=dict(dash='dot'))
 
-                            fig1.update_layout(showlegend=False)
-                            
-                            # get the average waiting list across all the runs
-                            weekly_avg_col3 = group_combined_col3_filtered.groupby(['Week Number',
-                                                            'variable'])['value'].mean(
-                                                            ).reset_index()
-                            
-                            fig2.add_trace(
-                                        go.Scatter(x=weekly_avg_col3["Week Number"],
-                                                y=weekly_avg_col3["value"],name='Average',
-                                                line=dict(width=3,color='blue')))
-                
-                            
+                            fig2.update_layout(showlegend=False)
+
+                            fig2.update_traces(line=dict(width=3, color='blue'))
+                                                
                             # get rid of 'variable' prefix resulting from df.melt
                             fig2.for_each_annotation(lambda a: a.update(text=a.text.split
                                                                     ("=")[1]))
@@ -1770,10 +1758,15 @@ if button_run_pressed:
 
                             section_title = ''
 
+                             # get the average waiting time across all the runs
+                            weekly_avg_col4 = group_combined_col4_filtered.groupby(['Week Number',
+                                                            'variable'])['value'].mean(
+                                                            ).reset_index()
+
                             fig4 = px.line(
-                                        group_combined_col4_filtered,
+                                        weekly_avg_col4,
                                         x="Week Number",
-                                        color="Run Number",
+                                        #color="Run Number",
                                         #line_dash="Run",
                                         y="value",
                                         labels={
@@ -1784,23 +1777,14 @@ if button_run_pressed:
                                         title='Waiting Time by Week'
                                         )
                             
-                            fig4.update_traces(line=dict(dash='dot'))
-                            
-                            # get the average waiting time across all the runs
-                            weekly_avg_col4 = group_combined_col4_filtered.groupby(['Week Number',
-                                                            'variable'])['value'].mean(
-                                                            ).reset_index()
-                            
+                            # Force the first trace to appear in the legend
+                            fig4.update_traces(name='Average', showlegend=True, line=dict(width=3, color='blue'))
+                         
                             # get the average waiting time across all the runs
                             weekly_max_col4 = group_combined_col4_max.groupby(['Week Number',
                                                             'variable'])['value'].mean(
                                                             ).reset_index()
-                            
-                            fig4.add_trace(
-                                        go.Scatter(x=weekly_avg_col4["Week Number"],
-                                                y=weekly_avg_col4["value"], name='Average',
-                                                line=dict(width=3,color='blue')))
-                            
+                             
                             fig4.add_trace(
                                         go.Scatter(x=weekly_max_col4["Week Number"],
                                                 y=weekly_max_col4["value"], name='Maximum',
@@ -1893,10 +1877,15 @@ if button_run_pressed:
                     elif list_name == 'Num Waiting':
                         section_title = 'Waiting List'
 
+                        # get the average waiting list across all the runs
+                        weekly_avg_col1 = cbt_combined_col1_filtered.groupby(['Week Number',
+                                                        'variable'])['value'].mean(
+                                                        ).reset_index()
+                        
                         fig2 = px.line(
-                                    cbt_combined_col1_filtered,
+                                    weekly_avg_col1,
                                     x="Week Number",
-                                    color="Run Number",
+                                    #color="Run Number",
                                     #line_dash="Run",
                                     y="value",
                                     labels={
@@ -1907,21 +1896,12 @@ if button_run_pressed:
                                     title='Number of Patients Waiting by Week'
                                     )
                         
-                        fig2.update_traces(line=dict(dash='dot'))
+                        #fig2.update_traces(line=dict(dash='dot'))
 
                         fig2.update_layout(showlegend=False)
-                        
-                        # get the average waiting list across all the runs
-                        weekly_avg_col1 = cbt_combined_col1_filtered.groupby(['Week Number',
-                                                        'variable'])['value'].mean(
-                                                        ).reset_index()
-                        
-                        fig2.add_trace(
-                                    go.Scatter(x=weekly_avg_col1["Week Number"],
-                                            y=weekly_avg_col1["value"],name='Average',
-                                            line=dict(width=3,color='blue')))
-            
-                        
+
+                        fig2.update_traces(line=dict(width=3, color='blue'))
+                                            
                         # get rid of 'variable' prefix resulting from df.melt
                         fig2.for_each_annotation(lambda a: a.update(text=a.text.split
                                                                 ("=")[1]))
@@ -1993,10 +1973,15 @@ if button_run_pressed:
 
                         section_title = ''
 
+                        # get the average waiting time across all the runs
+                        weekly_avg_col2 = cbt_combined_col2_filtered.groupby(['Week Number',
+                                                        'variable'])['value'].mean(
+                                                        ).reset_index()
+
                         fig4 = px.line(
-                                    cbt_combined_col2_filtered,
+                                    weekly_avg_col2,
                                     x="Week Number",
-                                    color="Run Number",
+                                    #color="Run Number",
                                     #line_dash="Run",
                                     y="value",
                                     labels={
@@ -2007,23 +1992,14 @@ if button_run_pressed:
                                     title='Waiting Time by Week'
                                     )
                         
-                        fig4.update_traces(line=dict(dash='dot'))
-                        
-                        # get the average waiting time across all the runs
-                        weekly_avg_col2 = cbt_combined_col2_filtered.groupby(['Week Number',
-                                                        'variable'])['value'].mean(
-                                                        ).reset_index()
-                        
+                        # Force the first trace to appear in the legend
+                        fig4.update_traces(name='Average', showlegend=True, line=dict(width=3, color='blue'))
+                
                         # get the average waiting time across all the runs
                         weekly_max_col2 = cbt_combined_col2_max.groupby(['Week Number',
                                                         'variable'])['value'].mean(
                                                         ).reset_index()
-                        
-                        fig4.add_trace(
-                                    go.Scatter(x=weekly_avg_col2["Week Number"],
-                                            y=weekly_avg_col2["value"], name='Average',
-                                            line=dict(width=3,color='blue')))
-                        
+
                         fig4.add_trace(
                                     go.Scatter(x=weekly_max_col2["Week Number"],
                                             y=weekly_max_col2["value"], name='Maximum',
@@ -2109,10 +2085,15 @@ if button_run_pressed:
                         elif list_name == 'Num Waiting':
                             section_title = 'Waiting List'
 
+                            # get the average waiting list across all the runs
+                            weekly_avg_col1 = couns_combined_col3_filtered.groupby(['Week Number',
+                                                            'variable'])['value'].mean(
+                                                            ).reset_index()
+                            
                             fig2 = px.line(
-                                        couns_combined_col3_filtered,
+                                        weekly_avg_col1,
                                         x="Week Number",
-                                        color="Run Number",
+                                        #color="Run Number",
                                         #line_dash="Run",
                                         y="value",
                                         labels={
@@ -2123,21 +2104,12 @@ if button_run_pressed:
                                         title='Number of Patients Waiting by Week'
                                         )
                             
-                            fig2.update_traces(line=dict(dash='dot'))
+                            #fig2.update_traces(line=dict(dash='dot'))
 
-                            fig1.update_layout(showlegend=False)
-                            
-                            # get the average waiting list across all the runs
-                            weekly_avg_col3 = couns_combined_col3_filtered.groupby(['Week Number',
-                                                            'variable'])['value'].mean(
-                                                            ).reset_index()
-                            
-                            fig2.add_trace(
-                                        go.Scatter(x=weekly_avg_col3["Week Number"],
-                                                y=weekly_avg_col3["value"],name='Average',
-                                                line=dict(width=3,color='blue')))
-                
-                            
+                            fig2.update_layout(showlegend=False)
+
+                            fig2.update_traces(line=dict(width=3, color='blue'))
+                                                
                             # get rid of 'variable' prefix resulting from df.melt
                             fig2.for_each_annotation(lambda a: a.update(text=a.text.split
                                                                     ("=")[1]))
@@ -2209,10 +2181,15 @@ if button_run_pressed:
 
                         section_title = ''
 
+                        # get the average waiting time across all the runs
+                        weekly_avg_col4 = couns_combined_col4_filtered.groupby(['Week Number',
+                                                        'variable'])['value'].mean(
+                                                        ).reset_index()
+
                         fig4 = px.line(
-                                    couns_combined_col4_filtered,
+                                    weekly_avg_col4,
                                     x="Week Number",
-                                    color="Run Number",
+                                    #color="Run Number",
                                     #line_dash="Run",
                                     y="value",
                                     labels={
@@ -2223,23 +2200,14 @@ if button_run_pressed:
                                     title='Waiting Time by Week'
                                     )
                         
-                        fig4.update_traces(line=dict(dash='dot'))
-                        
-                        # get the average waiting time across all the runs
-                        weekly_avg_col4 = couns_combined_col4_filtered.groupby(['Week Number',
-                                                        'variable'])['value'].mean(
-                                                        ).reset_index()
-                        
+                        # Force the first trace to appear in the legend
+                        fig4.update_traces(name='Average', showlegend=True, line=dict(width=3, color='blue'))
+                                                
                         # get the average waiting time across all the runs
                         weekly_max_col4 = couns_combined_col4_max.groupby(['Week Number',
                                                         'variable'])['value'].mean(
                                                         ).reset_index()
-                        
-                        fig4.add_trace(
-                                    go.Scatter(x=weekly_avg_col4["Week Number"],
-                                            y=weekly_avg_col4["value"], name='Average',
-                                            line=dict(width=3,color='blue')))
-                        
+                      
                         fig4.add_trace(
                                     go.Scatter(x=weekly_max_col4["Week Number"],
                                             y=weekly_max_col4["value"], name='Maximum',
@@ -2288,14 +2256,15 @@ if button_run_pressed:
                     title="Referral To Treatment Waits"
                 )
 
-                fig1.update_traces(name='Avg RTT', line=dict(width=3, color='blue'))
+                # Force the first trace to appear in the legend
+                fig1.update_traces(name='Average', showlegend=True, line=dict(width=3, color='blue'))
 
-                # Add Max RTT trace before displaying
+                # Add Max RTT trace
                 fig1.add_trace(
                     go.Scatter(
                         x=pwp_rtt_max["Week Number"],
                         y=pwp_rtt_max["value"],
-                        name='Max RTT',
+                        name='Maximum',
                         line=dict(width=3, color='red')
                     )
                 )
@@ -2303,7 +2272,6 @@ if button_run_pressed:
                 fig1.update_layout(title_x=0.3, font=dict(size=10))
 
                 st.plotly_chart(fig1, key=f"pwp_chart_{list_name}", use_container_width=True)
-                
                 st.divider()
 
                 st.subheader('Psychological Wellbeing Practitioner - Groups')
@@ -2321,14 +2289,15 @@ if button_run_pressed:
                     title="Referral To Treatment Waits"
                 )
 
-                fig2.update_traces(name='Avg RTT', line=dict(width=3, color='blue'))
+                # Force the first trace to appear in the legend
+                fig2.update_traces(name='Average', showlegend=True, line=dict(width=3, color='blue'))
 
-                # Add Max RTT trace before displaying
+                # Add Max RTT trace
                 fig2.add_trace(
                     go.Scatter(
                         x=group_rtt_max["Week Number"],
                         y=group_rtt_max["value"],
-                        name='Max RTT',
+                        name='Maximum',
                         line=dict(width=3, color='red')
                     )
                 )
@@ -2336,13 +2305,12 @@ if button_run_pressed:
                 fig2.update_layout(title_x=0.3, font=dict(size=10))
 
                 st.plotly_chart(fig2, key=f"group_chart_{list_name}", use_container_width=True)
-                
                 st.divider()
 
             with col2:
 
                 st.subheader('Cognitive Behavioural Therapy')
-                
+
                 cbt_rtt_avg = cbt_rtt_summary[cbt_rtt_summary['variable'] == 'Avg RTT']
                 cbt_rtt_max = cbt_rtt_summary[cbt_rtt_summary['variable'] == 'Max RTT']
 
@@ -2356,14 +2324,15 @@ if button_run_pressed:
                     title="Referral To Treatment Waits"
                 )
 
-                fig3.update_traces(name='Avg RTT', line=dict(width=3, color='blue'))
+                # Force the first trace to appear in the legend
+                fig3.update_traces(name='Average', showlegend=True, line=dict(width=3, color='blue'))
 
-                # Add Max RTT trace before displaying
+                # Add Max RTT trace
                 fig3.add_trace(
                     go.Scatter(
                         x=cbt_rtt_max["Week Number"],
                         y=cbt_rtt_max["value"],
-                        name='Max RTT',
+                        name='Maximum',
                         line=dict(width=3, color='red')
                     )
                 )
@@ -2371,7 +2340,6 @@ if button_run_pressed:
                 fig3.update_layout(title_x=0.3, font=dict(size=10))
 
                 st.plotly_chart(fig3, key=f"cbt_chart_{list_name}", use_container_width=True)
-                
                 st.divider()
 
                 st.subheader('Depression Counselling')
@@ -2389,14 +2357,15 @@ if button_run_pressed:
                     title="Referral To Treatment Waits"
                 )
 
-                fig4.update_traces(name='Avg RTT', line=dict(width=3, color='blue'))
+                # Force the first trace to appear in the legend
+                fig4.update_traces(name='Average', showlegend=True, line=dict(width=3, color='blue'))
 
-                # Add Max RTT trace before displaying
+                # Add Max RTT trace
                 fig4.add_trace(
                     go.Scatter(
                         x=couns_rtt_max["Week Number"],
                         y=couns_rtt_max["value"],
-                        name='Max RTT',
+                        name='Maximum',
                         line=dict(width=3, color='red')
                     )
                 )
@@ -2404,7 +2373,6 @@ if button_run_pressed:
                 fig4.update_layout(title_x=0.3, font=dict(size=10))
 
                 st.plotly_chart(fig4, key=f"couns_chart_{list_name}", use_container_width=True)
-                
                 st.divider()
         #
         # ########## Job Plans ##########
