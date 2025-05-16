@@ -2280,9 +2280,7 @@ if button_run_pressed:
                     title="Referral To Treatment Waits"
                 )
 
-                fig1.update_traces(line=dict(width=3, color='blue'))
-
-                fig1.update_layout(showlegend=True)
+                fig1.update_traces(name='Avg RTT', line=dict(width=3, color='blue'))
 
                 # Add Max RTT trace before displaying
                 fig1.add_trace(
@@ -2315,9 +2313,7 @@ if button_run_pressed:
                     title="Referral To Treatment Waits"
                 )
 
-                fig2.update_traces(line=dict(width=3, color='blue'))
-
-                fig2.update_layout(showlegend=True)
+                fig2.update_traces(name='Avg RTT', line=dict(width=3, color='blue'))
 
                 # Add Max RTT trace before displaying
                 fig2.add_trace(
@@ -2352,9 +2348,7 @@ if button_run_pressed:
                     title="Referral To Treatment Waits"
                 )
 
-                fig3.update_traces(line=dict(width=3, color='blue'))
-
-                fig3.update_layout(showlegend=True)
+                fig3.update_traces(name='Avg RTT', line=dict(width=3, color='blue'))
 
                 # Add Max RTT trace before displaying
                 fig3.add_trace(
@@ -2387,9 +2381,7 @@ if button_run_pressed:
                     title="Referral To Treatment Waits"
                 )
 
-                fig4.update_traces(line=dict(width=3, color='blue'))
-
-                fig4.update_layout(showlegend=True)
+                fig4.update_traces(name='Avg RTT', line=dict(width=3, color='blue'))
 
                 # Add Max RTT trace before displaying
                 fig4.add_trace(
