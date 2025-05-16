@@ -2259,6 +2259,8 @@ if button_run_pressed:
         
         with tab4:
 
+            st.header('Referral To Treatment Waiting Times')
+
             col1, col2 = st.columns(2)
 
             with col1:
@@ -2279,6 +2281,8 @@ if button_run_pressed:
                 )
 
                 fig1.update_traces(line=dict(width=3, color='blue'))
+
+                fig1.update_layout(showlegend=True)
 
                 # Add Max RTT trace before displaying
                 fig1.add_trace(
@@ -2313,6 +2317,8 @@ if button_run_pressed:
 
                 fig2.update_traces(line=dict(width=3, color='blue'))
 
+                fig2.update_layout(showlegend=True)
+
                 # Add Max RTT trace before displaying
                 fig2.add_trace(
                     go.Scatter(
@@ -2331,6 +2337,8 @@ if button_run_pressed:
 
             with col2:
 
+                st.subheader('Cognitive Behavioural Therapy')
+                
                 cbt_rtt_avg = cbt_rtt_summary[cbt_rtt_summary['variable'] == 'Avg RTT']
                 cbt_rtt_max = cbt_rtt_summary[cbt_rtt_summary['variable'] == 'Max RTT']
 
@@ -2345,6 +2353,8 @@ if button_run_pressed:
                 )
 
                 fig3.update_traces(line=dict(width=3, color='blue'))
+
+                fig3.update_layout(showlegend=True)
 
                 # Add Max RTT trace before displaying
                 fig3.add_trace(
@@ -2378,6 +2388,8 @@ if button_run_pressed:
                 )
 
                 fig4.update_traces(line=dict(width=3, color='blue'))
+
+                fig4.update_layout(showlegend=True)
 
                 # Add Max RTT trace before displaying
                 fig4.add_trace(
