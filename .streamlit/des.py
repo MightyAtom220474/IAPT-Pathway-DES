@@ -2264,178 +2264,136 @@ if button_run_pressed:
             with col1:
 
                 st.subheader('Psychological Wellbeing Practitioner - 1:1')
-            
-                for r, list_name in enumerate(pwp_rtt_summary['variable']
-                                            .unique()):
-                  
-                    if list_name == 'Avg RTT':
 
-                        pwp_rtt_filtered = pwp_rtt_summary[pwp_rtt_summary['variable'] == list_name]
-                    
-                        fig1 = px.line(
-                                    pwp_rtt_filtered,
-                                    x="Week Number",
-                                    y="value",
-                                    labels={
-                                            "value": 'Weeks'
-                                        },
-                                    height=500,
-                                    width=350,
-                                    title='Referral To Treatment Waits'
-                                    )
-                        
-                        fig1.update_traces(line=dict(width=3,color='blue'))  # Set a fixed color
+                pwp_rtt_avg = pwp_rtt_summary[pwp_rtt_summary['variable'] == 'Avg RTT']
+                pwp_rtt_max = pwp_rtt_summary[pwp_rtt_summary['variable'] == 'Max RTT']
 
-                        # get rid of 'variable' prefix resulting from df.melt
-                        fig1.for_each_annotation(lambda a: a.update(text=a.text.split
-                                                                ("=")[1]))
-                       
-                        fig1.update_layout(title_x=0.3,font=dict(size=10))
-                        #fig.
+                fig1 = px.line(
+                    pwp_rtt_avg,
+                    x="Week Number",
+                    y="value",
+                    labels={"value": "Weeks"},
+                    height=500,
+                    width=350,
+                    title="Referral To Treatment Waits"
+                )
 
-                        st.plotly_chart(fig1, key=f"pwp_chart_{list_name}_{r}"
-                                                    ,use_container_width=True)
-                        
-                    if list_name == 'Max RTT':
+                fig1.update_traces(line=dict(width=3, color='blue'))
 
-                        fig1.add_trace(
-                                    go.Scatter(x=pwp_rtt_filtered["Week Number"],
-                                            y=pwp_rtt_filtered["value"],name='Max RTT',
-                                            line=dict(width=3,color='red')))
+                # Add Max RTT trace before displaying
+                fig1.add_trace(
+                    go.Scatter(
+                        x=pwp_rtt_max["Week Number"],
+                        y=pwp_rtt_max["value"],
+                        name='Max RTT',
+                        line=dict(width=3, color='red')
+                    )
+                )
 
-                        st.divider()
+                fig1.update_layout(title_x=0.3, font=dict(size=10))
+
+                st.plotly_chart(fig1, key=f"pwp_chart_{list_name}", use_container_width=True)
+                
+                st.divider()
 
                 st.subheader('Psychological Wellbeing Practitioner - Groups')
             
-                for g, list_name in enumerate(group_rtt_summary['variable']
-                                            .unique()):
-                  
-                    if list_name == 'Avg RTT':
-                        section_title = 'Sessions'
+                group_rtt_avg = group_rtt_summary[group_rtt_summary['variable'] == 'Avg RTT']
+                group_rtt_max = group_rtt_summary[group_rtt_summary['variable'] == 'Max RTT']
 
-                        group_rtt_filtered = group_rtt_summary[group_rtt_summary['variable'] == list_name]
-                    
-                        fig2 = px.line(
-                                    group_rtt_filtered,
-                                    x="Week Number",
-                                    y="value",
-                                    labels={
-                                            "value": 'Weeks'
-                                        },
-                                    height=500,
-                                    width=350,
-                                    title='Referral To Treatment Waits'
-                                    )
+                fig2 = px.line(
+                    group_rtt_avg,
+                    x="Week Number",
+                    y="value",
+                    labels={"value": "Weeks"},
+                    height=500,
+                    width=350,
+                    title="Referral To Treatment Waits"
+                )
 
-                        fig2.update_traces(line=dict(color='blue'))  # Set a fixed color
-                        
-                        # get rid of 'variable' prefix resulting from df.melt
-                        fig2.for_each_annotation(lambda a: a.update(text=a.text.split
-                                                                ("=")[1]))
-                       
-                        fig2.update_layout(title_x=0.3,font=dict(size=10))
-                        #fig.
+                fig2.update_traces(line=dict(width=3, color='blue'))
 
-                        st.plotly_chart(fig2, key=f"group_chart_{list_name}_{g}"
-                                                    ,use_container_width=True)
-                        
-                    elif list_name == 'Max RTT':
-                        section_title = 'Waiting List'
+                # Add Max RTT trace before displaying
+                fig2.add_trace(
+                    go.Scatter(
+                        x=group_rtt_max["Week Number"],
+                        y=group_rtt_max["value"],
+                        name='Max RTT',
+                        line=dict(width=3, color='red')
+                    )
+                )
 
-                        fig2.add_trace(
-                                    go.Scatter(x=group_rtt_filtered["Week Number"],
-                                            y=group_rtt_filtered["value"],name='Max RTT',
-                                            line=dict(width=3,color='red')))
+                fig2.update_layout(title_x=0.3, font=dict(size=10))
 
-                        st.divider()
+                st.plotly_chart(fig2, key=f"group_chart_{list_name}", use_container_width=True)
+                
+                st.divider()
 
             with col2:
 
-                st.subheader('Cognitive Behavioural Therapy')
-            
-                for t, list_name in enumerate(cbt_rtt_summary['variable']
-                                            .unique()):
-                  
-                    if list_name == 'Avg RTT':
+                cbt_rtt_avg = cbt_rtt_summary[cbt_rtt_summary['variable'] == 'Avg RTT']
+                cbt_rtt_max = cbt_rtt_summary[cbt_rtt_summary['variable'] == 'Max RTT']
 
-                        cbt_rtt_filtered = cbt_rtt_summary[cbt_rtt_summary['variable'] == list_name]
-                    
-                        fig1 = px.line(
-                                    cbt_rtt_filtered,
-                                    x="Week Number",
-                                    y="value",
-                                    labels={
-                                            "value": 'Weeks'
-                                        },
-                                    height=500,
-                                    width=350,
-                                    title='Referral To Treatment Waits'
-                                    )
+                fig3 = px.line(
+                    cbt_rtt_avg,
+                    x="Week Number",
+                    y="value",
+                    labels={"value": "Weeks"},
+                    height=500,
+                    width=350,
+                    title="Referral To Treatment Waits"
+                )
 
-                        fig1.update_traces(line=dict(color='blue'))  # Set a fixed color
-                        
-                        # get rid of 'variable' prefix resulting from df.melt
-                        fig1.for_each_annotation(lambda a: a.update(text=a.text.split
-                                                                ("=")[1]))
-                       
-                        fig1.update_layout(title_x=0.3,font=dict(size=10))
-                        #fig.
+                fig3.update_traces(line=dict(width=3, color='blue'))
 
-                        st.plotly_chart(fig1, key=f"cbt_chart_{list_name}_{t}"
-                                                    ,use_container_width=True)
-                        
-                    elif list_name == 'Max RTT':
+                # Add Max RTT trace before displaying
+                fig3.add_trace(
+                    go.Scatter(
+                        x=cbt_rtt_max["Week Number"],
+                        y=cbt_rtt_max["value"],
+                        name='Max RTT',
+                        line=dict(width=3, color='red')
+                    )
+                )
 
-                        fig1.add_trace(
-                                    go.Scatter(x=cbt_rtt_filtered["Week Number"],
-                                            y=cbt_rtt_filtered["value"],name='Max RTT',
-                                            line=dict(width=3,color='red')))
+                fig3.update_layout(title_x=0.3, font=dict(size=10))
 
-                        st.divider()
+                st.plotly_chart(fig3, key=f"cbt_chart_{list_name}", use_container_width=True)
+                
+                st.divider()
 
                 st.subheader('Depression Counselling')
             
-                for u, list_name in enumerate(couns_rtt_summary['variable']
-                                            .unique()):
-                  
-                    if list_name == 'Avg RTT':
-                        section_title = 'Sessions'
+                couns_rtt_avg = couns_rtt_summary[couns_rtt_summary['variable'] == 'Avg RTT']
+                couns_rtt_max = couns_rtt_summary[couns_rtt_summary['variable'] == 'Max RTT']
 
-                        couns_rtt_filtered = couns_rtt_summary[couns_rtt_summary['variable'] == list_name]
-                    
-                        fig2 = px.line(
-                                    couns_rtt_filtered,
-                                    x="Week Number",
-                                    y="value",
-                                    labels={
-                                            "value": 'Weeks'
-                                        },
-                                    height=500,
-                                    width=350,
-                                    title='Referral To Treatment Waits'
-                                    )
+                fig4 = px.line(
+                    couns_rtt_avg,
+                    x="Week Number",
+                    y="value",
+                    labels={"value": "Weeks"},
+                    height=500,
+                    width=350,
+                    title="Referral To Treatment Waits"
+                )
 
-                        fig1.update_traces(line=dict(color='blue'))  # Set a fixed color
-                        
-                        # get rid of 'variable' prefix resulting from df.melt
-                        fig2.for_each_annotation(lambda a: a.update(text=a.text.split
-                                                                ("=")[1]))
-                       
-                        fig2.update_layout(title_x=0.3,font=dict(size=10))
-                        #fig.
+                fig4.update_traces(line=dict(width=3, color='blue'))
 
-                        st.plotly_chart(fig2, key=f"couns_chart_{list_name}_{u}"
-                                                    ,use_container_width=True)
-                        
-                    elif list_name == 'Max RTT':
-                        section_title = 'Waiting List'
+                # Add Max RTT trace before displaying
+                fig4.add_trace(
+                    go.Scatter(
+                        x=couns_rtt_max["Week Number"],
+                        y=couns_rtt_max["value"],
+                        name='Max RTT',
+                        line=dict(width=3, color='red')
+                    )
+                )
 
-                        fig2.add_trace(
-                                    go.Scatter(x=couns_rtt_filtered["Week Number"],
-                                            y=couns_rtt_filtered["value"],name='Max RTT',
-                                            line=dict(width=3,color='red')))
+                fig4.update_layout(title_x=0.3, font=dict(size=10))
 
-                        st.divider()
+                st.plotly_chart(fig4, key=f"couns_chart_{list_name}", use_container_width=True)
+                
+                st.divider()
         #
         # ########## Job Plans ##########
         with tab5:
