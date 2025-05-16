@@ -42,7 +42,7 @@ with st.sidebar:
         # Referral Inputs
         st.markdown("#### Screening")
         referral_input = st.slider("Average Number of Referrals Per Week", 0, 1500
-                                   , g.mean_referrals_pw)
+                                   , 50)
         ta_wl_input = st.number_input("Current Telephone Assessment Waiting List", min_value=0, max_value=1000, step=1, value=200)
         if ta_wl_input > 0:
             ta_wait_input = st.number_input("Current Average TA Waiting Time (weeks)", min_value=0, max_value=52, step=1, value=3)
@@ -78,9 +78,9 @@ with st.sidebar:
         step2_path_ratio = st.number_input("% of Step 2 Allocated to PwP vs Group",
                                            min_value=0.0, max_value=100.0, 
                                            step=1.0, value=47.0)
-        pwp_wl_input = st.number_input("Current PwP 1:1 Waiting List", min_value=0, max_value=1000, step=1, value=300)
+        pwp_wl_input = st.number_input("Current PwP 1:1 Waiting List", min_value=0, max_value=1000, step=1, value=74)
         if pwp_wl_input > 0:
-            pwp_wait_input = st.number_input("Current Average PwP 1:1 Waiting Time (weeks)", min_value=0, max_value=52, step=1, value=4)
+            pwp_wait_input = st.number_input("Current Average PwP 1:1 Waiting Time (weeks)", min_value=0, max_value=52, step=1, value=2)
         else:
             pwp_wait_input = 0
         step2_first_input = st.slider("Number of Mins for First PwP Appointment",
@@ -117,7 +117,7 @@ with st.sidebar:
         step_down_input = st.number_input("% of Patients Stepped Down",
                                           min_value=0.0, max_value=20.0,
                                           step=0.5, value=12.0)
-        cbt_wl_input = st.number_input("Current CBT Waiting List", min_value=0, max_value=1000, step=1, value=250)
+        cbt_wl_input = st.number_input("Current CBT Waiting List", min_value=0, max_value=1000, step=1, value=130)
         if cbt_wl_input > 0:
             cbt_wait_input = st.number_input("Current Average CBT Waiting Time (weeks)", min_value=0, max_value=52, step=1, value=5)
         else:
@@ -129,9 +129,9 @@ with st.sidebar:
         step3_cbt_dna_input = st.number_input("% DNA's for CBT Appointments",
                                               min_value=0.0, max_value=30.0,
                                               step=0.5, value=20.0)
-        couns_wl_input = st.number_input("Current DepC Waiting List", min_value=0, max_value=1000, step=1, value=1000)
+        couns_wl_input = st.number_input("Current DepC Waiting List", min_value=0, max_value=1000, step=1, value=250)
         if couns_wl_input > 0:
-            couns_wait_input = st.number_input("Current Average DepC Waiting Time (weeks)", min_value=0, max_value=52, step=1, value=25)
+            couns_wait_input = st.number_input("Current Average DepC Waiting Time (weeks)", min_value=0, max_value=52, step=1, value=10)
         else:
             couns_wait_input = 0
         step3_couns_first_input = st.slider("Number of Mins for First DepC Appointment",
@@ -160,13 +160,13 @@ with st.sidebar:
         st.markdown("#### Job Plans")
         cbt_avail_input = st.number_input(label="Starting Number of CBT Practitioners WTE",
                                           min_value=1,max_value=200,
-                                          step=1,value = g.number_staff_cbt)
+                                          step=1,value = 7)
         couns_avail_input = st.number_input(label="Starting Number of DepC Practitioners WTE",
                                             min_value=1,max_value=100,
-                                            step=1,value = g.number_staff_couns)
+                                            step=1,value = 2)
         pwp_avail_input = st.number_input(label="Starting Number of PwP Practitioners WTE",
                                           min_value=1,max_value=200,
-                                          step=1,value = g.number_staff_pwp)
+                                          step=1,value = 6)
         cbt_add_input = st.number_input("Additional Number of CBT Practitioners WTE",
                         min_value=-20, max_value=20, step=1, value=0)
         couns_add_input = st.number_input("Additional Number of DepC Practitioners WTE",
