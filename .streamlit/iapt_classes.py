@@ -959,55 +959,45 @@ class Model:
             self.step2_waiting_list_clean = self.step2_waiting_list_clean.reset_index(drop=True)
             # get patients that are still waiting at the end of this week
             self.step2_weekly_waiting_stats = self.step2_waiting_list_clean[self.step2_waiting_list_clean['IsWaiting'] == 1].copy()
-            
+            # get patients that have stopped waiting at the end of this week
+            self.step2_weekly_rtt_stats = self.step2_waiting_list_clean[self.step2_waiting_list_clean['IsWaiting'] == 0].copy()
             #print(self.step2_weekly_waiting_stats)
-
-            # calculate how long they've been waiting for patients not coming from waiting list
-            mask = self.step2_weekly_waiting_stats['Source'] == 'referral_gen'
-            # set weeks waited based on patient source
-            df = self.step2_weekly_waiting_stats  # for readability
-
+            
             # Define boolean masks
             is_referral = self.step2_weekly_waiting_stats['Source'] == 'referral_gen'
-            is_cbt = self.step2_weekly_waiting_stats['Source'] == 'cbt_wl'
-            is_couns = self.step2_weekly_waiting_stats['Source'] == 'couns_wl'
+            is_pwp = self.step2_weekly_waiting_stats['Source'] == 'pwp_wl'
+            is_group = self.step2_weekly_waiting_stats['Source'] == 'group_wl'
 
             # Define choices for each condition
-            weeks_waited_referral = self.stats_week_number - df['Start Week']
-            weeks_waited_cbt = g.cbt_avg_wait
-            weeks_waited_couns = g.couns_avg_wait
+            weeks_waited_referral = self.stats_week_number - self.step2_weekly_waiting_stats['Start Week']
+            weeks_waited_pwp = g.pwp_avg_wait
+            weeks_waited_group = 0
 
             # Use np.select to apply conditional logic
             self.step2_weekly_waiting_stats['Weeks Waited'] = np.select(
-                condlist=[is_referral, is_cbt, is_couns],
-                choicelist=[weeks_waited_referral, weeks_waited_cbt, weeks_waited_couns],
+                condlist=[is_referral, is_pwp, is_group],
+                choicelist=[weeks_waited_referral, weeks_waited_pwp, weeks_waited_group],
                 default=np.nan  # optional fallback for other sources
             )
             
             #print(self.step2_weekly_waiting_stats)
             
             #print(self.step2_weekly_waiting_stats)
-            # possible options to iterate through
-            
-            # if self.stats_week_number == 51:
-            #     self.step2_weekly_waiting_stats.to_csv("step2_waiting_list.csv", index=True)
-        
+                   
             self.waiting_list_path_step2 = ['pwp','group']
 
-            #self.waiting_list_source_step2 = ['pwp_wl','referral_gen']
-
-            # Create summary stats for each of the pathways and sources
+            # Create summary stats for each of the pathways
             for pathway in self.waiting_list_path_step2:
-                    #for source in self.waiting_list_source_step2:
-                    # filter for appropriate pathway
+                # filter for appropriate pathway
                 self.step2_weekly_waiting_filtered = self.step2_weekly_waiting_stats[self.step2_weekly_waiting_stats['Route Name'] == pathway].reset_index()
+                self.step2_weekly_rtt_filtered = self.step2_weekly_waiting_stats[self.step2_weekly_waiting_stats['Route Name'] == pathway].reset_index()
                 #self.step2_weekly_waiting_filtered = self.step2_weekly_waiting_pathway[self.step2_weekly_waiting_pathway['Source'] == source].reset_index()
                 # calculate required values
                 self.step2_waiting_count = self.step2_weekly_waiting_filtered['IsWaiting'].sum()
                 self.step2_waiting_avg = self.step2_weekly_waiting_filtered['Weeks Waited'].mean()
                 self.step2_waiting_max = self.step2_weekly_waiting_filtered['Weeks Waited'].max()
-                self.step2_rtt_avg = self.step2_weekly_waiting_filtered['Wait Time'].mean()
-                self.step2_rtt_max = self.step2_weekly_waiting_filtered['Wait Time'].max()
+                self.step2_rtt_avg = self.step2_weekly_rtt_filtered['Wait Time'].mean()
+                self.step2_rtt_max = self.step2_weekly_rtt_filtered['Wait Time'].max()
 
                 # append data
                 self.step2_waiting_stats.append({
@@ -1022,61 +1012,55 @@ class Model:
                     'Max RTT': self.step2_rtt_max
                 })
 
-            # get rid of records that didn't get to the stage of deciding which path to go down
-            self.step3_waiting_list_clean = self.step3_waiting_list.dropna(
-                                                        subset=['Route Name'])
-            # Reset index to avoid mismatches
-            self.step3_waiting_list_clean = self.step3_waiting_list_clean \
-                                                        .reset_index(drop=True)
-            # get patients that are still waiting at the end of this week
-            self.step3_weekly_waiting_stats = self.step3_waiting_list_clean[
-                        self.step3_waiting_list_clean['IsWaiting'] == 1].copy()
+                step2_waits_df = pd.DataFrame(self.step2_waiting_stats)
+                print(step2_waits_df)
 
+            ##### Step 3 #####
+            # get rid of records that didn't get to the stage of deciding which path to go down
+            self.step3_waiting_list_clean = self.step3_waiting_list.dropna(subset=['Route Name'])
+            # Reset index to avoid mismatches
+            self.step3_waiting_list_clean = self.step3_waiting_list_clean.reset_index(drop=True)
+            # get patients that are still waiting at the end of this week
+            self.step3_weekly_waiting_stats = self.step3_waiting_list_clean[self.step3_waiting_list_clean['IsWaiting'] == 1].copy()
+            # get patients that have stopped waiting at the end of this week
+            self.step3_weekly_rtt_stats = self.step3_waiting_list_clean[self.step3_waiting_list_clean['IsWaiting'] == 0].copy()
             #print(self.step3_weekly_waiting_stats)
             
-            mask = self.step3_weekly_waiting_stats['Source'] == 'referral_gen'
-            conditions = [
-                            self.step3_weekly_waiting_stats.loc[mask, 'Source'] == 'referral_gen',
-                            self.step3_weekly_waiting_stats.loc[mask, 'Source'] == 'cbt_wl',
-                            self.step3_weekly_waiting_stats.loc[mask, 'Source'] == 'couns_wl'
-                        ]
+            # Define boolean masks
+            is_referral = self.step3_weekly_waiting_stats['Source'] == 'referral_gen'
+            is_cbt = self.step3_weekly_waiting_stats['Source'] == 'cbt_wl'
+            is_couns = self.step3_weekly_waiting_stats['Source'] == 'couns_wl'
 
-            # set weeks waited based on patient source
-            choices = [
-                self.stats_week_number - self.step3_weekly_waiting_stats.loc[mask, 'Start Week'],
-                g.cbt_avg_wait,
-                g.couns_avg_wait
-            ]
+            # Define choices for each condition
+            weeks_waited_referral = self.stats_week_number - self.step3_weekly_waiting_stats['Start Week']
+            weeks_waited_cbt = g.cbt_avg_wait
+            weeks_waited_couns = g.couns_avg_wait
 
-            # Apply the logic
-            self.step3_weekly_waiting_stats.loc[mask, 'Weeks Waited'] = np.select(
-                conditions,
-                choices,
-                default=0  # A fallback if no conditions match
-                )
-            # self.step3_weekly_waiting_stats['Weeks Waited'
-            #         ] = self.stats_week_number - self.step3_weekly_waiting_stats[
-            #         'Start Week']
-
+            # Use np.select to apply conditional logic
+            self.step3_weekly_waiting_stats['Weeks Waited'] = np.select(
+                condlist=[is_referral, is_cbt, is_couns],
+                choicelist=[weeks_waited_referral, weeks_waited_cbt, weeks_waited_couns],
+                default=np.nan  # optional fallback for other sources
+            )
+            
             #print(self.step3_weekly_waiting_stats)
-
-            # possible options to iterate through
+            
+            #print(self.step3_weekly_waiting_stats)
+                   
             self.waiting_list_path_step3 = ['cbt','couns']
 
-            #self.waiting_list_source_step3 = ['cbt_wl','couns_wl','referral_gen']
-
-            # Create summary stats for each of the pathways and sources
+            # Create summary stats for each of the pathways
             for pathway in self.waiting_list_path_step3:
-                #for source in self.waiting_list_source_step3:
                 # filter for appropriate pathway
                 self.step3_weekly_waiting_filtered = self.step3_weekly_waiting_stats[self.step3_weekly_waiting_stats['Route Name'] == pathway].reset_index()
+                self.step3_weekly_rtt_filtered = self.step3_weekly_waiting_stats[self.step3_weekly_waiting_stats['Route Name'] == pathway].reset_index()
                 #self.step3_weekly_waiting_filtered = self.step3_weekly_waiting_pathway[self.step3_weekly_waiting_pathway['Source'] == source].reset_index()
                 # calculate required values
                 self.step3_waiting_count = self.step3_weekly_waiting_filtered['IsWaiting'].sum()
                 self.step3_waiting_avg = self.step3_weekly_waiting_filtered['Weeks Waited'].mean()
                 self.step3_waiting_max = self.step3_weekly_waiting_filtered['Weeks Waited'].max()
-                self.step3_rtt_avg = self.step3_weekly_waiting_filtered['Wait Time'].mean()
-                self.step3_rtt_max = self.step3_weekly_waiting_filtered['Wait Time'].max()
+                self.step3_rtt_avg = self.step3_weekly_rtt_filtered['Wait Time'].mean()
+                self.step3_rtt_max = self.step3_weekly_rtt_filtered['Wait Time'].max()
 
                 # append data
                 self.step3_waiting_stats.append({
@@ -1087,9 +1071,13 @@ class Model:
                     'Num Waiting': self.step3_waiting_count,
                     'Avg Wait': self.step3_waiting_avg,
                     'Max Wait': self.step3_waiting_max,
-                    'Avg RTT': self.step2_rtt_avg,
-                    'Max RTT': self.step2_rtt_max
+                    'Avg RTT': self.step3_rtt_avg,
+                    'Max RTT': self.step3_rtt_max
                 })
+
+                step3_waits_df = pd.DataFrame(self.step3_waiting_stats)
+                print(step3_waits_df)
+
             if g.debug_level >= 1:
                 print('[Weekly Stats] - Weekly Stats Collected')
             # hand control back to the governor function
@@ -3204,12 +3192,12 @@ class Trial:
             my_model.step3_waiting_stats = pd.DataFrame(my_model.step3_waiting_stats)
             my_model.staff_weekly_stats = pd.DataFrame(my_model.staff_weekly_stats)
 
-            my_model.asst_weekly_stats['Run'] = run
-            my_model.step2_waiting_stats['Run'] = run
-            my_model.step3_waiting_stats['Run'] = run
-            my_model.step2_weekly_stats['Run'] = run
-            my_model.step3_weekly_stats['Run'] = run
-            my_model.staff_weekly_stats['Run'] = run
+            # my_model.asst_weekly_stats['Run'] = run
+            # my_model.step2_waiting_stats['Run'] = run
+            # my_model.step3_waiting_stats['Run'] = run
+            # my_model.step2_weekly_stats['Run'] = run
+            # my_model.step3_weekly_stats['Run'] = run
+            # my_model.staff_weekly_stats['Run'] = run
 
             self.asst_weekly_dfs.append(my_model.asst_weekly_stats)
             self.step2_waiting_dfs.append(my_model.step2_waiting_stats)
@@ -3232,16 +3220,16 @@ class Trial:
             print(f'#####  SIMULATION COMPLETE #####')
         
         return (
-            self.step2_results_df, 
-            self.step2_sessions_df, 
-            self.step3_results_df,
-            self.step3_sessions_df,
-            pd.concat(self.asst_weekly_dfs) if self.asst_weekly_dfs else pd.DataFrame(),
-            pd.concat(self.step2_waiting_dfs) if self.step2_waiting_dfs else pd.DataFrame(),
-            pd.concat(self.step3_waiting_dfs) if self.step3_waiting_dfs else pd.DataFrame(),
-            pd.concat(self.staff_weekly_dfs) if self.staff_weekly_dfs else pd.DataFrame(),
-            self.caseload_weekly_dfs if hasattr(self, 'caseload_weekly_dfs') else pd.DataFrame()
-        )
+                self.step2_results_df, 
+                self.step2_sessions_df, 
+                self.step3_results_df,
+                self.step3_sessions_df,
+                pd.concat(self.asst_weekly_dfs) if self.asst_weekly_dfs else pd.DataFrame(),
+                pd.concat(self.step2_waiting_dfs).fillna(0) if self.step2_waiting_dfs else pd.DataFrame(),
+                pd.concat(self.step3_waiting_dfs).fillna(0) if self.step3_waiting_dfs else pd.DataFrame(),
+                pd.concat(self.staff_weekly_dfs) if self.staff_weekly_dfs else pd.DataFrame(),
+                self.caseload_weekly_dfs if hasattr(self, 'caseload_weekly_dfs') else pd.DataFrame()
+                )
 
 if __name__ == "__main__":
     env = simpy.Environment()

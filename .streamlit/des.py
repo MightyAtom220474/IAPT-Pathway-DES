@@ -348,6 +348,8 @@ if button_run_pressed:
                 'Route Name'] == 'pwp',['Run Number', 'Week Number', 
                                       'Num Waiting','Avg Wait','Max Wait'
                                       ,'Avg RTT','Max RTT']].reset_index(drop=True)
+        
+        #st.write(step2_pwp_waiting_summary)
 
         step2_pwp_sessions_summary = step2_sessions_df.loc[step2_sessions_df[
                 'Route Name'] == 'pwp', ['Run Number', 'Week Number', 
@@ -358,9 +360,7 @@ if button_run_pressed:
                 'Route Name'] == 'pwp', ['Run Number', 'Week Number', 
                                       'Session Number','Session Type','Session Time',
                                       'Admin Time','IsDNA']].reset_index(drop=True)
-        
-        #st.write(step2_pwp_session_type_summary)
-        
+               
         step2_group_results_summary = step2_results_df.loc[step2_results_df[
                 'Route Name'] == 'group',['Run Number', 'Week Number', 
                                         'IsStep','IsDropout']].reset_index(drop=True)
@@ -795,10 +795,16 @@ if button_run_pressed:
         
         pwp_waiting_summary = aggregated_waiting['step2_pwp_waiting_summary']
 
-        # pivot to get mean across all runs
+        #st.write(pwp_waiting_summary)
+
+        # get mean across all runs
         pwp_waiting_summary = (
-            pwp_waiting_summary.groupby(['Week Number', 'variable'], as_index=False)
-            .mean(numeric_only=True))
+                                pwp_waiting_summary
+                                .groupby(['Week Number', 'variable'], as_index=False)['value']
+                                .mean()
+                                )
+        
+        #st.write(pwp_waiting_summary)
         
         # isolate RTT data
         pwp_rtt_summary = pwp_waiting_summary[pwp_waiting_summary[
@@ -806,46 +812,64 @@ if button_run_pressed:
 
         # isolate waiting list data
         pwp_waiting_summary = pwp_waiting_summary[pwp_waiting_summary[
-                                'variable'].isin(['Avg Wait','Max Wait'])]
+                                'variable'].isin(['Num Waiting','Avg Wait','Max Wait'])]
         
         group_waiting_summary = aggregated_waiting['step2_group_waiting_summary']
-
-        # pivot to get mean across all runs
+        
+        # get mean across all runs
         group_waiting_summary = (
-            group_waiting_summary.groupby(['Week Number', 'variable'], as_index=False)
-            .mean(numeric_only=True))
-                
+                                group_waiting_summary
+                                .groupby(['Week Number', 'variable'], as_index=False)['value']
+                                .mean()
+                                )
+        
+        #st.write(group_waiting_summary)
+        
+        # isolate RTT data
         group_rtt_summary = group_waiting_summary[group_waiting_summary[
                         'variable'].isin(['Avg RTT','Max RTT'])]
 
+        # isolate waiting list data
         group_waiting_summary = group_waiting_summary[group_waiting_summary[
-                                'variable'].isin(['Avg Wait','Max Wait'])]
+                                'variable'].isin(['Num Waiting','Avg Wait','Max Wait'])]
         
         cbt_waiting_summary = aggregated_waiting['step3_cbt_waiting_summary']
-
-        # pivot to get mean across all runs
+        
+        # get mean across all runs
         cbt_waiting_summary = (
-            cbt_waiting_summary.groupby(['Week Number', 'variable'], as_index=False)
-            .mean(numeric_only=True))
-                
+                                cbt_waiting_summary
+                                .groupby(['Week Number', 'variable'], as_index=False)['value']
+                                .mean()
+                                )
+        
+        #st.write(cbt_waiting_summary)
+        
+        # isolate RTT data
         cbt_rtt_summary = cbt_waiting_summary[cbt_waiting_summary[
                         'variable'].isin(['Avg RTT','Max RTT'])]
 
+        # isolate waiting list data
         cbt_waiting_summary = cbt_waiting_summary[cbt_waiting_summary[
-                                'variable'].isin(['Avg Wait','Max Wait'])]
+                                'variable'].isin(['Num Waiting','Avg Wait','Max Wait'])]
         
         couns_waiting_summary = aggregated_waiting['step3_couns_waiting_summary']
-
-        # pivot to get mean across all runs
+        
+        # get mean across all runs
         couns_waiting_summary = (
-            couns_waiting_summary.groupby(['Week Number', 'variable'], as_index=False)
-            .mean(numeric_only=True))
-                
+                                couns_waiting_summary
+                                .groupby(['Week Number', 'variable'], as_index=False)['value']
+                                .mean()
+                                )
+        
+        #st.write(couns_waiting_summary)
+        
+        # isolate RTT data
         couns_rtt_summary = couns_waiting_summary[couns_waiting_summary[
                         'variable'].isin(['Avg RTT','Max RTT'])]
 
+        # isolate waiting list data
         couns_waiting_summary = couns_waiting_summary[couns_waiting_summary[
-                                'variable'].isin(['Avg Wait','Max Wait'])]
+                                'variable'].isin(['Num Waiting','Avg Wait','Max Wait'])]
  
         ##### merge results and sessions #####
         pwp_combined_summary = pd.concat([pwp_sessions_summary,
@@ -2260,7 +2284,7 @@ if button_run_pressed:
                                     title='Referral To Treatment Waits'
                                     )
                         
-                        fig1.update_traces(line=dict(color='blue'))  # Set a fixed color
+                        fig1.update_traces(line=dict(width=3,color='blue'))  # Set a fixed color
 
                         # get rid of 'variable' prefix resulting from df.melt
                         fig1.for_each_annotation(lambda a: a.update(text=a.text.split
@@ -2272,7 +2296,7 @@ if button_run_pressed:
                         st.plotly_chart(fig1, key=f"pwp_chart_{list_name}_{r}"
                                                     ,use_container_width=True)
                         
-                    elif list_name == 'Max RTT':
+                    if list_name == 'Max RTT':
 
                         fig1.add_trace(
                                     go.Scatter(x=pwp_rtt_filtered["Week Number"],
