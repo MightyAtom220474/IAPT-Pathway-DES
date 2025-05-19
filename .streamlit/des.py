@@ -42,7 +42,7 @@ with st.sidebar:
         # Referral Inputs
         st.markdown("#### Screening")
         referral_input = st.slider("Average Number of Referrals Per Week", 0, 1500
-                                   , 50)
+                                   , 65)
         ta_wl_input = st.number_input("Current Telephone Assessment Waiting List", min_value=0, max_value=1000, step=1, value=200)
         if ta_wl_input > 0:
             ta_wait_input = st.number_input("Current Average TA Waiting Time (weeks)", min_value=0, max_value=52, step=1, value=3)
@@ -2542,15 +2542,19 @@ if button_run_pressed:
 
             fig22.update_yaxes(title_text="Caseload")
 
-            # add line for available pwp hours
+             # add line for maximum couns slots
+            # Ensure x and y are the same length
+            weeks = pwp_caseload_weekly_summary["Week Number"]
+            max_value = pwp_caseload_max * (pwp_avail_input + pwp_add_input)
+
             fig22.add_trace(
-                                go.Scatter(x=pwp_caseload_weekly_summary["Week Number"],
-                                        y=np.repeat(pwp_caseload_max*(
-                                        pwp_avail_input+pwp_add_input)
-                                        ,sim_duration_input*(pwp_avail_input
-                                        +pwp_add_input)),
-                                        name='Maximum Slots',line=dict(width=3,
-                                        color='green')))
+                go.Scatter(
+                    x=weeks,
+                    y=np.full(len(weeks), max_value),  # same length as weeks
+                    name='Maximum Slots',
+                    line=dict(width=3, color='green')
+                )
+            )
 
             st.plotly_chart(fig22, use_container_width=True)
 
@@ -2577,15 +2581,19 @@ if button_run_pressed:
 
             fig22.update_yaxes(title_text="Caseload")
 
-            # add line for available cbt hours
+            # add line for maximum cbt slots
+            # Ensure x and y are the same length
+            weeks = cbt_caseload_weekly_summary["Week Number"]
+            max_value = cbt_caseload_max * (cbt_avail_input + cbt_add_input)
+
             fig22.add_trace(
-                                go.Scatter(x=cbt_caseload_weekly_summary["Week Number"],
-                                        y=np.repeat(cbt_caseload_max*(cbt_avail_input
-                                                +cbt_add_input)
-                                                ,sim_duration_input*(
-                                                cbt_avail_input+cbt_add_input)),
-                                                name='Maximum Slots',line=dict(width=3,
-                                                color='green')))
+                go.Scatter(
+                    x=weeks,
+                    y=np.full(len(weeks), max_value),  # same length as weeks
+                    name='Maximum Slots',
+                    line=dict(width=3, color='green')
+                )
+            )
 
             st.plotly_chart(fig22, use_container_width=True)
 
@@ -2612,15 +2620,19 @@ if button_run_pressed:
 
             fig22.update_yaxes(title_text="Caseload")
 
-            # add line for available couns hours
+            # add line for maximum couns slots
+            # Ensure x and y are the same length
+            weeks = couns_caseload_weekly_summary["Week Number"]
+            max_value = couns_caseload_max * (couns_avail_input + couns_add_input)
+
             fig22.add_trace(
-                                go.Scatter(x=couns_caseload_weekly_summary["Week Number"],
-                                        y=np.repeat(couns_caseload_max*(
-                                                    couns_avail_input+couns_add_input)
-                                                    ,sim_duration_input*(
-                                                    couns_avail_input+couns_add_input)),
-                                        name='Maximum Slots',line=dict(width=3,
-                                        color='green')))
+                go.Scatter(
+                    x=weeks,
+                    y=np.full(len(weeks), max_value),  # same length as weeks
+                    name='Maximum Slots',
+                    line=dict(width=3, color='green')
+                )
+            )
 
             st.plotly_chart(fig22, use_container_width=True)
 
