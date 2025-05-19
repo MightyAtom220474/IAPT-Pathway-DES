@@ -7,10 +7,10 @@ import math
 class g:
 
     # used for testing
-    debug_level = 0 # 0 = Off, 1 = Governor, 2 = Main Process, 3 = Sub-process, 4 = Patient Pathway
+    debug_level = 4 # 0 = Off, 1 = Governor, 2 = Main Process, 3 = Sub-process, 4 = Patient Pathway
 
     # Referrals
-    mean_referrals_pw = 125
+    mean_referrals_pw = 175
 
     # Screening
     referral_rej_rate = 0.3 # % of referrals rejected, advised 30%
@@ -126,9 +126,9 @@ class g:
 
     # bring in past referral data
     
-    # referral_rate_lookup = pd.read_csv('talking_therapies_referral_rates.csv'
-    #                                                            ,index_col=0)
-    # # #print(referral_rate_lookup)
+    referral_rate_lookup = pd.read_csv('talking_therapies_referral_rates.csv'
+                                                               ,index_col=0)
+    # # # #print(referral_rate_lookup)
 # function to vary the number of sessions
 def vary_number_sessions(lower, upper, lambda_val=0.1):
         
@@ -1013,7 +1013,7 @@ class Model:
                 })
 
                 step2_waits_df = pd.DataFrame(self.step2_waiting_stats)
-                print(step2_waits_df)
+                #print(step2_waits_df)
 
             ##### Step 3 #####
             # get rid of records that didn't get to the stage of deciding which path to go down
@@ -1076,7 +1076,7 @@ class Model:
                 })
 
                 step3_waits_df = pd.DataFrame(self.step3_waiting_stats)
-                print(step3_waits_df)
+                #print(step3_waits_df)
 
             if g.debug_level >= 1:
                 print('[Weekly Stats] - Weekly Stats Collected')
@@ -1751,9 +1751,14 @@ class Model:
 
         # Now do Telephone Assessment using mean and varying
         self.asst_results_df.at[p.id, 'TA Mins'
-                                        ] = int(self.random_normal(
-                                        g.ta_time_mins
-                                        ,g.std_dev))
+                                        ] = g.ta_time_mins #int(self.random_normal(
+                                        #g.ta_time_mins
+                                        #,g.std_dev))
+
+        if g.debug_level >= 4:
+            print(f"[Assessment] - TA Mins at week {self.week_number} assigned to Patient {p.id}:",
+            self.asst_results_df.at[p.id, 'TA Mins'])
+            print(self.asst_results_df.loc[[p.id], ['TA Mins']])
         
         # decide if the patient is accepted following TA
         if self.ta_accepted > g.ta_accept_rate:
