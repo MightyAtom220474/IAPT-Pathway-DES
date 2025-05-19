@@ -747,56 +747,53 @@ class Model:
         if g.debug_level >= 2:
             print(f"[Prefill] - Completed at sim time: {self.env.now}") 
 
-    def pathway_start_point(self,patient,pathway_week):
-        
+    def pathway_start_point(self, patient, pathway_week):
+
         p = patient
 
         if g.debug_level >= 3:
             print(f"[Pathway] - Patient {p.id} starting pathway at sim time: {self.env.now}")
 
         self.path_week_number = pathway_week
-        ##### decide how the patient is entering the system #####
-        # if we are in the prefill stage do it this way
-        # wait until prefill has completed before setting the simulation running
-        
+
         if p.asst_already_seen == False and p.asst_wl_added == True:
-
             if g.debug_level >= 3:
-                print(f'[Pathway] - Week {self.path_week_number} Patient {p.id} coming from {p.patient_source} sent for Assessment')
-    
-            self.env.process(self.telephone_assessment(p))  
-        
-        # if added from pwp waiting list send them down that path
+                print(f'[Pathway] - Patient {p.id} queued for Assessment')
+
+            self.queued_ta_patients.append(p)
+            yield self.prefill_done_event
+            yield self.env.process(self.telephone_assessment(p))
+
         elif p.asst_already_seen == True and p.pwp_wl_added == True:
-            
             if g.debug_level >= 3:
-                        print(f'[Pathway] - Week {self.week_number} Patient {p.id} coming from {p.patient_source} sent down PwP path')
+                print(f'[Pathway] - Patient {p.id} queued for PwP Treatment')
 
-            self.env.process(self.step2_pwp_process(p))  
-                       
-        # if added from CBT waiting list send them down that path
+            self.queued_pwp_patients.append(p)
+            yield self.prefill_done_event
+            yield self.env.process(self.step2_pwp_process(p))
+
         elif p.asst_already_seen == True and p.cbt_wl_added == True:
-            # add them to the CBT Waiting List here
-
             if g.debug_level >= 3:
-                        print(f'[Pathway] - Week {self.week_number} Patient {p.id} coming from {p.patient_source} sent down CBT path')
+                print(f'[Pathway] - Patient {p.id} queued for CBT Treatment')
 
-            self.env.process(self.step3_cbt_process(p))  
-        
-        # if added from CBT waiting list send them down that path
+            self.queued_cbt_patients.append(p)
+            yield self.prefill_done_event
+            yield self.env.process(self.step3_cbt_process(p))
+
         elif p.asst_already_seen == True and p.couns_wl_added == True:
-            
             if g.debug_level >= 3:
-                        print(f'[Pathway] - Week {self.week_number} Patient {p.id} coming from {p.patient_source} sent down Couns path')
+                print(f'[Pathway] - Patient {p.id} queued for DepC Treatment')
 
-            self.env.process(self.step3_couns_process(p))  
-        # otherwise, if added from referral_generator, start them right at the
-        # beginning of the pathway
+            self.queued_couns_patients.append(p)
+            yield self.prefill_done_event
+            
+            yield self.env.process(self.step3_couns_process(p))
+
         else:
             if g.debug_level >= 3:
-                        print(f'[Pathway] - Week {self.week_number} Patient {p.id} coming from {p.patient_source} sent down Referral path')
-            
-            self.env.process(self.screen_referral(p,self.week_number))
+                print(f'[Pathway] - Week {self.week_number} Patient {p.id} coming from {p.patient_source} sent down Referral path')
+
+            yield self.env.process(self.screen_referral(p, self.week_number))
 
         yield self.env.timeout(0)
     
@@ -1683,19 +1680,13 @@ class Model:
 
         p = patient
 
-        self.queued_ta_patients.append(p)
-
-        if g.debug_level >= 4:
-            print(f'[Assessment] - Patient {p.id} added to Assessment waiting list')
-
-        yield self.prefill_done_event
-
         if g.debug_level >= 4:
             print(f'[Assessment] - Patient {p.id} is starting Assessment after prefill completion')
-            print("[Assessment] - Starting Assessment of Patient")
 
         if not p.asst_wl_added:
             g.number_on_ta_wl += 1
+            if g.debug_level >= 4:
+                print(f'[Assessment] - {p.step2_path_route} RUNNER: Patient {p.id} added to Assessment waiting list')
 
         # Ensure row exists in DataFrame
         if p.id not in self.asst_results_df.index:
@@ -2044,19 +2035,13 @@ class Model:
         
         p = patient
 
-        self.queued_pwp_patients.append(p)
-
         if g.debug_level >= 4:
-            print(f'[pwp] - {p.step2_path_route} RUNNER: Patient {p.id} added to {p.step2_path_route} waiting list')
+            print(f'[PwP] - Patient {p.id} is starting PwP Treatment after prefill completion')
 
-        yield self.prefill_done_event
-
-        if g.debug_level >= 4:
-            print(f'[pwp] - {p.step2_path_route} RUNNER: Patient {p.id} is starting process after prefill completion')
-
-        self.pwp_session_counter = 0
-        self.pwp_dna_counter = 0
-        self.start_q_pwp = self.env.now
+        if not p.asst_wl_added:
+            g.number_on_ta_wl += 1
+            if g.debug_level >= 4:
+                print(f'[PwP] - {p.step2_path_route} RUNNER: Patient {p.id} added to PwP waiting list')
 
         # Ensure patient exists in step2_results_df
         if p.id not in self.step2_results_df.index:
@@ -2310,12 +2295,12 @@ class Model:
 
         p = patient
 
-        self.queued_group_patients.append(p)
+        # self.queued_group_patients.append(p)
 
-        if g.debug_level >= 4:
-            print(f'[Group] - {p.step2_path_route} RUNNER: Patient {p.id} added to {p.step2_path_route} waiting list')
+        # if g.debug_level >= 4:
+        #     print(f'[Group] - {p.step2_path_route} RUNNER: Patient {p.id} added to {p.step2_path_route} waiting list')
 
-        yield self.prefill_done_event
+        # yield self.prefill_done_event
 
         if g.debug_level >= 4:
             print(f'[Group] - {p.step2_path_route} RUNNER: Patient {p.id} is starting process after prefill completion')
@@ -2515,23 +2500,13 @@ class Model:
 
         p = patient
 
-        self.queued_cbt_patients.append(p)
-
         if g.debug_level >= 4:
-            print(f'[CBT] - {p.step3_path_route} RUNNER: Patient {p.id} added to {p.step3_path_route} waiting list')
+            print(f'[CBT] - Patient {p.id} is starting CBT Treatment after prefill completion')
 
-        yield self.prefill_done_event
-
-        if g.debug_level >= 4:
-            print(f'[CBT] - {p.step3_path_route} RUNNER: Patient {p.id} is starting process after prefill completion')
-
-        self.cbt_session_counter = 0
-        self.cbt_dna_counter = 0
-
-        if g.debug_level >= 4:
-            print(f'[CBT] - {p.step3_path_route} RUNNER: Patient {p.id} added to {p.step3_path_route} waiting list')
-
-        start_q_cbt = self.env.now
+        if not p.cbt_wl_added:
+            g.number_on_cbt_wl += 1
+            if g.debug_level >= 4:
+                print(f'[CBT] - {p.step3_path_route} RUNNER: Patient {p.id} added to CBT waiting list')
 
         # Ensure patient exists in step3_results_df
         if p.id not in self.step3_results_df.index:
@@ -2791,15 +2766,13 @@ class Model:
 
         p = patient
 
-        self.queued_couns_patients.append(p)
-
         if g.debug_level >= 4:
-            print(f'[couns] - {p.step3_path_route} RUNNER: Patient {p.id} added to {p.step3_path_route} waiting list')
+            print(f'[Couns] - Patient {p.id} is starting DepC Treatment after prefill completion')
 
-        yield self.prefill_done_event
-
-        if g.debug_level >= 4:
-            print(f'[couns] - {p.step3_path_route} RUNNER: Patient {p.id} is starting process after prefill completion')
+        if not p.couns_wl_added:
+            g.number_on_couns_wl += 1
+            if g.debug_level >= 4:
+                print(f'[Couns] - {p.step3_path_route} RUNNER: Patient {p.id} added to Couns waiting list')
 
         self.couns_session_counter = 0
         self.couns_dna_counter = 0
