@@ -6,7 +6,7 @@ import math
 class g:
 
     # used for testing
-    debug_level = 0 # 0 = Off, 1 = Governor, 2 = Main Process, 3 = Sub-process, 4 = Patient Pathway
+    debug_level = 4 # 0 = Off, 1 = Governor, 2 = Main Process, 3 = Sub-process, 4 = Patient Pathway
 
     # Referrals
     mean_referrals_pw = 65
@@ -73,7 +73,7 @@ class g:
     step3_couns_dna_rate = 0.216 # Wellbeing Workshop attendance 78.6%
     step3_couns_period = 16 # max number of weeks couns delivered over
     step3_session_var = 0.15 # % of instances where number sessions goes over standard amount
-    
+    delayed_disc_var = 0.1 # % of instances where discharge is delayed    
     # Staff
     supervision_time = 120 # 2 hours per month per modality ##### could use modulus for every 4th week
     break_time = 100 # 20 mins per day
@@ -142,6 +142,20 @@ def vary_number_sessions(lower, upper, lambda_val=0.1):
             if lower <= sessions <= upper:
                 # Convert to integer and return
                 return int(sessions)
+# function to delay discharge
+#          
+def delay_discharge(lower=1, upper=13, lambda_val=0.6):
+    
+    while True:
+        # Generate a value from exponential distribution
+        val = np.random.exponential(1 / lambda_val)
+
+        # Shift so the minimum is at `lower`
+        shifted_val = lower + val
+
+        # Clip to the range and return as integer
+        if shifted_val <= upper:
+            return int(np.floor(shifted_val))
 
 # Patient to capture flow of patient through pathway
 class Patient:
@@ -2392,13 +2406,25 @@ class Model:
             # Move to the next session
             self.pwp_session_counter += 1
 
-        if self.pwp_dna_counter >= self.dnas_allowed:
+        # decide whether discharge is going to be delayed
+        self.delay_disch_choice = random.uniform(0,1)
+
+        self.delay_disch_amnt = 0
+        
+        if self.delay_disch_choice < g.delayed_disc_var:
+            # if disch delayed add on the number of weeks by
+            self.delay_disch_amnt += delay_discharge()
+        
+            if g.debug_level >= 4:
+                print(f'[Couns] - Patient {p.id} has had discharge delayed by {self.delay_disch_amnt} weeks')
+
+        if self.couns_dna_counter >= self.dnas_allowed:
 
             self.env.process(self.record_caseload_use(p.step2_path_route,self.pwp_caseload_id,self.pwp_random_weeks[self.pwp_session_counter]))
             
         else:
             # record when the caseload resource can be restored
-            self.env.process(self.record_caseload_use(p.step2_path_route,self.pwp_caseload_id,max(self.pwp_random_weeks)))
+            self.env.process(self.record_caseload_use(p.step2_path_route,self.pwp_caseload_id,max(self.pwp_random_weeks)+self.delay_disch_amnt))
         
         # reset counters for pwp sessions
         self.pwp_session_counter = 0
@@ -2873,13 +2899,25 @@ class Model:
             # Move to the next session
             self.cbt_session_counter += 1
 
+        # decide whether discharge is going to be delayed
+        self.delay_disch_choice = random.uniform(0,1)
+
+        self.delay_disch_amnt = 0
+        
+        if self.delay_disch_choice < g.delayed_disc_var:
+            # if disch delayed add on the number of weeks by
+            self.delay_disch_amnt += delay_discharge()
+        
+            if g.debug_level >= 4:
+                print(f'[CBT] - Patient {p.id} has had discharge delayed by {self.delay_disch_amnt} weeks')
+
         if self.cbt_dna_counter >= self.dnas_allowed:
 
             self.env.process(self.record_caseload_use(p.step3_path_route,self.cbt_caseload_id,self.cbt_random_weeks[self.cbt_session_counter]))
             
         else:
             # record when the caseload resource can be restored
-            self.env.process(self.record_caseload_use(p.step3_path_route,self.cbt_caseload_id,max(self.cbt_random_weeks)))
+            self.env.process(self.record_caseload_use(p.step3_path_route,self.cbt_caseload_id,max(self.cbt_random_weeks)+self.delay_disch_amnt))
         
         # reset counters for cbt sessions
         self.cbt_session_counter = 0
@@ -3158,8 +3196,17 @@ class Model:
             # Move to the next session
             self.couns_session_counter += 1
 
-        # # remove from this specific caseload
-        # self.couns_caseload_posn -=1
+        # decide whether discharge is going to be delayed
+        self.delay_disch_choice = random.uniform(0,1)
+
+        self.delay_disch_amnt = 0
+        
+        if self.delay_disch_choice < g.delayed_disc_var:
+            # if disch delayed add on the number of weeks by
+            self.delay_disch_amnt += delay_discharge()
+        
+            if g.debug_level >= 4:
+                print(f'[Couns] - Patient {p.id} has had discharge delayed by {self.delay_disch_amnt} weeks')
 
         if self.couns_dna_counter >= self.dnas_allowed:
 
@@ -3167,8 +3214,8 @@ class Model:
             
         else:
             # record when the caseload resource can be restored
-            self.env.process(self.record_caseload_use(p.step3_path_route,self.couns_caseload_id,max(self.couns_random_weeks)))
-        
+            self.env.process(self.record_caseload_use(p.step3_path_route,self.couns_caseload_id,max(self.couns_random_weeks)+self.delay_disch_amnt))
+            
         # reset counters for couns sessions
         self.couns_session_counter = 0
         self.couns_dna_counter = 0
