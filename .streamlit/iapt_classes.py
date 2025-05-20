@@ -10,6 +10,7 @@ class g:
 
     # Referrals
     mean_referrals_pw = 65
+    prevalence = 220 # expected prevalence
 
     # Screening
     referral_rej_rate = 0.3 # % of referrals rejected, advised 30%

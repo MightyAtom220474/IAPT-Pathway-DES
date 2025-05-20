@@ -216,6 +216,7 @@ with st.sidebar:
         #st.toggle(label='Test Run?', value=False)
 
 g.referral_rate_lookup = load_referral_rates()
+g.prevalence = prevalence_input
 
 ##### Screening
 g.mean_referrals_pw = referral_input
