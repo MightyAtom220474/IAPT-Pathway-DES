@@ -887,31 +887,31 @@ if button_run_pressed:
         pwp_combined_summary = pd.concat([pwp_sessions_summary,
                                         pwp_results_summary,
                                         pwp_waiting_summary],
-                                        ignore_index=True).reset_index(drop=True)
+                                        ignore_index=True).reset_index()
         #st.write(pwp_combined_summary)
 
         group_combined_summary = pd.concat([group_sessions_summary,
                                         group_results_summary,
                                         group_waiting_summary],
-                                        ignore_index=True).reset_index(drop=True)
+                                        ignore_index=True).reset_index()
         cbt_combined_summary = pd.concat([cbt_sessions_summary,
                                         cbt_results_summary,
                                         cbt_waiting_summary],
-                                        ignore_index=True).reset_index(drop=True)
+                                        ignore_index=True).reset_index()
         couns_combined_summary = pd.concat([couns_sessions_summary,
                                         couns_results_summary,
                                         couns_waiting_summary],
-                                        ignore_index=True).reset_index(drop=True)
+                                        ignore_index=True).reset_index()
         # get rid of any sessions recorded beyond the simulation period
         pwp_combined_summary = pwp_combined_summary[pwp_combined_summary[  
                                 "Week Number"] <= sim_duration_input-1
-                                ].reset_index(drop=True)
+                                ].reset_index()
         group_combined_summary = group_combined_summary[group_combined_summary[
-                                "Week Number"] <= sim_duration_input-1].reset_index(drop=True)
+                                "Week Number"] <= sim_duration_input-1].reset_index()
         cbt_combined_summary = cbt_combined_summary[cbt_combined_summary[
-                                "Week Number"] <= sim_duration_input-1].reset_index(drop=True)
+                                "Week Number"] <= sim_duration_input-1].reset_index()
         couns_combined_summary = couns_combined_summary[couns_combined_summary[
-                                "Week Number"] <= sim_duration_input-1].reset_index(drop=True)
+                                "Week Number"] <= sim_duration_input-1].reset_index()
         # get rid of week zero as no sessions run until week 1 when assessments come through
         # pwp_combined_summary = pwp_combined_summary[pwp_combined_summary[
         #                                             "Week Number"] != 0]
@@ -936,7 +936,7 @@ if button_run_pressed:
                                                     ]/(60*number_of_runs_input)
         
         pwp_weekly_act_dfs = staff_weekly_dfs.loc[staff_weekly_dfs[
-                'Job Role'] == 'pwp'].reset_index(drop=True)
+                'Job Role'] == 'pwp'].reset_index()
         
         pwp_weekly_activity = pd.melt(pwp_weekly_act_dfs, value_vars=[
                                                                 'Supervision Hrs',
@@ -945,7 +945,6 @@ if button_run_pressed:
                                                                 'Huddle Hrs',
                                                                 'CPD Hrs'],
                                                                 id_vars=[
-                                                                'Week Number'])
         
         cbt_weekly_act_dfs = staff_weekly_dfs.loc[staff_weekly_dfs[
                 'Job Role'] == 'cbt'].reset_index(drop=True)
@@ -1112,7 +1111,7 @@ if button_run_pressed:
                                             ,group_hours_weekly
                                             ,pwp_asst_weekly_summary
                                             ,pwp_weekly_activity
-                                            ],ignore_index=True)
+                                            ],ignore_index=True).reset_index()
         # get rid of sessions that go beyond sim duration
         pwp_hours_weekly_summary = pwp_hours_weekly_summary[
                                     pwp_hours_weekly_summary[

@@ -1479,8 +1479,14 @@ class Model:
 
             # Increment the staff counter by 1
             self.pwp_counter += 1
+            # reset the staff counter back to original level once all staff have been processed
+            self.pwp_staff_identifier = 1000
+
             # Create a new staff member from Staff Class
-            s = Staff(self.pwp_counter+(self.pwp_counter*2))
+            s = Staff(self.pwp_staff_identifier+(self.pwp_counter))
+
+            if s.id not in self.staff_results_df.index:
+                self.staff_results_df.loc[s.id] = pd.Series(dtype='object')  # create empty row
 
             if g.debug_level >= 2:
                 print(f"[Staff Generator] - ==== pwp Staff {s.id} Generated ====")
@@ -1489,6 +1495,7 @@ class Model:
             self.staff_results_df.at[s.id,'Run Number'] = self.run_number
             self.staff_results_df.at[s.id,'Job Role'] = 'pwp'
             self.staff_results_df.at[s.id,'Break Mins'] = g.break_time
+            self.staff_results_df.at[s.id,'Huddle Mins'] = 0 # couns only
             # Monthly Activities            
             self.staff_results_df.at[s.id,'Supervision Mins'] = int(g.supervision_time/4)
             self.staff_results_df.at[s.id,'Wellbeing Mins'] = int(g.wellbeing_time/4)
@@ -1496,12 +1503,10 @@ class Model:
         
         yield(self.env.timeout(0))
         
-        # reset the staff counter back to original level once all staff have been processed
-        self.pwp_staff_counter = 100
-
     def cbt_staff_generator(self,week_number):
 
         self.cbt_counter = 0
+        self.cbt_staff_identifier = 2000
        
         # iterate through the cbt staff
         while self.cbt_counter < g.number_staff_cbt:
@@ -1510,7 +1515,10 @@ class Model:
             self.cbt_counter += 1
 
             # Create a new staff member from Staff Class
-            s = Staff(self.cbt_counter+(self.cbt_counter*2))
+            s = Staff(self.cbt_staff_identifier+(self.cbt_counter))
+            
+            if s.id not in self.staff_results_df.index:
+                self.staff_results_df.loc[s.id] = pd.Series(dtype='object')  # create empty row
 
             if g.debug_level >= 2:
                 print(f"[Staff Generator] - ==== cbt Staff {s.id} Generated ====")
@@ -1519,6 +1527,7 @@ class Model:
             self.staff_results_df.at[s.id,'Run Number'] = self.run_number
             self.staff_results_df.at[s.id,'Job Role'] = 'cbt'
             self.staff_results_df.at[s.id,'Break Mins'] = g.break_time
+            self.staff_results_df.at[s.id,'Huddle Mins'] = 0 # couns only
             # Monthly Activities
             self.staff_results_df.at[s.id,'Supervision Mins'] = int(g.supervision_time/4)
             self.staff_results_df.at[s.id,'Wellbeing Mins'] = int(g.wellbeing_time/4)
@@ -1526,8 +1535,6 @@ class Model:
         
         yield(self.env.timeout(0))
         
-        # reset the staff counter back to original level once all staff have been processed
-        self.cbt_staff_counter = 200
 
     def couns_staff_generator(self,week_number):
 
@@ -1538,9 +1545,13 @@ class Model:
 
             # Increment the staff counter by 1
             self.couns_counter += 1
+            self.couns_staff_identifier = 3000
 
             # Create a new staff member from Staff Class
-            s = Staff(self.couns_counter+(self.couns_counter*2))
+            s = Staff(self.couns_staff_identifier+(self.couns_counter))
+            
+            if s.id not in self.staff_results_df.index:
+                self.staff_results_df.loc[s.id] = pd.Series(dtype='object')  # create empty row
 
             if g.debug_level >= 2:
                 print('')
@@ -1557,9 +1568,6 @@ class Model:
             self.staff_results_df.at[s.id,'CPD Mins'] = int(g.cpd_time/4)
         
         yield(self.env.timeout(0))
-        
-        # reset the staff counter back to original level once all staff have been processed
-        self.pwp_staff_counter = 300
 
     ###### assessment part of the clinical pathway #####
     def screen_referral(self,patient,asst_week_number):
@@ -3337,7 +3345,7 @@ if __name__ == "__main__":
     step2_results_df, step2_sessions_df, step3_results_df, step3_sessions_df, asst_weekly_dfs, step2_waiting_dfs, step3_waiting_dfs, staff_weekly_dfs, caseload_weekly_dfs  = my_trial.run_trial()
     # print(step2_sessions_df.to_string())
     # print(df_trial_results)
-    # asst_weekly_dfs.to_csv("asst_results.csv", index=True)
+    # staff_weekly_dfs.to_csv("staff_results.csv", index=True)
     # step2_waiting_dfs.to_csv("step2_waiters.csv", index=True)
     # step2_results_df.to_csv("step2_results.csv", index=True)
     # caseload_weekly_dfs.to_csv("caseloads.csv", index=True)
