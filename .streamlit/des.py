@@ -43,6 +43,8 @@ with st.sidebar:
         st.markdown("#### Screening")
         referral_input = st.slider("Average Number of Referrals Per Week", 0, 1500
                                    , 65)
+        prevalence_input = st.slider("Expected Prevalence", 0, 500
+                                   , 220)
         ta_wl_input = st.number_input("Current Telephone Assessment Waiting List", min_value=0, max_value=1000, step=1, value=200)
         if ta_wl_input > 0:
             ta_wait_input = st.number_input("Current Average TA Waiting Time (weeks)", min_value=0, max_value=52, step=1, value=3)
