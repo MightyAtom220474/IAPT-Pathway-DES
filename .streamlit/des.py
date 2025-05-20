@@ -283,13 +283,19 @@ g.number_of_runs = number_of_runs_input
 # print the results                                       #
 ###########################################################
 
+#st.session_state.sim_data = {}
+
+# Initialize sim_data in session_state if not already there
+if "sim_data" not in st.session_state:
+    st.session_state.sim_data = None
+
+# Button to trigger simulation
 button_run_pressed = st.button("Run simulation")
 
-st.session_state.sim_data = {}
-
+# Run the simulation only when button is pressed
 if button_run_pressed:
     with st.spinner('Simulating the system...'):
-        # Create an instance of the Trial class
+        # Create environment and trial instance
         env = simpy.Environment()
         my_trial = Trial(env)
         pd.set_option('display.max_rows', 1000)
@@ -299,7 +305,7 @@ if button_run_pressed:
         asst_weekly_dfs, step2_waiting_dfs, step3_waiting_dfs, staff_weekly_dfs, \
         caseload_weekly_dfs = my_trial.run_trial()
 
-        # Store the results in session state
+        # Store results safely in session_state
         st.session_state.sim_data = {
             "step2_results_df": step2_results_df,
             "step2_sessions_df": step2_sessions_df,
@@ -312,8 +318,14 @@ if button_run_pressed:
             "caseload_weekly_dfs": caseload_weekly_dfs
         }
 
-        for name, df in st.session_state.sim_data.items():
-            pd.DataFrame(df)
+        st.success("Simulation complete!")
+
+# Only display outputs if simulation has run
+# if st.session_state.sim_data:
+#     st.subheader("Simulation Data Overview")
+#     for name, df in st.session_state.sim_data.items():
+#         st.write(f"**{name}**")
+#         st.dataframe(df if isinstance(df, pd.DataFrame) else pd.concat(df, ignore_index=True))
 
         # st.subheader(f'Summary of all {g.number_of_runs} Simulation Runs over {g.sim_duration} Weeks')
         # st.subheader(f' Weeks with {cbt_add_input} change in CBT, {couns_add_input} change in DepC and ')
@@ -322,12 +334,12 @@ if button_run_pressed:
         #st.write(step2_sessions_df)
         
         ##### get all data structured correctly for dashboard #####
-              
+        #st.write(asst_weekly_dfs)   
         asst_weekly_dfs['Referral Screen Hrs'] = asst_weekly_dfs['Referral Screen Mins']/60
-        asst_weekly_dfs['TA Hrs'] = asst_weekly_dfs['TA Mins']/60
+        #asst_weekly_dfs['TA Hrs'] = asst_weekly_dfs['TA Mins']/60
         asst_weekly_dfs['Accepted Referrals'] = asst_weekly_dfs['Referrals Received'
                                                 ]-asst_weekly_dfs['Referrals Rejected']
-      
+       
         # filter dataframe to just return columns needed
         asst_weekly_summary = asst_weekly_dfs[['Run Number','Week Number',
                                     'Referrals Received','Referral Screen Hrs',

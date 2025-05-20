@@ -3,21 +3,20 @@ import random
 import numpy as np
 import pandas as pd
 import math
-
 class g:
 
     # used for testing
-    debug_level = 4 # 0 = Off, 1 = Governor, 2 = Main Process, 3 = Sub-process, 4 = Patient Pathway
+    debug_level = 0 # 0 = Off, 1 = Governor, 2 = Main Process, 3 = Sub-process, 4 = Patient Pathway
 
     # Referrals
-    mean_referrals_pw = 175
+    mean_referrals_pw = 65
 
     # Screening
     referral_rej_rate = 0.3 # % of referrals rejected, advised 30%
     referral_review_rate = 0.4 # % that go to MDT as prev contact with Trust
     mdt_freq = 2 # how often in weeks MDT takes place, longest time a review referral may wait for review
     review_rej_rate = 0.5 # % ref that go to MDT and get rejected
-    ta_waiting_list = 100 # current number of patients on TA waiting list
+    ta_waiting_list = 200 # current number of patients on TA waiting list
     ta_avg_wait = 4 # current average TA waiting time in weeks
     referral_screen_time = 20 # average time it takes to screen one referral by a pwp
     opt_in_wait = 1 # no. of weeks patients have to opt in
@@ -83,9 +82,9 @@ class g:
     cpd_time = 225 # half day per month CPD
     
     # Job Plans
-    number_staff_cbt = 14 #138
-    number_staff_pwp = 12 #40
-    number_staff_couns = 4 #125
+    number_staff_cbt = 7 #138
+    number_staff_pwp = 6 #40
+    number_staff_couns = 2 #125
     pwp_avail = number_staff_pwp
     cbt_avail = number_staff_cbt
     couns_avail = number_staff_couns
@@ -128,7 +127,7 @@ class g:
     
     referral_rate_lookup = pd.read_csv('talking_therapies_referral_rates.csv'
                                                                ,index_col=0)
-    # # # #print(referral_rate_lookup)
+    # # # # #print(referral_rate_lookup)
 # function to vary the number of sessions
 def vary_number_sessions(lower, upper, lambda_val=0.1):
         
@@ -243,6 +242,7 @@ class Model:
         self.asst_results_df = pd.DataFrame()
         # Patient
         self.asst_results_df['PatientID'] = [1]
+        # self.asst_results_df['Source'] = ['NA']
         # Referral
         self.asst_results_df['Week Number'] = [0]
         self.asst_results_df['Run Number'] = [0]
@@ -587,16 +587,77 @@ class Model:
             # Create patient
             p = Patient(self.patient_counter)
 
+            # Ensure asst_results_df has expected columns
+            expected_columns = ['Week Number','Run Number','At Risk','Referral Time Screen',
+                'Referral Rejected','Referral Accepted','Referral Reviewed',
+                'Review Wait','Review Rejected','Opted In', 'Opt-in Wait', 
+                'Opt-in Q Time','TA Q Time','TA 6W Pass','TA WL Posn',
+                'TA Outcome','TA Mins','Treatment Path']
+
+            # Make sure DataFrame exists and has the required structure
+            if self.asst_results_df.empty:
+                self.asst_results_df = pd.DataFrame(columns=expected_columns)
+
             if wait_list_type == 'ta':
                 if g.debug_level >= 2:
                     print(f'[Prefill] - Filling Assessment Waiting List with {wait_list_size} patients')
 
+                # Convert Patient ID to int for consistency
+                p_id_int = int(p.id)
+               
+                # # Match column types if DataFrame is non-empty
+                # if not self.step2_waiting_list.empty:
+                #     pwp_new_row = pwp_new_row.astype(self.step2_waiting_list.dtypes)
+                
                 g.number_on_ta_wl += 1
                 p.patient_source = 'TA WL'
                 p.week_added = 0
                 p.ta_wait_start = -g.ta_avg_wait  # simulate historical wait
                 p.asst_wl_added = True
                 p.asst_already_seen = False
+
+                if p_id_int not in self.asst_results_df.index:
+                    ta_new_row = pd.DataFrame([{
+                        'Week Number': self.week_number,
+                        'Run Number': self.run_number,
+                        'At Risk': 0,
+                        'Referral Time Screen': 0.0,
+                        'Referral Rejected': 0,
+                        'Referral Accepted': 0,
+                        'Referral Reviewed': 0,
+                        'Review Wait': 0.0,
+                        'Review Rejected': 0,
+                        'Opted In': 1,
+                        'Opt-in Wait': 0.0,
+                        'Opt-in Q Time':0.0,
+                        'TA Q Time':g.ta_avg_wait,
+                        'TA 6W Pass':0,
+                        'TA WL Posn': g.number_on_ta_wl,
+                        'TA Outcome':0,
+                        'TA Mins': 0,
+                        'Treatment Path':'NA'
+                    }], index=[p_id_int])  # Set index during creation
+
+                    # Match column types if DataFrame is non-empty
+                    if not self.asst_results_df.empty:
+                        ta_new_row = ta_new_row.astype(self.asst_results_df.dtypes)
+
+                    # Safely concat only non-empty DataFrames
+                    frames_to_concat = [df for df in [self.asst_results_df, ta_new_row] if not df.empty]
+                    self.asst_results_df = pd.concat(frames_to_concat) if frames_to_concat else ta_new_row
+
+                else:
+                    # Update existing patient data
+                    self.asst_results_df.loc[p_id_int, [
+                        'Week Number','Run Number','At Risk','Referral Time Screen',
+                        'Referral Rejected','Referral Accepted','Referral Reviewed',
+                        'Review Wait','Review Rejected','Opted In', 'Opt-in Wait', 
+                        'Opt-in Q Time','TA Q Time','TA 6W Pass','TA WL Posn',
+                        'TA Outcome','TA Mins','Treatment Path'
+                    ]] = [self.week_number,self.run_number,0,0.0,0,0,0,0.0,0,1,
+                        0.0,0.0,g.ta_avg_wait,0,g.number_on_ta_wl,0,
+                        g.ta_time_mins,'NA']
+            
             elif wait_list_type == 'pwp':
                 if g.debug_level >= 2:
                     print(f'[Prefill] - Filling PwP Waiting list with {wait_list_size} patients')
@@ -875,7 +936,8 @@ class Model:
                                         'TA 6W PC':self.asst_sixweek_pc,
                                         'TA Max Wait':self.asst_max_wait,
                                         'TA Total Accept':self.asst_tot_accept,
-                                        'TA Mins':self.asst_time_total
+                                        'TA Mins':self.asst_time_total,
+                                        'TA Hrs': self.asst_time_total / 60
                                         })
     
             ## Staff
@@ -1697,14 +1759,42 @@ class Model:
         if not p.asst_wl_added:
             g.number_on_ta_wl += 1
 
-        # Ensure row exists in DataFrame
-        if p.id not in self.asst_results_df.index:
-            if g.debug_level >= 3:
-                print(f"[Assessment] - Creating new asst_results_df row for Patient {p.id}")
-            # Copy structure from first row or create default row
-            new_row = self.asst_results_df.iloc[0].copy()
-            new_row.name = p.id
-            self.asst_results_df.loc[p.id] = new_row
+        # if p.id not in self.asst_results_df.index:
+        #     if not self.asst_results_df.empty:
+        #         new_row = self.asst_results_df.iloc[0].copy()
+        #     else:
+        #         # Define all required columns manually
+        #         new_row = pd.Series({
+        #             'Week Number': 0,
+        #             'Run Number': 0,
+        #             'At Risk': 0,
+        #             'Referral Time Screen': 0.0,
+        #             'Referral Rejected': 0,
+        #             'Referral Accepted': 0,
+        #             'Referral Reviewed': 0,
+        #             'Review Wait': 0.0,
+        #             'Review Rejected': 0,
+        #             'Opted In': 0,
+        #             'Opt-in Wait': 0.0,
+        #             'Opt-in Q Time': 0.0,
+        #             'TA Q Time': 0.0,
+        #             'TA WL Posn': 0,
+        #             'TA Outcome': 0,
+        #             'TA Mins': 0,
+        #             'TA 6W Pass': 0,
+        #             'Treatment Path': 'NA'
+        #         }, name=p.id)
+    
+        #     self.asst_results_df.loc[p.id] = new_row
+        
+        # # Ensure row exists in DataFrame
+        # if p.id not in self.asst_results_df.index:
+        #     if g.debug_level >= 3:
+        #         print(f"[Assessment] - Creating new asst_results_df row for Patient {p.id}")
+        #     # Copy structure from first row or create default row
+        #     new_row = self.asst_results_df.iloc[0].copy()
+        #     new_row.name = p.id
+        #     self.asst_results_df.loc[p.id] = new_row
 
         # Now safely update
         self.asst_results_df.at[p.id, 'Opted In'] = 1
@@ -1742,6 +1832,9 @@ class Model:
         # Record how long patient queued for TA
         self.asst_results_df.at[p.id, 'TA Q Time'] = self.q_time_ta
 
+        # Record the week that asst took place
+        self.asst_results_df.at[p.id, 'Week Number'] = self.week_number
+
         if self.q_time_ta <= 6:
             self.asst_results_df.at[p.id, 'TA 6W Pass'] = 1
         else:
@@ -1750,15 +1843,17 @@ class Model:
             print(f'[Assessment] - Patient {p.id} waited {self.q_time_ta} for assessment')
 
         # Now do Telephone Assessment using mean and varying
-        self.asst_results_df.at[p.id, 'TA Mins'
-                                        ] = g.ta_time_mins #int(self.random_normal(
-                                        #g.ta_time_mins
-                                        #,g.std_dev))
-
-        if g.debug_level >= 4:
-            print(f"[Assessment] - TA Mins at week {self.week_number} assigned to Patient {p.id}:",
-            self.asst_results_df.at[p.id, 'TA Mins'])
-            print(self.asst_results_df.loc[[p.id], ['TA Mins']])
+        try:
+            self.asst_results_df.at[p.id, 'TA Mins'] = g.ta_time_mins
+            if g.debug_level >= 3:
+                print(f"[Assessment] - TA Mins recorded for Patient {p.id}: {g.ta_time_mins}")
+        except Exception as e:
+            print(f"[Assessment] - ERROR writing TA Mins for Patient {p.id}: {e}")
+            if g.debug_level >= 4:
+                print(f"[Assessment] - TA Mins at week {self.week_number} assigned to Patient {p.id}:",
+                        self.asst_results_df.at[p.id, 'TA Mins'])
+        # if g.debug_level >= 4:    
+        #     print(self.asst_results_df.loc[[p.id], ['TA Mins']])
         
         # decide if the patient is accepted following TA
         if self.ta_accepted > g.ta_accept_rate:
@@ -3242,7 +3337,7 @@ if __name__ == "__main__":
     step2_results_df, step2_sessions_df, step3_results_df, step3_sessions_df, asst_weekly_dfs, step2_waiting_dfs, step3_waiting_dfs, staff_weekly_dfs, caseload_weekly_dfs  = my_trial.run_trial()
     # print(step2_sessions_df.to_string())
     # print(df_trial_results)
-    # step3_sessions_df.to_csv("step3_sessions.csv", index=True)
+    # asst_weekly_dfs.to_csv("asst_results.csv", index=True)
     # step2_waiting_dfs.to_csv("step2_waiters.csv", index=True)
     # step2_results_df.to_csv("step2_results.csv", index=True)
     # caseload_weekly_dfs.to_csv("caseloads.csv", index=True)
