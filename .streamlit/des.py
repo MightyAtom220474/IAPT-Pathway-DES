@@ -31,7 +31,7 @@ def load_referral_rates():  # Thanks to Sammi Rosser :-)
 
 #global_page_style('static/css/style.css')
 
-st.title("Talking Therapies Pathway Simulation")
+st.subheader("Talking Therapies Pathway Simulation")
 
 with st.sidebar:
 
@@ -148,6 +148,11 @@ with st.sidebar:
                                                   min_value=0.0, max_value=30.0,
                                                   step=0.25, value=20.0)
         
+        delayed_disch_input = st.number_input(
+                    "% of Instances where Patients Discharge is Delayed",
+                                                  min_value=0.0, max_value=30.0,
+                                                  step=0.5, value=10.0)
+        
         # code for conditional streamlit inputs
         # if triage_wl_input > 0:
         #     triage_wait_input = st.number_input("Current Average Triage Waiting Time (weeks)", min_value=0, max_value=52, step=1, value=0)
@@ -250,6 +255,7 @@ g.step3_couns_fup_mins = step3_couns_fup_input
 g.step3_couns_dna_rate = step3_couns_dna_input/100
 g.step_down_rate = step_down_input/100
 g.step3_session_admin = step3_admin_input
+g.delayed_disc_var = delayed_disch_input
 
 ##### Job Plans
 g.cbt_caseload = cbt_caseload_input
@@ -318,7 +324,7 @@ if button_run_pressed:
             "caseload_weekly_dfs": caseload_weekly_dfs
         }
 
-        st.success("Simulation complete!")
+        # st.success("Simulation complete!")
 
 # Only display outputs if simulation has run
 # if st.session_state.sim_data:
@@ -945,6 +951,7 @@ if button_run_pressed:
                                                                 'Huddle Hrs',
                                                                 'CPD Hrs'],
                                                                 id_vars=[
+                                                                'Week Number'])
         
         cbt_weekly_act_dfs = staff_weekly_dfs.loc[staff_weekly_dfs[
                 'Job Role'] == 'cbt'].reset_index(drop=True)
@@ -1237,8 +1244,8 @@ if button_run_pressed:
                                 labels={
                                         "value": axis_title
                                        },
-                                height=500,
-                                width=350,
+                                height=425,
+                                width=500,
                                 title=f'{list_name} by Week'
                                 )
                     
@@ -1304,8 +1311,8 @@ if button_run_pressed:
                                 labels={
                                         "value": axis_title
                                         },
-                                    height=500,
-                                    width=350,
+                                    height=425,
+                                    width=500,
                                     title=f'{list_name} by Week'
                                     )
                         
@@ -1360,8 +1367,8 @@ if button_run_pressed:
                             labels={
                                     "value": axis_title
                                     },
-                                height=500,
-                                width=350,
+                                height=425,
+                                width=500,
                                 title=f'{list_name} by Week'
                                 )
                     
@@ -1475,8 +1482,8 @@ if button_run_pressed:
                                     labels={
                                             "value": 'Patients'
                                         },
-                                    height=500,
-                                    width=350,
+                                    height=425,
+                                    width=500,
                                     title='Number of Patients Waiting by Week'
                                     )
                         
@@ -1571,8 +1578,8 @@ if button_run_pressed:
                                     labels={
                                             "value": 'Weeks'
                                         },
-                                    height=500,
-                                    width=350,
+                                    height=425,
+                                    width=500,
                                     title='Waiting Time by Week'
                                     )
                         
@@ -1687,8 +1694,8 @@ if button_run_pressed:
                                         labels={
                                                 "value": 'Patients'
                                             },
-                                        height=500,
-                                        width=350,
+                                        height=425,
+                                        width=500,
                                         title='Number of Patients Waiting by Week'
                                         )
                             
@@ -1783,8 +1790,8 @@ if button_run_pressed:
                                         labels={
                                                 "value": 'Weeks'
                                             },
-                                        height=500,
-                                        width=350,
+                                        height=425,
+                                        width=500,
                                         title='Waiting Time by Week'
                                         )
                             
@@ -1902,8 +1909,8 @@ if button_run_pressed:
                                     labels={
                                             "value": 'Patients'
                                         },
-                                    height=500,
-                                    width=350,
+                                    height=425,
+                                    width=500,
                                     title='Number of Patients Waiting by Week'
                                     )
                         
@@ -1998,8 +2005,8 @@ if button_run_pressed:
                                     labels={
                                             "value": 'Weeks'
                                         },
-                                    height=500,
-                                    width=350,
+                                    height=425,
+                                    width=500,
                                     title='Waiting Time by Week'
                                     )
                         
@@ -2110,8 +2117,8 @@ if button_run_pressed:
                                         labels={
                                                 "value": 'Patients'
                                             },
-                                        height=500,
-                                        width=350,
+                                        height=425,
+                                        width=500,
                                         title='Number of Patients Waiting by Week'
                                         )
                             
@@ -2206,8 +2213,8 @@ if button_run_pressed:
                                     labels={
                                             "value": 'Weeks'
                                         },
-                                    height=500,
-                                    width=350,
+                                    height=425,
+                                    width=500,
                                     title='Waiting Time by Week'
                                     )
                         
@@ -2262,8 +2269,8 @@ if button_run_pressed:
                     x="Week Number",
                     y="value",
                     labels={"value": "Weeks"},
-                    height=500,
-                    width=350,
+                    height=425,
+                    width=500,
                     title="Referral To Treatment Waits"
                 )
 
@@ -2295,8 +2302,8 @@ if button_run_pressed:
                     x="Week Number",
                     y="value",
                     labels={"value": "Weeks"},
-                    height=500,
-                    width=350,
+                    height=425,
+                    width=500,
                     title="Referral To Treatment Waits"
                 )
 
@@ -2330,8 +2337,8 @@ if button_run_pressed:
                     x="Week Number",
                     y="value",
                     labels={"value": "Weeks"},
-                    height=500,
-                    width=350,
+                    height=425,
+                    width=500,
                     title="Referral To Treatment Waits"
                 )
 
@@ -2363,8 +2370,8 @@ if button_run_pressed:
                     x="Week Number",
                     y="value",
                     labels={"value": "Weeks"},
-                    height=500,
-                    width=350,
+                    height=425,
+                    width=500,
                     title="Referral To Treatment Waits"
                 )
 
