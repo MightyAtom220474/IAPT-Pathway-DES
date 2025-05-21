@@ -1239,9 +1239,14 @@ if button_run_pressed:
                         section_title = 'Assessment'
 
                     if list_name == 'Referrals Received':
+                        chart_title = list_name
+                    elif list_name == 'TA Avg Wait':
+                        chart_title = 'TA Waiting Times'
+
+                    if list_name == 'Referrals Received':
                         axis_title = 'Referrals'
                     elif list_name == 'TA Avg Wait':
-                        axis_title = 'Weeks'
+                        axis_title = 'TA Avg Wait'
 
                     st.subheader(section_title)
 
