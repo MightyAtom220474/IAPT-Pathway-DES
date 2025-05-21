@@ -928,7 +928,8 @@ class Model:
             self.asst_optin_wait = self.asst_results_weekly_stats['Opt-in Q Time'].mean()
             self.ta_6w_sum = self.asst_results_weekly_stats['TA 6W Pass'].sum()
             self.ta_6w_count = self.asst_results_weekly_stats['TA 6W Pass'].count()
-            self.asst_sixweek_pc = (self.ta_6w_sum / self.ta_6w_count * 100) if self.ta_6w_count > 0 else 100
+            self.asst_sixweek_pc = (self.ta_6w_sum / self.ta_6w_count)*100 if self.ta_6w_count > 0 else 100
+            self.prev_pc = (self.ta_6w_count/g.prevalence)*100 if self.ta_6w_count > 0 else 100
             self.asst_waiting_list = g.number_on_ta_wl
             self.asst_avg_wait = self.asst_results_weekly_stats['TA Q Time'].mean()
             self.asst_max_wait = self.asst_results_weekly_stats['TA Q Time'].max()
@@ -949,6 +950,7 @@ class Model:
                                         'TA Waiting List':self.asst_waiting_list,
                                         'TA Avg Wait':self.asst_avg_wait,
                                         'TA 6W PC':self.asst_sixweek_pc,
+                                        'Prev PC':self.prev_pc,
                                         'TA Max Wait':self.asst_max_wait,
                                         'TA Total Accept':self.asst_tot_accept,
                                         'TA Mins':self.asst_time_total,
