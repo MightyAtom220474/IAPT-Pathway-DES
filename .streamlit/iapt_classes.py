@@ -2332,6 +2332,9 @@ class Model:
         else:
             self.dnas_allowed = 3
 
+        # list to hold pwp sessions
+        pwp_session_rows = []
+        
         while self.pwp_session_counter < g.step2_pwp_sessions and self.pwp_dna_counter < self.dnas_allowed:
 
             if g.debug_level >= 4:
@@ -2385,7 +2388,7 @@ class Model:
                     }
             
             # Append the session data to the DataFrame
-            self.step2_sessions_df = pd.concat([self.step2_sessions_df, pd.DataFrame([new_pwp_row])], ignore_index=False)
+            pwp_session_rows.append(new_pwp_row)
 
             # Handle step-up logic
             if is_step_up:
@@ -2408,6 +2411,13 @@ class Model:
 
             # Move to the next session
             self.pwp_session_counter += 1
+
+        # After loop ends
+        if pwp_session_rows:
+            self.step2_sessions_df = pd.concat(
+                [self.step2_sessions_df, pd.DataFrame(pwp_session_rows)],
+                ignore_index=True
+            )
 
         # decide whether discharge is going to be delayed
         self.delay_disch_choice = random.uniform(0,1)
@@ -2555,6 +2565,8 @@ class Model:
         else:
             self.dnas_allowed = 3
 
+        group_session_rows = []
+
         while self.group_session_counter < g.step2_group_sessions and self.group_dna_counter < self.dnas_allowed:
 
             if g.debug_level >= 4:
@@ -2608,8 +2620,8 @@ class Model:
                         'IsDNA': is_dna
                     }
             
-            # Append the session data to the DataFrame
-            self.step2_groups_df = pd.concat([self.step2_groups_df, pd.DataFrame([new_group_row])], ignore_index=False)
+            # Append the session data to the list
+            group_session_rows.append(new_group_row)
             
             # Handle step-up logic
             if is_step_up:
@@ -2633,6 +2645,13 @@ class Model:
 
             # Move to the next session
             self.group_session_counter += 1
+
+        # concatenate all session rows
+        if group_session_rows:
+            self.step2_sessions_df = pd.concat(
+                [self.step2_sessions_df, pd.DataFrame(group_session_rows)],
+                ignore_index=True
+            )
        
         # reset counters for group sessions
         self.group_session_counter = 0
@@ -2823,6 +2842,8 @@ class Model:
 
         # print(self.random_weeks)
 
+        cbt_session_rows = []
+
         while self.cbt_session_counter < g.step3_cbt_sessions and self.cbt_dna_counter < self.dnas_allowed:
 
             if g.debug_level >= 4:
@@ -2879,7 +2900,7 @@ class Model:
                     }
 
             # Append the session data to the DataFrame
-            self.step3_sessions_df = pd.concat([self.step3_sessions_df, pd.DataFrame([new_cbt_row])], ignore_index=False)
+            cbt_session_rows.append(new_cbt_row)
 
             # Handle step-up logic
             if is_step_down:
@@ -2901,6 +2922,12 @@ class Model:
 
             # Move to the next session
             self.cbt_session_counter += 1
+
+        if cbt_session_rows:
+            self.step3_sessions_df = pd.concat(
+                [self.step3_sessions_df, pd.DataFrame(cbt_session_rows)],
+                ignore_index=True
+            )
 
         # decide whether discharge is going to be delayed
         self.delay_disch_choice = random.uniform(0,1)
@@ -3120,6 +3147,8 @@ class Model:
 
         # print(self.random_weeks)
 
+        couns_session_rows = []
+        
         while self.couns_session_counter < g.step3_couns_sessions and self.couns_dna_counter < self.dnas_allowed:
 
             if g.debug_level >= 4:
@@ -3176,7 +3205,7 @@ class Model:
                     }
 
             # Append the session data to the DataFrame
-            self.step3_sessions_df = pd.concat([self.step3_sessions_df, pd.DataFrame([new_couns_row])], ignore_index=False)
+            couns_session_rows.append(new_couns_row)
 
             # Handle step-up logic
             if is_step_down:
@@ -3199,6 +3228,12 @@ class Model:
             # Move to the next session
             self.couns_session_counter += 1
 
+        if couns_session_rows:
+            self.step3_sessions_df = pd.concat(
+                [self.step3_sessions_df, pd.DataFrame(couns_session_rows)],
+                ignore_index=True
+            )
+        
         # decide whether discharge is going to be delayed
         self.delay_disch_choice = random.uniform(0,1)
 
