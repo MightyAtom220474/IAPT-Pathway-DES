@@ -2421,7 +2421,7 @@ class Model:
             if g.debug_level >= 4:
                 print(f'[Couns] - Patient {p.id} has had discharge delayed by {self.delay_disch_amnt} weeks')
 
-        if self.couns_dna_counter >= self.dnas_allowed:
+        if self.pwp_dna_counter >= self.dnas_allowed:
 
             self.env.process(self.record_caseload_use(p.step2_path_route,self.pwp_caseload_id,self.pwp_random_weeks[self.pwp_session_counter]))
             
