@@ -6,7 +6,7 @@ import math
 class g:
 
     # used for testing
-    debug_level = 4 # 0 = Off, 1 = Governor, 2 = Main Process, 3 = Sub-process, 4 = Patient Pathway
+    debug_level = 0 # 0 = Off, 1 = Governor, 2 = Main Process, 3 = Sub-process, 4 = Patient Pathway
 
     # Referrals
     mean_referrals_pw = 65
@@ -926,13 +926,13 @@ class Model:
             self.asst_optin_delay = self.asst_results_weekly_stats['Opt-in Wait'].mean()
             self.asst_tot_optin = self.asst_results_weekly_stats['Opted In'].sum()
             self.asst_optin_wait = self.asst_results_weekly_stats['Opt-in Q Time'].mean()
-            self.ta_6w_sum = self.asst_results_df['TA 6W Pass'].sum()
-            self.ta_6w_count = self.asst_results_df['TA 6W Pass'].count()
+            self.ta_6w_sum = self.asst_results_weekly_stats['TA 6W Pass'].sum()
+            self.ta_6w_count = self.asst_results_weekly_stats['TA 6W Pass'].count()
             self.asst_sixweek_pc = (self.ta_6w_sum / self.ta_6w_count * 100) if self.ta_6w_count > 0 else 100
             self.asst_waiting_list = g.number_on_ta_wl
-            self.asst_avg_wait = self.asst_results_df['TA Q Time'].mean()
-            self.asst_max_wait = self.asst_results_df['TA Q Time'].max()
-            self.asst_tot_accept = self.asst_results_df['TA Outcome'].sum()
+            self.asst_avg_wait = self.asst_results_weekly_stats['TA Q Time'].mean()
+            self.asst_max_wait = self.asst_results_weekly_stats['TA Q Time'].max()
+            self.asst_tot_accept = self.asst_results_weekly_stats['TA Outcome'].sum()
             self.asst_time_total = self.asst_results_weekly_stats['TA Mins'].sum()
 
             self.asst_weekly_stats.append({'Run Number': self.run_number,
