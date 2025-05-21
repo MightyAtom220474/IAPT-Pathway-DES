@@ -355,8 +355,9 @@ if button_run_pressed:
                                     'Accepted Referrals','Referrals Rejected',
                                     'Referrals Reviewed','Reviews Rejected',
                                     'Referrals Opted-in','TA Waiting List',
-                                    'TA 6W PC','TA Avg Wait','TA Max Wait',
-                                    'TA Total Accept','TA Hrs']].reset_index()
+                                    'TA 6W PC','Prev PC','TA Avg Wait',
+                                    'TA Max Wait','TA Total Accept','TA Hrs'
+                                    ]].reset_index()
         #st.write(asst_weekly_summary)       
         # asst_weekly_summary = asst_weekly_summary[asst_weekly_summary[
         #                     "Week Number"] != 0].reset_index(drop=True)
@@ -1184,6 +1185,16 @@ if button_run_pressed:
                                                     id_vars=['Run Number',
                                                     'Week Number'])
         
+        weekly_avg_prev = (
+                            pd.melt(asst_weekly_summary, 
+                                    id_vars=['Run Number', 'Week Number'], 
+                                    value_vars=['Prev PC'])
+                            .groupby(['Week Number', 'variable'], as_index=False)['value']
+                            .mean()
+                        )
+        
+        #st.write(weekly_avg_prev)
+        
         ########## Caseloads ##########
 
         caseload_weekly_dfs['caseload_used'] = caseload_weekly_dfs[
@@ -1298,41 +1309,59 @@ if button_run_pressed:
                                         asst_referrals_col2_unpivot["variable"]
                                         ==list_name]
                     
-                    if list_name == 'Rejected Referrals':
+                    weekly_avg_col2 = asst_referrals_col2_filtered.groupby([
+                                                    'Week Number','variable']
+                                                    )['value'].mean(
+                                                    ).reset_index()
+                    
+                    if list_name == 'Referrals Rejected':
                         axis_title = 'Referrals'
                     elif list_name == 'TA Waiting List':
                         axis_title = 'Patients'
                     
                     st.subheader('') 
 
-                    fig_asst_2 = px.line(
-                                asst_referrals_col2_filtered,
-                                x="Week Number",
-                                color="Run Number",
-                                #line_dash="Run",
-                                y="value",
-                                labels={
-                                        "value": axis_title
-                                        },
-                                    height=425,
-                                    width=500,
-                                    title=f'{list_name} by Week'
-                                    )
+                    if list_name == 'Referrals Rejected':
+                    
+                        fig_asst_2 = px.line(
+                                    weekly_avg_col2,
+                                    x="Week Number",
+                                    #color="Run Number",
+                                    #line_dash="Run",
+                                    y="value",
+                                    labels={
+                                            "value": axis_title
+                                            },
+                                        height=425,
+                                        width=500,
+                                        title=f'{list_name} by Week'
+                                        )
+                            
+                        fig_asst_2.update_traces(showlegend=False, line=dict(width=3, color='blue'))
+
+                    else:
+
+                        fig_asst_2 = px.line(
+                                    asst_referrals_col2_filtered,
+                                    x="Week Number",
+                                    color="Run Number",
+                                    #line_dash="Run",
+                                    y="value",
+                                    labels={
+                                            "value": axis_title
+                                            },
+                                        height=425,
+                                        width=500,
+                                        title=f'{list_name} by Week'
+                                        )
+                            
+                        fig_asst_2.update_traces(line=dict(dash='dot'))
+                   
+                        fig_asst_2.add_trace(
+                                    go.Scatter(x=weekly_avg_col2["Week Number"],
+                                            y=weekly_avg_col2["value"], name='Average',
+                                            line=dict(width=3,color='blue')))
                         
-                    fig_asst_2.update_traces(line=dict(dash='dot'))
-                    
-                    # get the average waiting list across all the runs
-                    weekly_avg_col2 = asst_referrals_col2_filtered.groupby([
-                                                    'Week Number','variable']
-                                                    )['value'].mean(
-                                                    ).reset_index()
-                    
-                    fig_asst_2.add_trace(
-                                go.Scatter(x=weekly_avg_col2["Week Number"],
-                                        y=weekly_avg_col2["value"], name='Average',
-                                        line=dict(width=3,color='blue')))
-        
-                    
                     # get rid of 'variable' prefix resulting from df.melt
                     fig_asst_2.for_each_annotation(lambda a: a.update(text=a.text.split
                                                             ("=")[1]))
@@ -1347,60 +1376,56 @@ if button_run_pressed:
 
         with col3:
 
-            for i, list_name in enumerate(asst_referrals_col3_unpivot['variable']
-                                            .unique()):
-
+            for i, list_name in enumerate(asst_referrals_col3_unpivot['variable'].unique()):
                 asst_referrals_col3_filtered = asst_referrals_col3_unpivot[
-                                    asst_referrals_col3_unpivot["variable"]==
-                                    list_name]
-                
+                    asst_referrals_col3_unpivot["variable"] == list_name]
+
+                weekly_avg_col3 = (
+                    asst_referrals_col3_filtered.groupby(['Week Number', 'variable'])['value']
+                    .mean().reset_index()
+                )
+
                 if list_name == 'Accepted Referrals':
-                        axis_title = 'Referrals'
+                    axis_title = 'Referrals'
                 elif list_name == 'TA 6W PC':
-                    axis_title = '% Patients'
+                    axis_title = '%'
+                else:
+                    axis_title = 'Value'
 
-                st.subheader('') 
-                
+                st.subheader('')
+
                 fig_asst_3 = px.line(
-                            asst_referrals_col3_filtered,
-                            x="Week Number",
-                            color="Run Number",
-                            #line_dash="Run",
-                            y="value",
-                            labels={
-                                    "value": axis_title
-                                    },
-                                height=425,
-                                width=500,
-                                title=f'{list_name} by Week'
-                                )
-                    
-                fig_asst_3.update_traces(line=dict(dash='dot'))
-                
-                # get the average waiting list across all the runs
-                weekly_avg_col3 = asst_referrals_col3_filtered.groupby([
-                                                'Week Number','variable']
-                                                )['value'].mean().reset_index()
-                
-                fig_asst_3.add_trace(
-                            go.Scatter(x=weekly_avg_col3["Week Number"],
-                                    y=weekly_avg_col3["value"], name='Average',
-                                    line=dict(width=3,color='blue')))
-                
-                if list_name == 'TA 6W PC':
-                    fig_asst_3.update_layout(title_text="% TA's Within 6 Weeks")
-                
-                # get rid of 'variable' prefix resulting from df.melt
-                fig_asst_3.for_each_annotation(lambda a: a.update(text=a.text.split
-                                                        ("=")[1]))
+                    weekly_avg_col3,
+                    x="Week Number",
+                    y="value",
+                    labels={"value": axis_title},
+                    height=425,
+                    width=500,
+                    title=f'{list_name} by Week'
+                )
 
-                fig_asst_3.update_layout(title_x=0.3,font=dict(size=10))
-                #fig.
+                if list_name == 'TA 6W PC':                
+                    fig_asst_3.update_traces(name='6 Week RTA', showlegend=True, line=dict(width=3, color='blue'))
+                else:
+                    fig_asst_3.update_traces(showlegend=False, line=dict(width=3, color='blue'))
 
-                st.plotly_chart(fig_asst_3, key=f"chart_{list_name}_{a}"
-                                                ,use_container_width=True)
+                if list_name == 'TA 6W PC' and 'weekly_avg_prev' in locals():
+                    fig_asst_3.add_trace(
+                        go.Scatter(x=weekly_avg_prev["Week Number"],
+                                y=weekly_avg_prev["value"],
+                                name='Prevalence',
+                                line=dict(width=3, color='green'))
+                    )
+                    fig_asst_3.update_layout(title_text="% RTA Within 6 Weeks & Prevalence")
 
+                fig_asst_3.for_each_annotation(lambda a: a.update(text=a.text.split("=")[1]))
+                
+                fig_asst_3.update_layout(title_x=0.3, font=dict(size=10))
+
+                st.plotly_chart(fig_asst_3, key=f"chart_{list_name}_{i}", use_container_width=True)
+                
                 st.divider()
+
 
         # ########## step2 Tab ##########
 
