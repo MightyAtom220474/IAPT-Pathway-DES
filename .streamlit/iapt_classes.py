@@ -3,6 +3,13 @@ import random
 import numpy as np
 import pandas as pd
 import math
+
+def load_referral_rates():  # Thanks to Sammi Rosser :-)
+    return pd.read_csv(
+        ("https://raw.githubusercontent.com/MightyAtom220474/IAPT-Pathway-DES/"
+         "refs/heads/waiting_lists_dev/.streamlit/talking_therapies_referral_rates.csv"),
+        index_col=0)
+
 class g:
 
     # used for testing
@@ -125,9 +132,12 @@ class g:
     number_on_couns_cl = 0 # used to keep track of pwp caseload
 
     # bring in past referral data
-    
+    referral_rate_lookup = load_referral_rates()
     # referral_rate_lookup = pd.read_csv('talking_therapies_referral_rates.csv'
     #                                                            ,index_col=0)
+
+
+
     # # # # #print(referral_rate_lookup)
 # function to vary the number of sessions
 def vary_number_sessions(lower, upper, lambda_val=0.1):
