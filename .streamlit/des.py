@@ -1271,6 +1271,8 @@ if button_run_pressed:
                                 width=500,
                                 title=f'{list_name} by Week'
                                 )
+                    
+                    fig_asst_1.update_traces(line=dict(width=3, color='blue'))
                               
                     
                     #fig_asst_1.update_traces(line=dict(dash='dot'))
