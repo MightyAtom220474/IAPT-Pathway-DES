@@ -1253,11 +1253,15 @@ if button_run_pressed:
                     asst_referrals_col1_filtered = asst_referrals_col1_unpivot[
                                         asst_referrals_col1_unpivot["variable"]
                                         ==list_name]
+
+                    weekly_avg_col1 = asst_referrals_col1_filtered.groupby([
+                                        'Week Number', 'variable'])['value'
+                                        ].mean().reset_index()
                     
                     fig_asst_1 = px.line(
-                                asst_referrals_col1_filtered,
+                                weekly_avg_col1,
                                 x="Week Number",
-                                color="Run Number",
+                                #color="Run Number",
                                 #line_dash="Run",
                                 y="value",
                                 labels={
@@ -1268,11 +1272,8 @@ if button_run_pressed:
                                 title=f'{list_name} by Week'
                                 )
                     
-                    fig_asst_1.update_traces(line=dict(dash='dot'))
-
-                    weekly_avg_col1 = asst_referrals_col1_filtered.groupby([
-                                        'Week Number', 'variable'])['value'
-                                        ].mean().reset_index()
+                    fig_asst_1.update_traces(showlegend=False, line=dict(width=3, color='blue'))
+                    #fig_asst_1.update_traces(line=dict(dash='dot'))
                     
                     if list_name == 'TA Avg Wait':
 
