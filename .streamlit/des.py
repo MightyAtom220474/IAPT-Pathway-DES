@@ -1272,11 +1272,13 @@ if button_run_pressed:
                                 title=f'{list_name} by Week'
                                 )
                               
-                    fig_asst_1.update_traces(showlegend=False, line=dict(width=3, color='blue'))
+                    
                     #fig_asst_1.update_traces(line=dict(dash='dot'))
                     
                     if list_name == 'TA Avg Wait':
 
+                        fig_asst_1.update_traces(name='Average', showlegend=True, line=dict(width=3, color='blue'))
+                        
                         weekly_max_col1 = asst_referrals_max_unpivot.loc[
                         asst_referrals_max_unpivot['variable'] == 'TA Max Wait'
                         ].groupby(['Week Number', 'variable'])['value'
@@ -1286,6 +1288,7 @@ if button_run_pressed:
                                 go.Scatter(x=weekly_avg_col1["Week Number"],
                                         y=weekly_max_col1["value"], name='Maximum',
                                         line=dict(width=3,color='red')))
+                        
                     else:
                         pass
 
