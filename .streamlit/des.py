@@ -1289,10 +1289,10 @@ if button_run_pressed:
                     else:
                         pass
 
-                    fig_asst_1.add_trace(
-                                go.Scatter(x=weekly_avg_col1["Week Number"],
-                                        y=weekly_avg_col1["value"], name='Average',
-                                        line=dict(width=3,color='blue')))
+                    # fig_asst_1.add_trace(
+                    #             go.Scatter(x=weekly_avg_col1["Week Number"],
+                    #                     y=weekly_avg_col1["value"], name='Average',
+                    #                     line=dict(width=3,color='blue')))
                            
                     # get rid of 'variable' prefix resulting from df.melt
                     fig_asst_1.for_each_annotation(lambda a: a.update(
