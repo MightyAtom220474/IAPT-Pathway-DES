@@ -1271,7 +1271,7 @@ if button_run_pressed:
                                 width=500,
                                 title=f'{list_name} by Week'
                                 )
-                    
+                              
                     fig_asst_1.update_traces(showlegend=False, line=dict(width=3, color='blue'))
                     #fig_asst_1.update_traces(line=dict(dash='dot'))
                     
@@ -1299,7 +1299,15 @@ if button_run_pressed:
                                             text=a.text.split("=")[1]))
 
                     fig_asst_1.update_layout(title_x=0.3,font=dict(size=10))
-                    #fig.
+
+                    # fig_asst_1.update_layout(
+                    #     legend=dict(
+                    #         x=0.8,  # Horizontal position (0 to 1, where 0 is left and 1 is right)
+                    #         y=0.9,  # Vertical position (0 to 1, where 0 is bottom and 1 is top)
+                    #         xanchor='center',  # Horizontal anchor point
+                    #         yanchor='top'      # Vertical anchor point
+                    #     )
+                    # )
 
                     st.plotly_chart(fig_asst_1, key=f"chart_{list_name}_{a}"
                                                 ,use_container_width=True)
