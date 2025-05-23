@@ -601,6 +601,19 @@ class Model:
         
         if g.debug_level >= 2:
             print(f'[Prefill] - Starting prefilling process for {wait_list_type}')
+
+        # lists to collect new rows for bulk concatenation
+        ta_rows = []
+        pwp_rows = []
+        cbt_rows = []
+        couns_rows = []
+
+        # Ensure asst_results_df has expected columns
+        expected_columns = ['Week Number','Run Number','At Risk','Referral Time Screen',
+            'Referral Rejected','Referral Accepted','Referral Reviewed',
+            'Review Wait','Review Rejected','Opted In', 'Opt-in Wait', 
+            'Opt-in Q Time','TA Q Time','TA 6W Pass','TA WL Posn',
+            'TA Outcome','TA Mins','Treatment Path']
         
         # prefill waiting list using value from g class
         for w in range(wait_list_size):
@@ -612,13 +625,6 @@ class Model:
             # Create patient
             p = Patient(self.patient_counter)
 
-            # Ensure asst_results_df has expected columns
-            expected_columns = ['Week Number','Run Number','At Risk','Referral Time Screen',
-                'Referral Rejected','Referral Accepted','Referral Reviewed',
-                'Review Wait','Review Rejected','Opted In', 'Opt-in Wait', 
-                'Opt-in Q Time','TA Q Time','TA 6W Pass','TA WL Posn',
-                'TA Outcome','TA Mins','Treatment Path']
-
             # Make sure DataFrame exists and has the required structure
             if self.asst_results_df.empty:
                 self.asst_results_df = pd.DataFrame(columns=expected_columns)
@@ -629,10 +635,6 @@ class Model:
 
                 # Convert Patient ID to int for consistency
                 p_id_int = int(p.id)
-               
-                # # Match column types if DataFrame is non-empty
-                # if not self.step2_waiting_list.empty:
-                #     pwp_new_row = pwp_new_row.astype(self.step2_waiting_list.dtypes)
                 
                 g.number_on_ta_wl += 1
                 p.patient_source = 'TA WL'
@@ -643,7 +645,7 @@ class Model:
                 p.asst_already_seen = False
 
                 if p_id_int not in self.asst_results_df.index:
-                    ta_new_row = pd.DataFrame([{
+                    ta_rows.append({
                         'Week Number': self.week_number,
                         'Run Number': self.run_number,
                         'At Risk': 0,
@@ -662,27 +664,27 @@ class Model:
                         'TA Outcome':0,
                         'TA Mins': 0,
                         'Treatment Path':'NA'
-                    }], index=[p_id_int])  # Set index during creation
+                    })
 
                     # Match column types if DataFrame is non-empty
-                    if not self.asst_results_df.empty:
-                        ta_new_row = ta_new_row.astype(self.asst_results_df.dtypes)
+                    # if not self.asst_results_df.empty:
+                    #     ta_new_row = ta_new_row.astype(self.asst_results_df.dtypes)
 
-                    # Safely concat only non-empty DataFrames
-                    frames_to_concat = [df for df in [self.asst_results_df, ta_new_row] if not df.empty]
-                    self.asst_results_df = pd.concat(frames_to_concat) if frames_to_concat else ta_new_row
+                    # # Safely concat only non-empty DataFrames
+                    # frames_to_concat = [df for df in [self.asst_results_df, ta_new_row] if not df.empty]
+                    # self.asst_results_df = pd.concat(frames_to_concat) if frames_to_concat else ta_new_row
 
-                else:
-                    # Update existing patient data
-                    self.asst_results_df.loc[p_id_int, [
-                        'Week Number','Run Number','At Risk','Referral Time Screen',
-                        'Referral Rejected','Referral Accepted','Referral Reviewed',
-                        'Review Wait','Review Rejected','Opted In', 'Opt-in Wait', 
-                        'Opt-in Q Time','TA Q Time','TA 6W Pass','TA WL Posn',
-                        'TA Outcome','TA Mins','Treatment Path'
-                    ]] = [self.week_number,self.run_number,0,0.0,0,0,0,0.0,0,1,
-                        0.0,0.0,g.ta_avg_wait,0,g.number_on_ta_wl,0,
-                        g.ta_time_mins,'NA']
+                # else:
+                #     # Update existing patient data
+                #     self.asst_results_df.loc[p_id_int, [
+                #         'Week Number','Run Number','At Risk','Referral Time Screen',
+                #         'Referral Rejected','Referral Accepted','Referral Reviewed',
+                #         'Review Wait','Review Rejected','Opted In', 'Opt-in Wait', 
+                #         'Opt-in Q Time','TA Q Time','TA 6W Pass','TA WL Posn',
+                #         'TA Outcome','TA Mins','Treatment Path'
+                #     ]] = [self.week_number,self.run_number,0,0.0,0,0,0,0.0,0,1,
+                #         0.0,0.0,g.ta_avg_wait,0,g.number_on_ta_wl,0,
+                #         g.ta_time_mins,'NA']
             
             elif wait_list_type == 'pwp':
                 if g.debug_level >= 2:
@@ -701,7 +703,7 @@ class Model:
                 p_id_int = int(p.id)
                 
                 if p_id_int not in self.step2_waiting_list.index:
-                    pwp_new_row = pd.DataFrame([{
+                    pwp_rows.append({
                         'Source': p.patient_source,
                         'Run Number': self.run_number,
                         'Week Number': self.week_number,
@@ -711,23 +713,23 @@ class Model:
                         'Start Week': 0,
                         'End Week': -1,
                         'Wait Time': 0
-                    }], index=[p_id_int])  # Set index during creation
+                    })  # Set index during creation
 
-                    # Match column types if DataFrame is non-empty
-                    if not self.step2_waiting_list.empty:
-                        pwp_new_row = pwp_new_row.astype(self.step2_waiting_list.dtypes)
+                #     # Match column types if DataFrame is non-empty
+                #     if not self.step2_waiting_list.empty:
+                #         pwp_new_row = pwp_new_row.astype(self.step2_waiting_list.dtypes)
 
-                    # Safely concat only non-empty DataFrames
-                    frames_to_concat = [df for df in [self.step2_waiting_list, pwp_new_row] if not df.empty]
-                    self.step2_waiting_list = pd.concat(frames_to_concat) if frames_to_concat else pwp_new_row
+                #     # Safely concat only non-empty DataFrames
+                #     frames_to_concat = [df for df in [self.step2_waiting_list, pwp_new_row] if not df.empty]
+                #     self.step2_waiting_list = pd.concat(frames_to_concat) if frames_to_concat else pwp_new_row
 
-                else:
-                    # Update existing patient data
-                    self.step2_waiting_list.loc[p_id_int, [
-                        'Source', 'Run Number', 'Week Number', 'Route Name', 'IsWaiting',
-                        'WL Position', 'Start Week', 'End Week', 'Wait Time'
-                    ]] = ['pwp_wl', self.run_number, self.week_number, 'pwp', 1,
-                        g.number_on_pwp_wl, 0, -1,0]
+                # else:
+                #     # Update existing patient data
+                #     self.step2_waiting_list.loc[p_id_int, [
+                #         'Source', 'Run Number', 'Week Number', 'Route Name', 'IsWaiting',
+                #         'WL Position', 'Start Week', 'End Week', 'Wait Time'
+                #     ]] = ['pwp_wl', self.run_number, self.week_number, 'pwp', 1,
+                #         g.number_on_pwp_wl, 0, -1,0]
                     
             elif wait_list_type == 'cbt':
                 if g.debug_level >= 2:
@@ -747,7 +749,7 @@ class Model:
 
                 # Add or update patient in waiting list
                 if p_id_int not in self.step3_waiting_list.index:
-                    cbt_new_row = pd.DataFrame([{
+                    cbt_rows.append({
                         'Source': 'cbt_wl',
                         'Run Number': self.run_number,
                         'Week Number': self.week_number,
@@ -757,22 +759,22 @@ class Model:
                         'Start Week': 0,
                         'End Week': -1,
                         'Wait Time': 0
-                    }], index=[p_id_int])  # Set index during creation
+                    })  # Set index during creation
 
-                    # Match column types if DataFrame is non-empty
-                    if not self.step3_waiting_list.empty:
-                        cbt_new_row = cbt_new_row.astype(self.step3_waiting_list.dtypes)
+                #     # Match column types if DataFrame is non-empty
+                #     if not self.step3_waiting_list.empty:
+                #         cbt_new_row = cbt_new_row.astype(self.step3_waiting_list.dtypes)
 
-                    # Safely concat only non-empty DataFrames
-                    frames_to_concat = [df for df in [self.step3_waiting_list, cbt_new_row] if not df.empty]
-                    self.step3_waiting_list = pd.concat(frames_to_concat) if frames_to_concat else cbt_new_row
+                #     # Safely concat only non-empty DataFrames
+                #     frames_to_concat = [df for df in [self.step3_waiting_list, cbt_new_row] if not df.empty]
+                #     self.step3_waiting_list = pd.concat(frames_to_concat) if frames_to_concat else cbt_new_row
             
-                else:    # Update existing patient data
-                    self.step3_waiting_list.loc[p_id_int, [
-                        'Source', 'Run Number', 'Week Number', 'Route Name', 'IsWaiting',
-                        'WL Position', 'Start Week', 'End Week', 'Wait Time'
-                    ]] = ['cbt_wl', self.run_number, self.week_number, 'cbt', 1,
-                        g.number_on_cbt_wl, 0, -1, 0]
+                # else:    # Update existing patient data
+                #     self.step3_waiting_list.loc[p_id_int, [
+                #         'Source', 'Run Number', 'Week Number', 'Route Name', 'IsWaiting',
+                #         'WL Position', 'Start Week', 'End Week', 'Wait Time'
+                #     ]] = ['cbt_wl', self.run_number, self.week_number, 'cbt', 1,
+                #         g.number_on_cbt_wl, 0, -1, 0]
                     
             elif wait_list_type == 'couns':
                 if g.debug_level >= 2:
@@ -792,7 +794,7 @@ class Model:
 
                 # Add or update patient in waiting list
                 if p_id_int not in self.step3_waiting_list.index:
-                    couns_new_row = pd.DataFrame([{
+                    couns_rows.append({
                         'Source': 'couns_wl',
                         'Run Number': self.run_number,
                         'Week Number': self.week_number,
@@ -802,19 +804,19 @@ class Model:
                         'Start Week': 0,
                         'End Week': -1,
                         'Wait Time': 0
-                    }], index=[p_id_int])  # Set index during creation
+                    })  # Set index during creation
 
-                    if self.step3_waiting_list.empty:
-                        self.step3_waiting_list = couns_new_row.copy()
-                    else:
-                        self.step3_waiting_list = pd.concat([self.step3_waiting_list, couns_new_row])
-                else:
-                    # Update existing patient data
-                    self.step3_waiting_list.loc[p_id_int, [
-                        'Source', 'Run Number', 'Week Number', 'Route Name', 'IsWaiting',
-                        'WL Position', 'Start Week', 'End Week', 'Wait Time'
-                    ]] = ['couns_wl', self.run_number, self.week_number, 'couns', 1,
-                        g.number_on_couns_wl, 0, -1, 0]
+                #     if self.step3_waiting_list.empty:
+                #         self.step3_waiting_list = couns_new_row.copy()
+                #     else:
+                #         self.step3_waiting_list = pd.concat([self.step3_waiting_list, couns_new_row])
+                # else:
+                #     # Update existing patient data
+                #     self.step3_waiting_list.loc[p_id_int, [
+                #         'Source', 'Run Number', 'Week Number', 'Route Name', 'IsWaiting',
+                #         'WL Position', 'Start Week', 'End Week', 'Wait Time'
+                #     ]] = ['couns_wl', self.run_number, self.week_number, 'couns', 1,
+                #         g.number_on_couns_wl, 0, -1, 0]
                     
             else:
                 if g.debug_level >= 2:
@@ -822,6 +824,27 @@ class Model:
 
             # now start the patient down the treatment pathway
             yield self.env.process(self.pathway_start_point(p, self.week_number))
+
+        # After loop, bulk concatenate all rows
+        if ta_rows:
+            ta_df = pd.DataFrame(ta_rows)
+            if not ta_df.empty:
+                self.asst_results_df = pd.concat([self.asst_results_df, ta_df], ignore_index=False)
+
+        if pwp_rows:
+            pwp_df = pd.DataFrame(pwp_rows)
+            if not pwp_df.empty:
+                self.step2_waiting_list = pd.concat([self.step2_waiting_list, pwp_df], ignore_index=False)
+
+        if cbt_rows:
+            cbt_df = pd.DataFrame(cbt_rows)
+            if not cbt_df.empty:
+                self.step3_waiting_list = pd.concat([self.step3_waiting_list, cbt_df], ignore_index=False)
+
+        if couns_rows:
+            couns_df = pd.DataFrame(couns_rows)
+            if not couns_df.empty:
+                self.step3_waiting_list = pd.concat([self.step3_waiting_list, couns_df], ignore_index=False)
 
         if g.debug_level >= 2:
             print('[Prefill] - Waiting Lists now Generated. Passing control back to Governor')
