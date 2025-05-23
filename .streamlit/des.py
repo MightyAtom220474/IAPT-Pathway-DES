@@ -1234,9 +1234,9 @@ if button_run_pressed:
                                             'variable'].unique()):
 
                     if list_name == 'Referrals Received':
-                        section_title = 'Referrals'
+                        section_title = '### Referrals'
                     elif list_name == 'TA Avg Wait':
-                        section_title = 'Assessment'
+                        section_title = '### Assessment'
 
                     if list_name == 'Referrals Received':
                         chart_title = list_name
@@ -1248,7 +1248,7 @@ if button_run_pressed:
                     elif list_name == 'TA Avg Wait':
                         axis_title = 'TA Avg Wait'
 
-                    st.subheader(section_title)
+                    st.markdown(section_title)
 
                     asst_referrals_col1_filtered = asst_referrals_col1_unpivot[
                                         asst_referrals_col1_unpivot["variable"]
@@ -1451,7 +1451,7 @@ if button_run_pressed:
         ########## pwp ##########
         with tab2:
 
-            st.header('Step 2')
+            st.subheader('Step 2')
 
             col1, col2 = st.columns(2)
 
@@ -1878,7 +1878,7 @@ if button_run_pressed:
         ########## cbt ##########
         with tab3:
 
-            st.header('Step 3')
+            st.subheader('Step 3')
 
             col1, col2 = st.columns(2)
 
@@ -2300,13 +2300,13 @@ if button_run_pressed:
         
         with tab4:
 
-            st.header('Referral To Treatment Waiting Times')
+            st.subheader('Referral To Treatment Waiting Times')
 
             col1, col2 = st.columns(2)
 
             with col1:
 
-                st.subheader('Psychological Wellbeing Practitioner - 1:1')
+                st.markdown('#### Psych Wellbeing Practitioner - 1:1')
 
                 pwp_rtt_avg = pwp_rtt_summary[pwp_rtt_summary['variable'] == 'Avg RTT']
                 pwp_rtt_max = pwp_rtt_summary[pwp_rtt_summary['variable'] == 'Max RTT']
@@ -2339,7 +2339,7 @@ if button_run_pressed:
                 st.plotly_chart(fig1, key=f"pwp_chart_{list_name}", use_container_width=True)
                 st.divider()
 
-                st.subheader('Psychological Wellbeing Practitioner - Groups')
+                st.markdown('#### Psych Wellbeing Practitioner - Groups')
             
                 group_rtt_avg = group_rtt_summary[group_rtt_summary['variable'] == 'Avg RTT']
                 group_rtt_max = group_rtt_summary[group_rtt_summary['variable'] == 'Max RTT']
@@ -2374,7 +2374,7 @@ if button_run_pressed:
 
             with col2:
 
-                st.subheader('Cognitive Behavioural Therapy')
+                st.markdown('#### Cognitive Behavioural Therapy')
 
                 cbt_rtt_avg = cbt_rtt_summary[cbt_rtt_summary['variable'] == 'Avg RTT']
                 cbt_rtt_max = cbt_rtt_summary[cbt_rtt_summary['variable'] == 'Max RTT']
@@ -2407,7 +2407,7 @@ if button_run_pressed:
                 st.plotly_chart(fig3, key=f"cbt_chart_{list_name}", use_container_width=True)
                 st.divider()
 
-                st.subheader('Depression Counselling')
+                st.markdown('#### Depression Counselling')
             
                 couns_rtt_avg = couns_rtt_summary[couns_rtt_summary['variable'] == 'Avg RTT']
                 couns_rtt_max = couns_rtt_summary[couns_rtt_summary['variable'] == 'Max RTT']
@@ -2443,7 +2443,7 @@ if button_run_pressed:
         # ########## Job Plans ##########
         with tab5:
             
-            st.header('Job Plans')
+            st.subheader('Job Plans')
 
             custom_colors = {
                             "CPD Hrs": "#1f77b4",       # Muted blue
@@ -2468,7 +2468,7 @@ if button_run_pressed:
 
             ##### pwp Practitioner #####
 
-            st.subheader('Psychological Wellbeing Practitioners')
+            st.markdown('### Psychological Wellbeing Practitioners')
 
             fig17 = px.histogram(pwp_hours_weekly_summary, 
                                 x='Week Number',
@@ -2506,7 +2506,7 @@ if button_run_pressed:
 
             ##### cbt Practitioner #####
 
-            st.subheader('Cognitive Behavioural Therapists')
+            st.markdown('### Cognitive Behavioural Therapists')
 
             fig18 = px.histogram(cbt_hours_weekly_summary, 
                                 x='Week Number',
@@ -2544,7 +2544,7 @@ if button_run_pressed:
 
             ##### couns Practitioner #####
 
-            st.subheader('Depression Counselling Therapists')
+            st.markdown('### Depression Counselling Therapists')
 
             fig19 = px.histogram(couns_hours_weekly_summary, 
                                 x='Week Number',
@@ -2583,11 +2583,11 @@ if button_run_pressed:
         ########## Caseloads ##########
         with tab6:
 
-            st.header('Caseloads')
+            st.subheader('Caseloads')
 
             ##### pwp Practitioner #####
 
-            st.subheader('Psychological Wellbeing Practitioners')
+            st.markdown('### Psychological Wellbeing Practitioners')
 
             fig22 = px.histogram(pwp_caseload_weekly_summary, 
                                 x='Week Number',
@@ -2627,7 +2627,7 @@ if button_run_pressed:
 
             ##### cbt Practitioner #####
 
-            st.subheader('Cognitive Behavioural Therapists')
+            st.markdown('### Cognitive Behavioural Therapists')
 
             fig22 = px.histogram(cbt_caseload_weekly_summary, 
                                 x='Week Number',
@@ -2666,7 +2666,7 @@ if button_run_pressed:
 
             ##### couns Practitioner #####
 
-            st.subheader('Depression Counsellors')
+            st.markdown('### Depression Counsellors')
 
             fig22 = px.histogram(couns_caseload_weekly_summary, 
                                 x='Week Number',
