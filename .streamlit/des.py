@@ -42,34 +42,71 @@ with st.sidebar:
         # Referral Inputs
         st.markdown("#### Screening")
         referral_input = st.slider("Average Number of Referrals Per Week", 0, 1500
-                                   , 65)
+                                   ,65,help='The mean number of referrals '
+                                  'received per week. This will be used as the '
+                                  'basis for seasonal variations based on '
+                                  'historical referral data')
         prevalence_input = st.slider("Expected Prevalence", 0, 500
-                                   , 220)
-        ta_wl_input = st.number_input("Current Telephone Assessment Waiting List", min_value=0, max_value=1000, step=1, value=200)
+                                   , 220,help='The expected Prevalence level '
+                                   'for this team or service')
+        ta_wl_input = st.number_input("Current Telephone Assessment Waiting List",
+                                    min_value=0, max_value=1000, step=1,
+                                    value=200,help='The current number of '
+                                        'patients on the assessment waiting '
+                                        'list, default is 0')
         if ta_wl_input > 0:
-            ta_wait_input = st.number_input("Current Average TA Waiting Time (weeks)", min_value=0, max_value=52, step=1, value=3)
+            ta_wait_input = st.number_input("Current Average TA Waiting Time (weeks)",
+                                           min_value=0, max_value=52, step=1,
+                                           value=3,help='If a waiting list value '
+                                           'has been entered above, the average '
+                                           'waiting time in weeks for patients '
+                                           'on the TA waiting list')
         else:
             ta_wait_input = 0
         referral_reject_input = st.number_input("Referral Rejection Rate (%)",
-                        min_value=0.0, max_value=20.0, step=0.25, value=4.25)
+                        min_value=0.0, max_value=20.0, step=0.25, value=4.25,
+                        help='The % of referrals that get rejected on initial '
+                        'referral, prior to any screening process e.g. due to '
+                        'missing information, inappropriate for service etc.')
         referral_review_input = st.number_input("% of Referrals Sent for Screening",
-                        min_value=0.0, max_value=100.0, step=0.5, value=60.0)
+                        min_value=0.0, max_value=100.0, step=0.5, value=60.0,
+                        help='The % of referrals that get sent for further '
+                        'screening')
         referral_reject_input = st.number_input("Screening Rejection Rate (%)",
                         min_value=0.0, max_value=100.0, step=0.25, 
-                        value=g.review_rej_rate*100)
+                        value=g.review_rej_rate*100,help='The % of referrals '
+                        'that get rejected as a result of the screening process')
         referral_screen_input = st.slider("Number of Mins to Screen Referral",
-                                          1, 30, 20)
+                                          1, 30, 20,help='Taken from Job '
+                                            'Plans: the number of minutes allocated '
+                                            'for a Referral to be screened')
         opt_in_input = st.number_input("% of Referrals that Opt-in",
-                        min_value=50.0, max_value=100.0, step=0.5, value=75.0)
+                        min_value=50.0, max_value=100.0, step=0.5, value=75.0,
+                        help='The % of referrals that opt-in to treatment')
         st.markdown("#### Assessment")
         ta_resource_pwp = st.slider("Number of TA Slots per PwP per Week"
-                                    , 0, 15, 9)
+                                    , 0, 15, 9,help='Taken from Job '
+                                            'Plans: the number of TA slots that '
+                                            'each PwP is expected to offer per '
+                                            'week. This serves as a resource '
+                                            'to decide whether a patient is '
+                                            'assessed or if all available '
+                                            'resources that week have been used, '
+                                            'is added to the assessment '
+                                            'waiting list')
         ta_accept_input = st.number_input("% of TA's that are Accepted",
                         min_value=50.0, max_value=100.0, step=0.5, value=70.0)
-        ta_time_input = st.slider("Number of Mins to Perform TA", 1, 90, 60)
+        ta_time_input = st.slider("Number of Mins to Perform TA", 1, 90, 60
+                                  ,help='Taken from Job Plans: the number of '
+                                            'minutes allocated for a patient to '
+                                            'be assessed')
         step2_step3_rate_input = st.number_input(
                                 "% of Patients Assigned to Step 2 vs Step 3",
-                        min_value=0.0, max_value=100.0, step=0.5, value=47.0)
+                        min_value=0.0, max_value=100.0, step=0.5, value=47.0
+                        ,help='The percentage of patients that get allocated to '
+                        'Step 2 versus Step 3 e.g. a value of 47.0 '
+                        'will send 47% of patients down the Step 2 route and '
+                        '53% down the Step 3 route')
            
     with st.expander("Step 2"):
         
@@ -79,33 +116,69 @@ with st.sidebar:
         
         step2_path_ratio = st.number_input("% of Step 2 Allocated to PwP vs Group",
                                            min_value=0.0, max_value=100.0, 
-                                           step=1.0, value=47.0)
-        pwp_wl_input = st.number_input("Current PwP 1:1 Waiting List", min_value=0, max_value=1000, step=1, value=74)
+                                           step=1.0, value=47.0,help='The percentage '
+                                          'of patients that get allocated to '
+                                          '1:1 versus Groups e.g. a value of 47.0 '
+                                          'will send 47% of patients down the '
+                                          '1:1 path and 53% down the Group path')
+        pwp_wl_input = st.number_input("Current PwP 1:1 Waiting List", 
+                                      min_value=0, max_value=1000, step=1,
+                                      value=74,help='The current number of '
+                                        'patients on the PwP 1:1 waiting '
+                                        'list, default is 0')
         if pwp_wl_input > 0:
-            pwp_wait_input = st.number_input("Current Average PwP 1:1 Waiting Time (weeks)", min_value=0, max_value=52, step=1, value=2)
+            pwp_wait_input = st.number_input("Current Average PwP 1:1 Waiting Time (weeks)",
+                                            min_value=0, max_value=52, step=1,
+                                            value=2,help='If a waiting list value '
+                                           'has been entered above, the average '
+                                           'waiting time in weeks for patients '
+                                           'on the PwP 1:1 waiting list')
         else:
             pwp_wait_input = 0
         step2_first_input = st.slider("Number of Mins for First PwP Appointment",
-                                            1, 60, 45)
+                                            1, 60, 45,help='Taken from Job '
+                                            'Plans: the number of minutes allocated '
+                                            'for a Step 2 First appointment')
         step2_fup_input = st.slider("Number of Mins for Follow-up PwP Appointment",
-                                    1, 60, 30)
+                                    1, 60, 30,help='Taken from Job Plans: '
+                                            'the number of minutes allocated '
+                                            'for a Step 2 Follow-up appointment')
         step2_admin_input = st.slider("Number of Mins for Writing up Step2 Appointment",
-                                    1, 20, 15)
+                                    1, 20, 15,help='Taken from Job Plans: '
+                                    'The number of minutes allocated for '
+                                    'administrative tasks, writing up etc. '
+                                    'following a Step 2 appointment')
         step_up_input = st.number_input("% of Patients Stepped Up", 
                                         min_value=0.0, max_value=10.0,
-                                        step=0.25, value=1.0)
+                                        step=0.25, value=1.0,help='The percentage'
+                                          ' of patients that get stepped up'
+                                          ' onto the Step 3 pathway as they '
+                                          'approach then end of their Step 2 '
+                                          'treatment')
         step2_pwp_dna_input = st.number_input("% DNA's for PwP Appointments",
                                             min_value=0.0, max_value=30.0,
-                                            step=0.5, value=15.0)
+                                            step=0.5, value=15.0,help='The % of '
+                                            'PwP 1:1 appointments where the '
+                                            'patient Did Not Attend')
         step2_group_dna_input = st.number_input("% DNA's for Group Sessions",
                                                min_value=0.0, max_value=30.0,
-                                               step=0.25, value=22.0)
+                                               step=0.25, value=22.0,help='The % of '
+                                               'Group appointments where the '
+                                               'patient Did Not Attend')
         step2_group_sessions_input = st.slider("Number of Step2 Group Sessions",
-                                              1, 10, 7)
-        step2_group_size_input = st.slider("Maximum Step2 Group Size", 1, 12, 7)
+                                              1, 10, 7,help='The number of '
+                                              'sessions typically offered for '
+                                              'PwP Group Therapy')
+        step2_group_size_input = st.slider("Maximum Step2 Group Size", 1, 12, 7,
+                                           help='The maximum number of '
+                                           'attendees on a course of Step 2 '
+                                           'Group Therapy')
         step2_group_duration_input = st.number_input("Length of Group Sessions (mins)",
                                                 min_value=180, max_value=300,
-                                                step=30, value=240)
+                                                step=30, value=240,help='The '
+                                                'standard duration in minutes '
+                                                'of a Step 2 Group Therapy ' \
+                                                'session')
 
     with st.expander("Step 3"):
         
@@ -115,45 +188,102 @@ with st.sidebar:
         
         step3_path_ratio = st.number_input("% of Step 3 Allocated to DepC vs CBT",
                                            min_value=0.0, max_value=100.0,
-                                           step=0.5, value=37.0)
+                                           step=0.5, value=37.0,help='The percentage '
+                                          'of patients that get allocated to '
+                                          'CBT versus DepC e.g. a value of 37.0 '
+                                          'will send 37% of patients down the '
+                                          'CBT path and 63% down the DepC path')
         step_down_input = st.number_input("% of Patients Stepped Down",
                                           min_value=0.0, max_value=20.0,
-                                          step=0.5, value=12.0)
-        cbt_wl_input = st.number_input("Current CBT Waiting List", min_value=0, max_value=1000, step=1, value=130)
+                                          step=0.5, value=12.0,help='The percentage '
+                                          'of patients that get stepped down '
+                                          'onto the Step 2 pathway as they '
+                                          'approach then end of their Step 3 '
+                                          'treatment')
+        cbt_wl_input = st.number_input("Current CBT Waiting List", min_value=0, 
+                                    max_value=1000, step=1, value=130,
+                                    help='The current number of patients on the '
+                                    'CBT waiting list, default is 0')
         if cbt_wl_input > 0:
-            cbt_wait_input = st.number_input("Current Average CBT Waiting Time (weeks)", min_value=0, max_value=52, step=1, value=5)
+            cbt_wait_input = st.number_input("Current Average CBT Waiting Time"
+                                             " (weeks)", min_value=0, 
+                                             max_value=52, step=1, value=5,
+                                             help='If a waiting list value has '
+                                             'been entered above, the average '
+                                             'waiting time in weeks for patients '
+                                             'on the CBT waiting list')
         else:
             cbt_wait_input = 0
         step3_cbt_first_input = st.slider("Number of Mins for First CBT Appointment",
-                                          1, 180, 90)
+                                          1, 180, 90,help='Taken from Job '
+                                            'Plans: the number of minutes allocated '
+                                            'for a CBT First appointment')
         step3_cbt_fup_input = st.slider("Number of Mins for Follow-up CBT Appointment",
-                                        1, 90, 60)
+                                        1, 90, 60,help='Taken from Job '
+                                            'Plans: the number of minutes allocated '
+                                            'for a CBT Follow-up appointment')
         step3_cbt_dna_input = st.number_input("% DNA's for CBT Appointments",
                                               min_value=0.0, max_value=30.0,
                                               step=0.5, value=20.0)
-        couns_wl_input = st.number_input("Current DepC Waiting List", min_value=0, max_value=1000, step=1, value=250)
+        couns_wl_input = st.number_input("Current DepC Waiting List",
+                                        min_value=0, max_value=1000,
+                                        step=1, value=250,help='The current '
+                                        'number of patients on the '
+                                        'DepC waiting list, default is 0')
         if couns_wl_input > 0:
-            couns_wait_input = st.number_input("Current Average DepC Waiting Time (weeks)", min_value=0, max_value=52, step=1, value=10)
+            couns_wait_input = st.number_input("Current Average DepC Waiting "
+                                               "Time (weeks)", min_value=0,
+                                               max_value=52, step=1, value=10,
+                                               help='If a waiting list value has '
+                                            'been entered above, the average '
+                                             'waiting time in weeks for patients '
+                                             'on the DepC waiting list')
         else:
             couns_wait_input = 0
         step3_couns_first_input = st.slider("Number of Mins for First DepC Appointment",
-                                            1, 180, 90)
+                                            1, 180, 90,help='Taken from Job '
+                                            'Plans: the number of minutes allocated '
+                                            'for a DepC First appointment')
         step3_couns_fup_input = st.slider("Number of Mins for Follow-up DepC Appointment",
-                                          1, 90, 60)
+                                          1, 90, 60,help='Taken from Job '
+                                            'Plans: the number of minutes allocated '
+                                            'for a DepC Follow-up appointment')
         step3_admin_input = st.slider("Number of Mins for Writing up Step3 Appointment",
-                                    1, 20, 15)
+                                    1, 20, 15,help='Taken from Job '
+                                            'Plans: the number of minutes allocated '
+                                            'for admin and writing up following '
+                                            'a Step 3 appointment')
         step3_couns_dna_input = st.number_input("% DNA's for DepC Sessions",
                                                 min_value=0.0, max_value=30.0,
                                                 step=0.25, value=20.0)
         step3_session_var_input = st.number_input(
                     "% of Instances where Patients Receive Additional Sessions",
                                                   min_value=0.0, max_value=30.0,
-                                                  step=0.25, value=20.0)
+                                                  step=0.25, value=20.0,
+                                                  help='The % of instances '
+                                                  'where a patient receives '
+                                                  'additional treatment '
+                                                  'sessions over and above '
+                                                  'the standard for that mode '
+                                                  'of treatment. Uses an '
+                                                  'exponential distribution '
+                                                  'with upper and lower limits '
+                                                  'based on data supplied by '
+                                                  'the service to determine '
+                                                  'how many additional sessions '
+                                                  'a patient receives')
         
         delayed_disch_input = st.number_input(
                     "% of Instances where Patients Discharge is Delayed",
                                                   min_value=0.0, max_value=30.0,
-                                                  step=0.5, value=10.0)
+                                                  step=0.5, value=10.0,
+                                                  help='The % of patients where '
+                                            'they are not removed from the '
+                                            'caseload immediately upon '
+                                            'completion of treatment. Uses an '
+                                            'exponential distribution with a '
+                                            'lower limit of 1 week and an '
+                                            'upper limit of 13 weeks')
         
         # code for conditional streamlit inputs
         # if triage_wl_input > 0:
@@ -167,42 +297,131 @@ with st.sidebar:
         st.markdown("#### Job Plans")
         cbt_avail_input = st.number_input(label="Starting Number of CBT Practitioners WTE",
                                           min_value=1,max_value=200,
-                                          step=1,value = 7)
+                                          step=1,value = 7,help='The current '
+                                            'number of CBT practitioners working '
+                                            'within the team or service')
         couns_avail_input = st.number_input(label="Starting Number of DepC Practitioners WTE",
                                             min_value=1,max_value=100,
-                                            step=1,value = 2)
+                                            step=1,value = 2,help='The current '
+                                            'number of DepC practitioners working '
+                                            'within the team or service')
         pwp_avail_input = st.number_input(label="Starting Number of PwP Practitioners WTE",
                                           min_value=1,max_value=200,
-                                          step=1,value = 6)
-        cbt_add_input = st.number_input("Additional Number of CBT Practitioners WTE",
-                        min_value=-20, max_value=20, step=1, value=0)
-        couns_add_input = st.number_input("Additional Number of DepC Practitioners WTE",
-                        min_value=-10, max_value=20, step=1, value=0)
-        pwp_add_input = st.number_input("Additional Number of PwP Practitioners WTE",
-                        min_value=-25, max_value=25, step=1, value=0)
+                                          step=1,value = 6,help='The current '
+                                            'number of PwP practitioners working '
+                                            'within the team or service')
+        cbt_add_input = st.number_input("Change in Number of CBT Practitioners WTE",
+                        min_value=-20, max_value=20, step=1, value=0,help='The '
+                                            'potential change in the number of '
+                                            'CBT practitioners within the team '
+                                            'or service - can be +ve or -ve')
+        couns_add_input = st.number_input("Change in Number of DepC Practitioners WTE",
+                        min_value=-10, max_value=20, step=1, value=0,help='The '
+                                            'potential change in the number of '
+                                            'DepC practitioners within the team '
+                                            'or service - can be +ve or -ve')
+        pwp_add_input = st.number_input("Change in Number of PwP Practitioners WTE",
+                        min_value=-25, max_value=25, step=1, value=0,help='The '
+                                            'potential change in the number of '
+                                            'PwP practitioners within the team '
+                                            'or service - can be +ve or -ve')
         cbt_caseload_input = st.slider("Number of Patients Allowed on CBT Caseload",
-                                            1, 50, g.cbt_caseload)
+                                            1, 50, g.cbt_caseload,help='The '
+                                            'maximum number of patients '
+                                            'allowed on a CBT practitioners '
+                                            'caseload per WTE. Once this limit '
+                                            'is reached patients will have to '
+                                            'wait until a slot becomes available. '
+                                            'Default is 100 so that availability '
+                                            'of First appointments is used to '
+                                            'decide whether to treat or add to '
+                                            'waiting list')
         couns_caseload_input = st.slider("Number of Patients Allowed on DepC Caseload",
-                                            1, 50, g.couns_caseload)
+                                            1, 50, g.couns_caseload,help='The '
+                                            'maximum number of patients '
+                                            'allowed on a DepC practitioners '
+                                            'caseload per WTE. Once this limit '
+                                            'is reached patients will have to '
+                                            'wait until a slot becomes available. '
+                                            'Default is 100 so that availability '
+                                            'of First appointments is used to '
+                                            'decide whether to treat or add to '
+                                            'waiting list')
         pwp_caseload_input = st.slider("Number of Patients Allowed on PwP Caseload",
-                                            1, 100, g.pwp_caseload)
+                                            1, 100, g.pwp_caseload,help='The '
+                                            'maximum number of patients '
+                                            'allowed on a PwP practitioners '
+                                            'caseload per WTE. Once this limit '
+                                            'is reached patients will have to '
+                                            'wait until a slot becomes available. '
+                                            'Default is 100 so that availability '
+                                            'of First appointments is used to '
+                                            'decide whether to treat or add to '
+                                            'waiting list')
         cbt_first_input = st.slider("Number of First Appointments per week per CBT Prac",
-                                            1, 10, 2)
+                                            1, 10, 2,help='The number of First '
+                                            'appointments a CBT practitioner '
+                                            'offers per week. This is used to '
+                                            'decide whether a patient is added '
+                                            'to the caseload or the waiting '
+                                            'list. If an appointment is '
+                                            'available they will be added to the '
+                                            'caseload. If all First appointments '
+                                            'have been used for that week they '
+                                            'will be added to the waiting list')
         couns_first_input = st.slider("Number of First Appointments per week per Couns Prac",
-                                            1, 10, 2)
+                                            1, 10, 2,help='The number of First '
+                                            'appointments a DepC practitioner '
+                                            'offers per week. This is used to '
+                                            'decide whether a patient is added '
+                                            'to the caseload or the waiting '
+                                            'list. If an appointment is '
+                                            'available they will be added to the '
+                                            'caseload. If all First appointments '
+                                            'have been used for that week they '
+                                            'will be added to the waiting list')
         pwp_first_input = st.slider("Number of First Appointments per week per PwP Prac",
-                                            1, 10, 4)
+                                            1, 10, 4,help='The number of First '
+                                            'appointments a PwP practitioner '
+                                            'offers per week. This is used to '
+                                            'decide whether a patient is added '
+                                            'to the caseload or the waiting '
+                                            'list. If an appointment is '
+                                            'available they will be added to the '
+                                            'caseload. If all First appointments '
+                                            'have been used for that week they '
+                                            'will be added to the waiting list')
         cbt_hours_avail_input = st.number_input(label="Non-Clinical Hours p/w for CBT Pratitioners",
                                                 min_value=10.0,max_value=25.0,
-                                                step=0.5,value = g.hours_avail_cbt)
+                                                step=0.5,
+                                                value = g.hours_avail_cbt,
+                                                help='Taken from Job Plans: '
+                                                'The number of hours p/w a CBT '
+                                                'practitioner allocates to '
+                                                'non-clinical activity e.g. '
+                                                'breaks, CPD, Wellbeing etc.')
         couns_hours_avail_input = st.number_input(label="Non-Clinical Hours p/w for DepC Pratitioners",
                                                   min_value=10.0,max_value=25.0,
-                                                  step=0.5,value = g.hours_avail_couns)
+                                                  step=0.5,
+                                                  value = g.hours_avail_couns,
+                                                  help='Taken from Job Plans: '
+                                                'The number of hours p/w a DepC '
+                                                'practitioner allocates to '
+                                                'non-clinical activity e.g. '
+                                                'breaks, CPD, Wellbeing etc.')
         pwp_hours_avail_input = st.number_input(label="Non-Clinical Hours p/w for PwP Pratitioners",
                                                 min_value=10.0,max_value=25.0,
-                                                step=0.5,value = g.hours_avail_pwp)
+                                                step=0.5,
+                                                value = g.hours_avail_pwp,
+                                                help='Taken from Job Plans: '
+                                                'The number of hours p/w a PwP '
+                                                'practitioner allocates to '
+                                                'non-clinical activity e.g. '
+                                                'breaks, CPD, Wellbeing etc.')
         weeks_lost_input = st.number_input("Weeks Lost to Leave/Sickness etc.",
-                            min_value=0.0, max_value=20.0, step=0.25, value=10.0)
+                            min_value=0.0, max_value=20.0, step=0.25, value=10.0,
+                            help='The number of weeks of activity lost per '
+                            'year to annual leave and sickness')
             
     with st.expander("Simulation Parameters"):
     
@@ -210,9 +429,25 @@ with st.sidebar:
         st.markdown("#### Simulation Parameters")
         sim_duration_input =  st.slider("Simulation Duration (weeks)",
                                         min_value=26, max_value=520,
-                                        value=52, step=26)
+                                        value=52, step=26,help='The number of '
+                                        'weeks the simulation is being run for '
+                                        'minimum 26 weeks, maximum 520 weeks '
+                                        '(10 years)')
         st.write(f"The service is running for {sim_duration_input} weeks")
-        number_of_runs_input = st.slider("Number of Simulation Runs", 1, 20, 2)
+        number_of_runs_input = st.slider("Number of Simulation Runs", 1, 20, 2,
+                                         help='The number of simulation runs '
+                                         'refers to how many times you repeat '
+                                         'the entire simulation process '
+                                         'independently. Each run can produce '
+                                         'different results due to randomness. ' 
+                                         'Running the simulation multiple times '
+                                         'allows you to capture variability in '
+                                         'outcomes, estimate averages and '
+                                         'confidence intervals, and ensure '
+                                         'robustness of results. It is '
+                                         'essential for statistical analysis '
+                                         'and drawing reliable conclusions '
+                                         'from the simulation')
         #st.toggle(label='Test Run?', value=False)
 
 g.referral_rate_lookup = load_referral_rates()
