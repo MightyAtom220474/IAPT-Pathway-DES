@@ -1504,7 +1504,7 @@ if button_run_pressed:
                                        },
                                 height=425,
                                 width=500,
-                                title=f'{list_name} by Week'
+                                title=f'{chart_title} by Week'
                                 )
                     
                     fig_asst_1.update_traces(line=dict(width=3, color='blue'))
