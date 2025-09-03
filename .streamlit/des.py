@@ -93,14 +93,19 @@ with st.sidebar:
                     'referrals, rejection rates, DNA rates etc.'
                    ,max_selections=1,default=None)
     
-    if not team_select_input:  # nothing selected
-        referrals_def = 65
-    else:
-        selected_team = team_select_input[0]
-        referrals_def = base_params_df.loc[
-            base_params_df['team'] == selected_team, 'referrals_pw'
-        ].iloc[0]
 
+    selected_team = team_select_input[0]
+    match = base_params_df.loc[
+        base_params_df['team'] == selected_team, 'referrals_pw'
+    ]
+
+    value = match.iloc[0]
+
+    if pd.isna(value):   # catches pd.NA and NaN
+        referrals_def = 65   # fallback default
+    else:
+        referrals_def = int(value)
+        
     st.subheader("Model Inputs")
 
     with st.expander("Screening & Assessment"):
