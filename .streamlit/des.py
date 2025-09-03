@@ -57,8 +57,9 @@ with st.sidebar:
     if not team_select_input:
         referrals_def = 65
     else:
-        referrals_def = base_params_df.loc[base_params_df['team']==
-                                           team_select_input],['referrals_pw']
+        referrals_def = base_params_df.loc[
+            base_params_df['team'] == team_select_input, 'referrals_pw'
+            ].iloc[0]
 
     st.subheader("Model Inputs")
 
