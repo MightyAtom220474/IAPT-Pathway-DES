@@ -3,6 +3,7 @@ import random
 import numpy as np
 import pandas as pd
 import streamlit as st
+import re
 #import matplotlib.pyplot as plt
 import plotly.express as px
 import plotly.graph_objects as go
@@ -33,77 +34,88 @@ st.set_page_config(layout="wide")
 
 base_params_df = load_base_params()
 
-
+# Enforce schema to ensure data types
 def enforce_schema(df: pd.DataFrame) -> pd.DataFrame:
-    """
-    Enforce consistent schema on base_params_df.
-    Converts columns to correct dtypes, coercing errors to NaN.
-    """
-
-    schema = {'team':'string',
-            'referrals_pw':'Int64',
-            'prevalence':'Int64',
-            'ta_wl':'Int64',
-            'ta_modal_wait':'Int64',
-            'ref_rej_rate':'float',
-            'screen_pc':'Int64',
-            'opt_in_rate':'Int64',
-            'ta_accept_rate':'Int64',
-            'step_2_pc':'Int64',
-            'pwp_vs_grp':'Int64',
-            'step2_dna_pc':'float',
-            'group_size':'Int64',
-            'cbt_vs_depc':'Int64',
-            'cbt_dna_first':'float',
-            'cbt_dna_fu':'float',
-            'depc_dna_first':'float',
-            'depc_dna_fu':'float'}
-
+    schema = {
+        'team':'string',
+        'referrals_pw':'Int64',
+        'prevalence':'Int64',
+        'ta_wl':'Int64',
+        'ta_modal_wait':'Int64',
+        'ref_rej_rate':'float',
+        'screen_pc':'Int64',
+        'opt_in_rate':'Int64',
+        'ta_accept_rate':'Int64',
+        'step_2_pc':'Int64',
+        'pwp_vs_grp':'Int64',
+        'step2_dna_pc':'float',
+        'group_size':'Int64',
+        'cbt_vs_depc':'Int64',
+        'cbt_dna_first':'float',
+        'cbt_dna_fu':'float',
+        'depc_dna_first':'float',
+        'depc_dna_fu':'float'
+    }
     for col, dtype in schema.items():
         if col not in df.columns:
             raise ValueError(f"Missing expected column: {col}")
-
         if dtype == "string":
             df[col] = df[col].astype("string")
         elif dtype == "Int64":
             df[col] = pd.to_numeric(df[col], errors="coerce").astype("Int64")
         elif dtype == "float":
             df[col] = pd.to_numeric(df[col], errors="coerce").astype("float")
-        else:
-            raise ValueError(f"Unsupported dtype: {dtype}")
-
     return df
 
 base_params_df = enforce_schema(base_params_df)
 
-team_list = base_params_df.iloc[:, 0].tolist()
+# Normalize function
+def normalize_name(name: str) -> str:
+    """Strip whitespace and lowercase team names for matching"""
+    if not isinstance(name, str):
+        return ''
+    return name.strip().lower()
 
-#print(team_list)
+# Add normalized column
+base_params_df['team_norm'] = base_params_df['team'].apply(normalize_name)
+
+st.write(base_params_df)
 
 st.subheader("Talking Therapies Pathway Simulation")
 
 with st.sidebar:
-
     st.subheader("Team Selection")
 
-    team_select_input = st.multiselect('Please select a team to configure the '\
-                    'model or leave blank for default settings',
-                   options=team_list,help='Please select a team. This will set'\
-                   ' the base parameters for that team such as number of ' \
-                    'referrals, rejection rates, DNA rates etc.'
-                   ,max_selections=1,default=None)
-    
+    # Team list for selection (original names for display)
+    team_list = base_params_df['team'].tolist()
 
-    if team_select_input:  # a team was selected
+    # Multiselect input
+    team_select_input = st.multiselect(
+        'Please select a team to configure the model or leave blank for default settings',
+        options=team_list,
+        help='Selecting a team will set the base parameters for that team such as referrals, rejection rates, DNA rates, etc.',
+        max_selections=1,
+        default=None
+    )
+
+    if team_select_input:
         selected_team = team_select_input[0]
+        selected_team_norm = normalize_name(selected_team)
 
-    match = base_params_df.loc[
-    base_params_df['team'].str.replace(r'\s+', '', regex=True).str.lower() ==
-    selected_team.strip().replace(" ", "").lower(),
-    'referrals_pw'
-    ]
+        # Lookup in normalized dataframe
+        match = base_params_df.loc[
+            base_params_df['team_norm'] == selected_team_norm, 'referrals_pw'
+        ]
+    else:
+        selected_team = ''
+        selected_team_norm = ''
+        match = pd.Series(dtype='Int64')  # empty series
 
-    referrals_def = 65 if match.empty or pd.isna(match.iloc[0]) else int(match.iloc[0])
+    # Safe default handling
+    referrals_def = int(match.fillna(65).iloc[0]) if not match.empty else 65
+
+    st.write("Selected team:", selected_team)
+    st.write("Referrals per week:", referrals_def)
 
     st.subheader("Model Inputs")
 
