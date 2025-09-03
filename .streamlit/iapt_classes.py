@@ -7,7 +7,13 @@ import math
 def load_referral_rates():  # Thanks to Sammi Rosser :-)
     return pd.read_csv(
         ("https://raw.githubusercontent.com/MightyAtom220474/IAPT-Pathway-DES/"
-         "refs/heads/waiting_lists_dev/.streamlit/talking_therapies_referral_rates.csv"),
+         "refs/heads/main/.streamlit/talking_therapies_referral_rates.csv"),
+        index_col=0)
+
+def load_base_params():  # Thanks to Sammi Rosser :-)
+    return pd.read_csv(
+        ("https://raw.githubusercontent.com/MightyAtom220474/IAPT-Pathway-DES/"
+         "refs/heads/main/.streamlit/talking_therapies_base_parameters.csv"),
         index_col=0)
 
 class g:
@@ -133,12 +139,10 @@ class g:
 
     # bring in past referral data
     referral_rate_lookup = load_referral_rates()
-    # referral_rate_lookup = pd.read_csv('talking_therapies_referral_rates.csv'
-    #                                                            ,index_col=0)
 
-
-
-    # # # # #print(referral_rate_lookup)
+    # bring in base parameters
+    base_params_lookup = load_base_params()
+    
 # function to vary the number of sessions
 def vary_number_sessions(lower, upper, lambda_val=0.1):
         
