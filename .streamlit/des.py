@@ -7,20 +7,20 @@ import streamlit as st
 import plotly.express as px
 import plotly.graph_objects as go
 
-from iapt_classes import g, Trial
+from iapt_classes import g, Trial, load_referral_rates, load_base_params
 #from app_style import global_page_style
 
 ########## Streamlit App ##########
 
 st.set_page_config(layout="wide")
 
-@st.cache_data
+#@st.cache_data
 
-def load_referral_rates():  # Thanks to Sammi Rosser :-)
-    return pd.read_csv(
-        ("https://raw.githubusercontent.com/MightyAtom220474/IAPT-Pathway-DES/"
-         "refs/heads/waiting_lists_dev/.streamlit/talking_therapies_referral_rates.csv"),
-        index_col=0)
+# def load_referral_rates():  # Thanks to Sammi Rosser :-)
+#     return pd.read_csv(
+#         ("https://raw.githubusercontent.com/MightyAtom220474/IAPT-Pathway-DES/"
+#          "refs/heads/main/.streamlit/talking_therapies_referral_rates.csv"),
+#         index_col=0)
 
 
 #st.logo("https://lancsvp.org.uk/wp-content/uploads/2021/08/nhs-logo-300x189.png")
@@ -31,9 +31,21 @@ def load_referral_rates():  # Thanks to Sammi Rosser :-)
 
 #global_page_style('static/css/style.css')
 
+base_params_df = load_base_params()
+
+print(base_params_df)
+
+team_list = base_params_df.iloc[:, 0].tolist()
+
+print(team_list)
+
 st.subheader("Talking Therapies Pathway Simulation")
 
 with st.sidebar:
+
+    team_select_input = st.multiselect('Please select the data item we are trying to predict',
+                   options=team_list,help='Please select just one value'
+                   ,max_selections=1)
 
     st.subheader("Model Inputs")
 
