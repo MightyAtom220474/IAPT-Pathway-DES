@@ -95,17 +95,16 @@ with st.sidebar:
     
 
     selected_team = team_select_input[0]
+    
     match = base_params_df.loc[
-        base_params_df['team'] == selected_team, 'referrals_pw'
-    ]
+            base_params_df['team'].str.strip().str.lower() == str(
+            selected_team).strip().lower(),'referrals_pw']
 
-    value = match.iloc[0]
-
-    if pd.isna(value):   # catches pd.NA and NaN
-        referrals_def = 65   # fallback default
+    if match.empty or pd.isna(match.iloc[0]):
+        referrals_def = 65  # fallback
     else:
-        referrals_def = int(value)
-        
+        referrals_def = int(match.iloc[0])
+
     st.subheader("Model Inputs")
 
     with st.expander("Screening & Assessment"):
