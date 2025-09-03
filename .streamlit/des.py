@@ -86,22 +86,24 @@ with st.sidebar:
 
     st.subheader("Team Selection")
 
-    team_select_input = st.selectbox(
-        "Please select a team to configure the model or leave blank for default settings",
-        options=[""] + team_list,  # add a blank choice
-        help="This will set the base parameters for that team such as referrals, rejection rates, DNA rates etc."
-    )
+    team_select_input = st.multiselect('Please select a team to configure the '\
+                    'model or leave blank for default settings',
+                   options=team_list,help='Please select a team. This will set'\
+                   ' the base parameters for that team such as number of ' \
+                    'referrals, rejection rates, DNA rates etc.'
+                   ,max_selections=1,default=None)
+    
 
-    if team_select_input == "":
-        referrals_def = 65
-    else:
+    if team_select_input:  # a team was selected
+        selected_team = team_select_input[0]
+
         match = base_params_df.loc[
-            base_params_df['team'].str.strip().str.lower() == team_select_input.strip().lower(),
-            'referrals_pw'
-        ]
+        base_params_df['team'].str.replace(r'\s+', '', regex=True).str.lower() ==
+        selected_team.strip().replace(" ", "").lower(),
+        'referrals_pw'
+    ]
 
-        referrals_def = 65 if match.empty or pd.isna(match.iloc[0]) else int(match.iloc[0])
-
+    referrals_def = 65 if match.empty or pd.isna(match.iloc[0]) else int(match.iloc[0])
 
     st.subheader("Model Inputs")
 
