@@ -33,11 +33,50 @@ st.set_page_config(layout="wide")
 
 base_params_df = load_base_params()
 
-#print(base_params_df)
+
+def enforce_schema(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Enforce consistent schema on base_params_df.
+    Converts columns to correct dtypes, coercing errors to NaN.
+    """
+
+    schema = {'team':'string',
+            'referrals_pw':'Int64',
+            'prevalence':'Int64',
+            'ta_wl':'Int64',
+            'ta_modal_wait':'Int64',
+            'ref_rej_rate':'float',
+            'screen_pc':'Int64',
+            'opt_in_rate':'Int64',
+            'ta_accept_rate':'Int64',
+            'step_2_pc':'Int64',
+            'pwp_vs_grp':'Int64',
+            'step2_dna_pc':'float',
+            'group_size':'Int64',
+            'cbt_vs_depc':'Int64',
+            'cbt_dna_first':'float',
+            'cbt_dna_fu':'float',
+            'depc_dna_first':'float',
+            'depc_dna_fu':'float'}
+
+    for col, dtype in schema.items():
+        if col not in df.columns:
+            raise ValueError(f"Missing expected column: {col}")
+
+        if dtype == "string":
+            df[col] = df[col].astype("string")
+        elif dtype == "Int64":
+            df[col] = pd.to_numeric(df[col], errors="coerce").astype("Int64")
+        elif dtype == "float":
+            df[col] = pd.to_numeric(df[col], errors="coerce").astype("float")
+        else:
+            raise ValueError(f"Unsupported dtype: {dtype}")
+
+    return df
+
+base_params_df = enforce_schema(base_params_df)
 
 team_list = base_params_df.iloc[:, 0].tolist()
-
-
 
 #print(team_list)
 
