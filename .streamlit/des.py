@@ -94,16 +94,21 @@ with st.sidebar:
                    ,max_selections=1,default=None)
     
 
-    selected_team = team_select_input[0]
-    
-    match = base_params_df.loc[
-            base_params_df['team'].str.strip().str.lower() == str(
-            selected_team).strip().lower(),'referrals_pw']
+    if team_select_input:  # a team was selected
+        selected_team = team_select_input[0]
 
-    if match.empty or pd.isna(match.iloc[0]):
-        referrals_def = 65  # fallback
-    else:
-        referrals_def = int(match.iloc[0])
+        match = base_params_df.loc[
+            base_params_df['team'].str.strip().str.lower() == str(selected_team).strip().lower(),
+            'referrals_pw'
+        ]
+
+        if match.empty or pd.isna(match.iloc[0]):
+            referrals_def = 65  # fallback
+        else:
+            referrals_def = int(match.iloc[0])
+
+    else:  # nothing selected
+        referrals_def = 65
 
     st.subheader("Model Inputs")
 
