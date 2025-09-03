@@ -97,10 +97,10 @@ with st.sidebar:
     if team_select_input:  # a team was selected
         selected_team = team_select_input[0]
 
-        match = base_params_df.loc[
-        base_params_df['team'].str.replace(r'\s+', '', regex=True).str.lower() ==
-        selected_team.strip().replace(" ", "").lower(),
-        'referrals_pw'
+    match = base_params_df.loc[
+    base_params_df['team'].str.replace(r'\s+', '', regex=True).str.lower() ==
+    selected_team.strip().replace(" ", "").lower(),
+    'referrals_pw'
     ]
 
     referrals_def = 65 if match.empty or pd.isna(match.iloc[0]) else int(match.iloc[0])
