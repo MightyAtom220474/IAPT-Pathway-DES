@@ -43,9 +43,14 @@ st.subheader("Talking Therapies Pathway Simulation")
 
 with st.sidebar:
 
-    team_select_input = st.multiselect('Please select the data item we are trying to predict',
-                   options=team_list,help='Please select just one value'
-                   ,max_selections=1)
+    st.subheader("Team Selection")
+
+    team_select_input = st.multiselect('Please select a team to configure the '\
+                    'model or leave blank for default settings',
+                   options=team_list,help='Please select a team. This will set'\
+                   ' the base parameters for that team such as number of ' \
+                    'referrals, rejection rates, DNA rates etc.'
+                   ,max_selections=1,default=None)
 
     st.subheader("Model Inputs")
 
