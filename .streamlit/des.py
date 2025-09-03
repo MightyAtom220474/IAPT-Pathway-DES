@@ -33,11 +33,13 @@ st.set_page_config(layout="wide")
 
 base_params_df = load_base_params()
 
-print(base_params_df)
+#print(base_params_df)
 
 team_list = base_params_df.iloc[:, 0].tolist()
 
-print(team_list)
+
+
+#print(team_list)
 
 st.subheader("Talking Therapies Pathway Simulation")
 
@@ -51,6 +53,12 @@ with st.sidebar:
                    ' the base parameters for that team such as number of ' \
                     'referrals, rejection rates, DNA rates etc.'
                    ,max_selections=1,default=None)
+    
+    if not team_select_input:
+        referrals_def = 65
+    else:
+        referrals_def = base_params_df.loc[base_params_df['team']==
+                                           team_select_input],['referrals_pw']
 
     st.subheader("Model Inputs")
 
@@ -59,7 +67,7 @@ with st.sidebar:
         # Referral Inputs
         st.markdown("#### Screening")
         referral_input = st.slider("Average Number of Referrals Per Week", 0, 1500
-                                   ,65,help='The mean number of referrals '
+                                   ,referrals_def,help='The mean number of referrals '
                                   'received per week. This will be used as the '
                                   'basis for seasonal variations based on '
                                   'historical referral data')
