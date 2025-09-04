@@ -13,7 +13,7 @@ def load_referral_rates():  # Thanks to Sammi Rosser :-)
 def load_base_params():  # Thanks to Sammi Rosser :-)
     return pd.read_csv(
         ("https://raw.githubusercontent.com/MightyAtom220474/IAPT-Pathway-DES/"
-         "refs/heads/base_params_dev/.streamlit/talking_therapies_base_parameters.csv"),
+         "refs/heads/base_param_dev/.streamlit/talking_therapies_base_parameters.csv"),
         index_col=None)
 class g:
 
