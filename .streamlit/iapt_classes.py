@@ -77,13 +77,15 @@ class g:
     step3_cbt_sessions = 12 # number of pwp sessions at step2
     step3_cbt_1st_mins = 90 # minutes allocated for 1st cbt session
     step3_cbt_fup_mins = 60 # minutes allocated for cbt follow-up session
-    step3_cbt_dna_rate = 0.216 # Wellbeing Workshop attendance 78.6%
+    step3_cbt_dna_1st_rate = 0.216 #
+    step3_cbt_dna_fu_rate = 0.216 #
     step3_session_admin = 15 # number of mins of clinical admin per session
     step3_cbt_period = 16 # max number of weeks cbt delivered over
     step3_couns_sessions = 8 # number of couns sessions
     step3_couns_1st_mins = 90 # minutes allocated for 1st couns session
     step3_couns_fup_mins = 60 # minutes allocated for couns follow-up session
-    step3_couns_dna_rate = 0.216 # Wellbeing Workshop attendance 78.6%
+    step3_couns_dna_1st_rate = 0.216 #
+    step3_couns_dna_fu_rate = 0.216 #
     step3_couns_period = 16 # max number of weeks couns delivered over
     step3_session_var = 0.15 # % of instances where number sessions goes over standard amount
     delayed_disc_var = 0.1 # % of instances where discharge is delayed    
@@ -2832,7 +2834,12 @@ class Model:
 
             # Determine whether the session was DNA'd
             self.dna_cbt_session = random.uniform(0, 1)
-            is_dna = 1 if self.dna_cbt_session <= g.step3_cbt_dna_rate else 0
+            if self.cbt_session_type == 'First' and self.dna_cbt_session <= g.step3_cbt_dna_1st_rate:
+                is_dna = 1
+            if self.cbt_session_type == 'Follow-Up' and self.dna_cbt_session <= g.step3_cbt_dna_fu_rate:
+                is_dna = 1
+            else:
+                is_dna = 0
 
             if is_dna:
                 self.cbt_dna_counter += 1
@@ -3126,7 +3133,12 @@ class Model:
 
             # Determine whether the session was DNA'd
             self.dna_couns_session = random.uniform(0, 1)
-            is_dna = 1 if self.dna_couns_session <= g.step3_couns_dna_rate else 0
+            if self.couns_session_type == 'First' and self.dna_couns_session <= g.step3_couns_dna_1st_rate:
+                is_dna = 1
+            if self.couns_session_type == 'Follow-Up' and self.dna_couns_session <= g.step3_couns_dna_fu_rate:
+                is_dna = 1
+            else:
+                is_dna = 0
 
             if is_dna:
                 self.couns_dna_counter += 1
