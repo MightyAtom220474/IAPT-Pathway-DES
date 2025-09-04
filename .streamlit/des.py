@@ -48,13 +48,22 @@ def enforce_schema(df: pd.DataFrame) -> pd.DataFrame:
         'ta_accept_rate':'Int64',
         'step_2_pc':'Int64',
         'pwp_vs_grp':'Int64',
+        'pwp_wl':'Int64',
+        'pwp_modal_wait':'Int64',
         'step2_dna_pc':'float',
         'group_size':'Int64',
         'cbt_vs_depc':'Int64',
+        'cbt_wl':'Int64',
+        'cbt_modal_wait':'Int64',
         'cbt_dna_first':'float',
         'cbt_dna_fu':'float',
+        'depc_wl':'Int64',
+        'depc_modal_wait':'Int64',
         'depc_dna_first':'float',
-        'depc_dna_fu':'float'
+        'depc_dna_fu':'float',
+        'pwp_wte':'Int64',
+        'cbt_wte':'Int64',
+        'depc_wte':'Int64'
     }
     for col, dtype in schema.items():
         if col not in df.columns:
@@ -104,15 +113,19 @@ with st.sidebar:
 
     # Team list for selection (original names for display)
     team_list = base_params_df['team'].tolist()
+    team_list = [""] + team_list  # add a blank option for "default"
 
-    # Multiselect input
-    team_select_input = st.multiselect(
-        'Please select a team to configure the model or leave blank for default settings',
+    team_select_input = st.selectbox(
+        "Please select a team to configure the model or leave blank for default settings",
         options=team_list,
-        help='Selecting a team will set the base parameters for that team such as referrals, rejection rates, DNA rates, etc.',
-        max_selections=1,
-        default=None
+        help="This sets the base parameters for that team (referrals, rejection rates, DNA rates, etc.)",
+        index=0  # default = blank
     )
+
+    selected_team = team_select_input
+
+    # Normalize (only if a team was chosen)
+    selected_team_norm = normalize_name(selected_team) if selected_team else ""
 
     if team_select_input:
         selected_team = team_select_input[0]
@@ -126,9 +139,26 @@ with st.sidebar:
     prevalence_def = get_param_value(base_params_df, selected_team_norm, 'prevalence', g.prevalence)
     ta_wl_def     = get_param_value(base_params_df, selected_team_norm, 'ta_wl', g.ta_waiting_list)
     ta_wait_def     = get_param_value(base_params_df, selected_team_norm, 'ta_modal_wait', g.ta_avg_wait)
-
-    # # Safe default handling
-    # referrals_def = int(match.fillna(65).iloc[0]) if not match.empty else 65
+    ref_rej_def     = get_param_value(base_params_df, selected_team_norm, 'ref_rej_rate', g.referral_rej_rate)
+    screen_pc_def     = get_param_value(base_params_df, selected_team_norm, 'screen_pc', g.referral_review_rate)
+    opt_in_def     = get_param_value(base_params_df, selected_team_norm, 'opt_in_rate', g.opt_in_rate)
+    ta_accept_def     = get_param_value(base_params_df, selected_team_norm, 'ta_accept_rate', g.ta_accept_rate)
+    step_2_def     = get_param_value(base_params_df, selected_team_norm, 'step_2_pc', g.step2_step3_ratio)
+    pwp_grp_def     = get_param_value(base_params_df, selected_team_norm, 'pwp_vs_grp', g.step2_path_ratios)
+    pwp_wl_def     = get_param_value(base_params_df, selected_team_norm, 'pwp_wl', g.pwp_waiting_list)
+    pwp_wait_def     = get_param_value(base_params_df, selected_team_norm, 'pwp_avg_wait', g.pwp_avg_wait)
+    step2_pwp_dna_def     = get_param_value(base_params_df, selected_team_norm, 'step2_dna_pc', g.step2_pwp_dna_rate)
+    step2_grp_dna_def     = get_param_value(base_params_df, selected_team_norm, 'step2_dna_pc', g.step2_group_dna_rate)
+    group_size_def     = get_param_value(base_params_df, selected_team_norm, 'group_size', g.step2_group_size)
+    cbt_depc_def     = get_param_value(base_params_df, selected_team_norm, 'cbt_vs_depc', g.step3_path_ratios)
+    cbt_wl_def     = get_param_value(base_params_df, selected_team_norm, 'cbt_wl', g.cbt_waiting_list)
+    cbt_wait_def     = get_param_value(base_params_df, selected_team_norm, 'cbt_avg_wait', g.cbt_avg_wait)
+    cbt_dna_1st_def     = get_param_value(base_params_df, selected_team_norm, 'cbt_dna_first', g.step3_cbt_dna_1st_rate)
+    cbt_dna_fu_def     = get_param_value(base_params_df, selected_team_norm, 'cbt_dna_fu', g.step3_cbt_dna_fu_rate)
+    couns_wl_def     = get_param_value(base_params_df, selected_team_norm, 'couns_wl', g.couns_waiting_list)
+    couns_wait_def     = get_param_value(base_params_df, selected_team_norm, 'couns_avg_wait', g.couns_avg_wait)
+    couns_dna_1st_def     = get_param_value(base_params_df, selected_team_norm, 'couns_dna_first', g.step3_couns_dna_1st_rate)
+    couns_dna_fu_def     = get_param_value(base_params_df, selected_team_norm, 'couns_dna_fu', g.step3_couns_dna_fu_rate)
 
     st.write("Selected team:", selected_team)
     st.write("Referrals per week:", referrals_def)
