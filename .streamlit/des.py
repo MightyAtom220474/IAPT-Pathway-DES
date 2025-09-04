@@ -76,10 +76,26 @@ def normalize_name(name: str) -> str:
         return ''
     return name.strip().lower()
 
+def get_param_value(df, team_norm, column_name, default_value):
+    """
+    Return parameter value for a given column.
+    - If team_norm is empty, returns default_value
+    - If team_norm is found but value is NaN, returns default_value
+    - Otherwise returns the dataframe value
+    """
+    if not team_norm:
+        return default_value
+
+    match = df.loc[df['team_norm'] == team_norm, column_name]
+
+    if match.empty or pd.isna(match.iloc[0]):
+        return default_value
+    return int(match.iloc[0]) if pd.api.types.is_integer_dtype(df[column_name]) else float(match.iloc[0])
+
 # Add normalized column
 base_params_df['team_norm'] = base_params_df['team'].apply(normalize_name)
 
-st.write(base_params_df)
+#st.write(base_params_df)
 
 st.subheader("Talking Therapies Pathway Simulation")
 
@@ -101,18 +117,18 @@ with st.sidebar:
     if team_select_input:
         selected_team = team_select_input[0]
         selected_team_norm = normalize_name(selected_team)
-
-        # Lookup in normalized dataframe
-        match = base_params_df.loc[
-            base_params_df['team_norm'] == selected_team_norm, 'referrals_pw'
-        ]
     else:
         selected_team = ''
         selected_team_norm = ''
-        match = pd.Series(dtype='Int64')  # empty series
 
-    # Safe default handling
-    referrals_def = int(match.fillna(65).iloc[0]) if not match.empty else 65
+    # set parameters based on team selection or lack of
+    referrals_def = get_param_value(base_params_df, selected_team_norm, 'referrals_pw', g.mean_referrals_pw)
+    prevalence_def = get_param_value(base_params_df, selected_team_norm, 'prevalence', g.prevalence)
+    ta_wl_def     = get_param_value(base_params_df, selected_team_norm, 'ta_wl', g.ta_waiting_list)
+    ta_wait_def     = get_param_value(base_params_df, selected_team_norm, 'ta_modal_wait', g.ta_avg_wait)
+
+    # # Safe default handling
+    # referrals_def = int(match.fillna(65).iloc[0]) if not match.empty else 65
 
     st.write("Selected team:", selected_team)
     st.write("Referrals per week:", referrals_def)
@@ -128,7 +144,7 @@ with st.sidebar:
                                   'received per week. This will be used as the '
                                   'basis for seasonal variations based on '
                                   'historical referral data')
-        prevalence_input = st.slider("Expected Prevalence", 0, 500
+        prevalence_input = st.slider("Expected Prevalence", 0, 1500
                                    , 220,help='The expected Prevalence level '
                                    'for this team or service')
         ta_wl_input = st.number_input("Current Telephone Assessment Waiting List",
