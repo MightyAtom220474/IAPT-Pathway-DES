@@ -140,7 +140,7 @@ with st.sidebar:
     referrals_def = get_param_value(base_params_df, selected_team_norm, 'referrals_pw', g.mean_referrals_pw)
     prevalence_def = get_param_value(base_params_df, selected_team_norm, 'prevalence', g.prevalence)
     ta_wl_def     = get_param_value(base_params_df, selected_team_norm, 'ta_wl', g.ta_waiting_list)
-    ta_wait_def     = get_param_value(base_params_df, selected_team_norm, 'ta_modal_wait', g.ta_avg_wait)
+    ta_wait_def     = get_param_value(base_params_df, selected_team_norm, 'ta_avg_wait', g.ta_avg_wait)
     ref_rej_def     = get_param_value(base_params_df, selected_team_norm, 'ref_rej_rate', g.referral_rej_rate)
     screen_pc_def     = get_param_value(base_params_df, selected_team_norm, 'screen_pc', g.referral_review_rate)
     opt_in_def     = get_param_value(base_params_df, selected_team_norm, 'opt_in_rate', g.opt_in_rate)
