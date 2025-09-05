@@ -46,15 +46,15 @@ def enforce_schema(df: pd.DataFrame) -> pd.DataFrame:
         'ta_avg_wait':'Int64',
         'ref_rej_rate':'float',
         'screen_pc':'Int64',
-        'opt_in_rate':'Int64',
-        'ta_accept_rate':'Int64',
-        'step_2_pc':'Int64',
-        'pwp_vs_grp':'Int64',
+        'opt_in_rate':'float',
+        'ta_accept_rate':'float',
+        'step_2_pc':'float',
+        'pwp_vs_grp':'float',
         'pwp_wl':'Int64',
         'pwp_avg_wait':'Int64',
         'step2_dna_pc':'float',
         'group_size':'Int64',
-        'cbt_vs_depc':'Int64',
+        'cbt_vs_depc':'float',
         'cbt_wl':'Int64',
         'cbt_avg_wait':'Int64',
         'cbt_dna_first':'float',
@@ -145,14 +145,14 @@ with st.sidebar:
     screen_pc_def     = get_param_value(base_params_df, selected_team_norm, 'screen_pc', g.referral_review_rate)
     opt_in_def     = get_param_value(base_params_df, selected_team_norm, 'opt_in_rate', g.opt_in_rate)
     ta_accept_def     = get_param_value(base_params_df, selected_team_norm, 'ta_accept_rate', g.ta_accept_rate)
-    step_2_def     = get_param_value(base_params_df, selected_team_norm, 'step_2_pc', g.step2_step3_ratio)
-    pwp_grp_def     = get_param_value(base_params_df, selected_team_norm, 'pwp_vs_grp', g.step2_path_ratios)
+    step_2_def     = get_param_value(base_params_df, selected_team_norm, 'step_2_pc', g.step2_step3_ratio[0])
+    pwp_grp_def     = get_param_value(base_params_df, selected_team_norm, 'pwp_vs_grp', (g.step2_path_ratios[0]*100))
     pwp_wl_def     = get_param_value(base_params_df, selected_team_norm, 'pwp_wl', g.pwp_waiting_list)
     pwp_wait_def     = get_param_value(base_params_df, selected_team_norm, 'pwp_avg_wait', g.pwp_avg_wait)
     step2_pwp_dna_def     = get_param_value(base_params_df, selected_team_norm, 'step2_dna_pc', g.step2_pwp_dna_rate)
     step2_grp_dna_def     = get_param_value(base_params_df, selected_team_norm, 'step2_dna_pc', g.step2_group_dna_rate)
     group_size_def     = get_param_value(base_params_df, selected_team_norm, 'group_size', g.step2_group_size)
-    cbt_depc_def     = get_param_value(base_params_df, selected_team_norm, 'cbt_vs_depc', g.step3_path_ratios)
+    cbt_depc_def     = get_param_value(base_params_df, selected_team_norm, 'cbt_vs_depc', (g.step3_path_ratios[0]*100))
     cbt_wl_def     = get_param_value(base_params_df, selected_team_norm, 'cbt_wl', g.cbt_waiting_list)
     cbt_wait_def     = get_param_value(base_params_df, selected_team_norm, 'cbt_avg_wait', g.cbt_avg_wait)
     cbt_dna_1st_def     = get_param_value(base_params_df, selected_team_norm, 'cbt_dna_first', g.step3_cbt_dna_1st_rate)
@@ -214,7 +214,7 @@ with st.sidebar:
                                             'Plans: the number of minutes allocated '
                                             'for a Referral to be screened')
         opt_in_input = st.number_input("% of Referrals that Opt-in",
-                        min_value=50.0, max_value=100.0, step=0.5, value=opt_in_def,
+                        min_value=0.0, max_value=100.0, step=0.5, value=opt_in_def,
                         help='The % of referrals that opt-in to treatment')
         st.markdown("#### Assessment")
         ta_resource_pwp = st.slider("Number of TA Slots per PwP per Week"
@@ -228,7 +228,7 @@ with st.sidebar:
                                             'is added to the assessment '
                                             'waiting list')
         ta_accept_input = st.number_input("% of TA's that are Accepted",
-                        min_value=50.0, max_value=100.0, step=0.5, value=ta_accept_def)
+                        min_value=0.0, max_value=100.0, step=0.5, value=ta_accept_def)
         ta_time_input = st.slider("Number of Mins to Perform TA", 1, 90, 60
                                   ,help='Taken from Job Plans: the number of '
                                             'minutes allocated for a patient to '
@@ -321,7 +321,7 @@ with st.sidebar:
         
         step3_path_ratio = st.number_input("% of Step 3 Allocated to DepC vs CBT",
                                            min_value=0.0, max_value=100.0,
-                                           step=0.5, value=cbt_depc_def,help='The percentage '
+                                           step=1.0, value=cbt_depc_def,help='The percentage '
                                           'of patients that get allocated to '
                                           'CBT versus DepC e.g. a value of 37.0 '
                                           'will send 37% of patients down the '
@@ -392,7 +392,7 @@ with st.sidebar:
         step3_couns_dna_1st_input = st.number_input("% DNA's for DepC 1st Sessions",
                                                 min_value=0.0, max_value=30.0,
                                                 step=0.25, value=couns_dna_1st_def)
-        step3_couns_dna_fu_input = st.number_input("% DNA's for DepC 1st Sessions",
+        step3_couns_dna_fu_input = st.number_input("% DNA's for DepC FU Sessions",
                                                 min_value=0.0, max_value=30.0,
                                                 step=0.25, value=couns_dna_fu_def)
         step3_session_var_input = st.number_input(
@@ -624,12 +624,14 @@ g.cbt_waiting_list = cbt_wl_input
 g.cbt_avg_wait = cbt_wait_input
 g.step3_cbt_1st_mins = step3_cbt_first_input
 g.step3_cbt_fup_mins = step3_cbt_fup_input
-g.step3_cbt_dna_rate = step3_cbt_dna_input/100
+g.step3_cbt_dna_1st_rate = step3_cbt_dna_1st_input/100
+g.step3_cbt_dna_fu_rate = step3_cbt_dna_fu_input/100
 g.couns_waiting_list = couns_wl_input
 g.couns_avg_wait = couns_wait_input
 g.step3_couns_1st_mins = step3_couns_first_input
 g.step3_couns_fup_mins = step3_couns_fup_input
-g.step3_couns_dna_rate = step3_couns_dna_input/100
+g.step3_couns_dna_1st_rate = step3_couns_dna_1st_input/100
+g.step3_couns_dna_fu_rate = step3_couns_dna_fu_input/100
 g.step_down_rate = step_down_input/100
 g.step3_session_admin = step3_admin_input
 g.delayed_disc_var = delayed_disch_input
