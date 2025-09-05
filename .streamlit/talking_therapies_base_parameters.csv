@@ -1,5 +1,5 @@
 team,referrals_pw,prevalence,ta_wl,ta_avg_wait,ref_rej_rate,screen_pc,opt_in_rate,ta_accept_rate,step_2_pc,pwp_vs_grp,pwp_wl,pwp_avg_wait,step2_dna_pc,group_size,cbt_vs_depc,cbt_wl,cbt_avg_wait,cbt_dna_first,cbt_dna_fu,depc_wl,depc_avg_wait,depc_dna_first,depc_dna_fu,pwp_wte,cbt_wte,depc_wte
-Central & West,250,1372,25,,2.45,75,75,30,47,75,100,6,9.8,12,67,400,12,10.4,6,1000,30,7.8,5.3,15,10,6
+Central & West,250,1372,25,12,2.45,75,75,30,47,75,100,6,9.8,12,67,400,12,10.4,6,1000,30,7.8,5.3,15,10,6
 Pennine,100,490,44,,6.91,75,75,30,47,75,35,8,9.8,12,67,100,10,10.4,6,400,34,7.8,5.3,6,4,2
 Fylde,200,1133,36,,2.02,75,75,30,47,75,77,7,9.8,12,67,320,14,10.4,6,850,29,7.8,5.3,12,8,5
 The Bay,180,903,19,,4.73,75,75,30,47,75,69,7,9.8,12,67,290,18,10.4,6,800,42,7.8,5.3,11,7,4
