@@ -130,7 +130,7 @@ with st.sidebar:
     selected_team_norm = normalize_name(selected_team) if selected_team else ""
 
     if team_select_input:
-        selected_team = team_select_input[0]
+        selected_team = team_select_input
         selected_team_norm = normalize_name(selected_team)
     else:
         selected_team = ''
@@ -161,6 +161,9 @@ with st.sidebar:
     couns_wait_def     = get_param_value(base_params_df, selected_team_norm, 'depc_avg_wait', g.couns_avg_wait)
     couns_dna_1st_def     = get_param_value(base_params_df, selected_team_norm, 'depc_dna_first', g.step3_couns_dna_1st_rate)
     couns_dna_fu_def     = get_param_value(base_params_df, selected_team_norm, 'depc_dna_fu', g.step3_couns_dna_fu_rate)
+    pwp_wte_def     = get_param_value(base_params_df, selected_team_norm, 'pwp_wte', g.number_staff_pwp
+    cbt_wte_def     = get_param_value(base_params_df, selected_team_norm, 'cbt_wte', g.number_staff_cbt)
+    couns_wte_def     = get_param_value(base_params_df, selected_team_norm, 'depc_wte', g.number_staff_couns)
 
     st.write("Selected team:", selected_team)
     st.write("Referrals per week:", referrals_def)
@@ -177,32 +180,32 @@ with st.sidebar:
                                   'basis for seasonal variations based on '
                                   'historical referral data')
         prevalence_input = st.slider("Expected Prevalence", 0, 1500
-                                   , 220,help='The expected Prevalence level '
+                                   ,prevalence_def,help='The expected Prevalence level '
                                    'for this team or service')
         ta_wl_input = st.number_input("Current Telephone Assessment Waiting List",
                                     min_value=0, max_value=1000, step=1,
-                                    value=200,help='The current number of '
+                                    value=ta_wl_def,help='The current number of '
                                         'patients on the assessment waiting '
                                         'list, default is 0')
         if ta_wl_input > 0:
             ta_wait_input = st.number_input("Current Average TA Waiting Time (weeks)",
                                            min_value=0, max_value=52, step=1,
-                                           value=3,help='If a waiting list value '
+                                           value=ta_wait_def,help='If a waiting list value '
                                            'has been entered above, the average '
                                            'waiting time in weeks for patients '
                                            'on the TA waiting list')
         else:
             ta_wait_input = 0
         referral_reject_input = st.number_input("Referral Rejection Rate (%)",
-                        min_value=0.0, max_value=20.0, step=0.25, value=4.25,
+                        min_value=0.0, max_value=20.0, step=0.25, value=ref_rej_def,
                         help='The % of referrals that get rejected on initial '
                         'referral, prior to any screening process e.g. due to '
                         'missing information, inappropriate for service etc.')
         referral_review_input = st.number_input("% of Referrals Sent for Screening",
-                        min_value=0.0, max_value=100.0, step=0.5, value=60.0,
+                        min_value=0.0, max_value=100.0, step=0.5, value=75.0,
                         help='The % of referrals that get sent for further '
                         'screening')
-        referral_reject_input = st.number_input("Screening Rejection Rate (%)",
+        screen_reject_input = st.number_input("Screening Rejection Rate (%)",
                         min_value=0.0, max_value=100.0, step=0.25, 
                         value=g.review_rej_rate*100,help='The % of referrals '
                         'that get rejected as a result of the screening process')
@@ -211,7 +214,7 @@ with st.sidebar:
                                             'Plans: the number of minutes allocated '
                                             'for a Referral to be screened')
         opt_in_input = st.number_input("% of Referrals that Opt-in",
-                        min_value=50.0, max_value=100.0, step=0.5, value=75.0,
+                        min_value=50.0, max_value=100.0, step=0.5, value=opt_in_def,
                         help='The % of referrals that opt-in to treatment')
         st.markdown("#### Assessment")
         ta_resource_pwp = st.slider("Number of TA Slots per PwP per Week"
@@ -225,14 +228,14 @@ with st.sidebar:
                                             'is added to the assessment '
                                             'waiting list')
         ta_accept_input = st.number_input("% of TA's that are Accepted",
-                        min_value=50.0, max_value=100.0, step=0.5, value=70.0)
+                        min_value=50.0, max_value=100.0, step=0.5, value=ta_accept_def)
         ta_time_input = st.slider("Number of Mins to Perform TA", 1, 90, 60
                                   ,help='Taken from Job Plans: the number of '
                                             'minutes allocated for a patient to '
                                             'be assessed')
         step2_step3_rate_input = st.number_input(
                                 "% of Patients Assigned to Step 2 vs Step 3",
-                        min_value=0.0, max_value=100.0, step=0.5, value=47.0
+                        min_value=0.0, max_value=100.0, step=0.5, value=step_2_def
                         ,help='The percentage of patients that get allocated to '
                         'Step 2 versus Step 3 e.g. a value of 47.0 '
                         'will send 47% of patients down the Step 2 route and '
@@ -246,20 +249,20 @@ with st.sidebar:
         
         step2_path_ratio = st.number_input("% of Step 2 Allocated to PwP vs Group",
                                            min_value=0.0, max_value=100.0, 
-                                           step=1.0, value=47.0,help='The percentage '
+                                           step=1.0, value=pwp_grp_def,help='The percentage '
                                           'of patients that get allocated to '
                                           '1:1 versus Groups e.g. a value of 47.0 '
                                           'will send 47% of patients down the '
                                           '1:1 path and 53% down the Group path')
         pwp_wl_input = st.number_input("Current PwP 1:1 Waiting List", 
                                       min_value=0, max_value=1000, step=1,
-                                      value=74,help='The current number of '
+                                      value=pwp_wl_def,help='The current number of '
                                         'patients on the PwP 1:1 waiting '
                                         'list, default is 0')
         if pwp_wl_input > 0:
             pwp_wait_input = st.number_input("Current Average PwP 1:1 Waiting Time (weeks)",
                                             min_value=0, max_value=52, step=1,
-                                            value=2,help='If a waiting list value '
+                                            value=pwp_wait_def,help='If a waiting list value '
                                            'has been entered above, the average '
                                            'waiting time in weeks for patients '
                                            'on the PwP 1:1 waiting list')
@@ -287,19 +290,19 @@ with st.sidebar:
                                           'treatment')
         step2_pwp_dna_input = st.number_input("% DNA's for PwP Appointments",
                                             min_value=0.0, max_value=30.0,
-                                            step=0.5, value=15.0,help='The % of '
+                                            step=0.5, value=step2_pwp_dna_def,help='The % of '
                                             'PwP 1:1 appointments where the '
                                             'patient Did Not Attend')
         step2_group_dna_input = st.number_input("% DNA's for Group Sessions",
                                                min_value=0.0, max_value=30.0,
-                                               step=0.25, value=22.0,help='The % of '
+                                               step=0.25, value=step2_grp_dna_def,help='The % of '
                                                'Group appointments where the '
                                                'patient Did Not Attend')
         step2_group_sessions_input = st.slider("Number of Step2 Group Sessions",
                                               1, 10, 7,help='The number of '
                                               'sessions typically offered for '
                                               'PwP Group Therapy')
-        step2_group_size_input = st.slider("Maximum Step2 Group Size", 1, 12, 7,
+        step2_group_size_input = st.slider("Maximum Step2 Group Size", 1, 12,group_size_def,
                                            help='The maximum number of '
                                            'attendees on a course of Step 2 '
                                            'Group Therapy')
@@ -318,7 +321,7 @@ with st.sidebar:
         
         step3_path_ratio = st.number_input("% of Step 3 Allocated to DepC vs CBT",
                                            min_value=0.0, max_value=100.0,
-                                           step=0.5, value=37.0,help='The percentage '
+                                           step=0.5, value=cbt_depc_def,help='The percentage '
                                           'of patients that get allocated to '
                                           'CBT versus DepC e.g. a value of 37.0 '
                                           'will send 37% of patients down the '
@@ -331,13 +334,13 @@ with st.sidebar:
                                           'approach then end of their Step 3 '
                                           'treatment')
         cbt_wl_input = st.number_input("Current CBT Waiting List", min_value=0, 
-                                    max_value=1000, step=1, value=130,
+                                    max_value=1000, step=1, value=cbt_wl_def,
                                     help='The current number of patients on the '
                                     'CBT waiting list, default is 0')
         if cbt_wl_input > 0:
             cbt_wait_input = st.number_input("Current Average CBT Waiting Time"
                                              " (weeks)", min_value=0, 
-                                             max_value=52, step=1, value=5,
+                                             max_value=52, step=1, value=cbt_wait_def,
                                              help='If a waiting list value has '
                                              'been entered above, the average '
                                              'waiting time in weeks for patients '
@@ -352,18 +355,21 @@ with st.sidebar:
                                         1, 90, 60,help='Taken from Job '
                                             'Plans: the number of minutes allocated '
                                             'for a CBT Follow-up appointment')
-        step3_cbt_dna_input = st.number_input("% DNA's for CBT Appointments",
+        step3_cbt_dna_1st_input = st.number_input("% DNA's for CBT 1st Appointments",
                                               min_value=0.0, max_value=30.0,
-                                              step=0.5, value=20.0)
+                                              step=0.5, value=cbt_dna_1st_def)
+        step3_cbt_dna_fu_input = st.number_input("% DNA's for CBT Follow-up Appointments",
+                                              min_value=0.0, max_value=30.0,
+                                              step=0.5, value=cbt_dna_fu_def)
         couns_wl_input = st.number_input("Current DepC Waiting List",
-                                        min_value=0, max_value=1000,
+                                        min_value=0, max_value=couns_wl_def,
                                         step=1, value=250,help='The current '
                                         'number of patients on the '
                                         'DepC waiting list, default is 0')
         if couns_wl_input > 0:
             couns_wait_input = st.number_input("Current Average DepC Waiting "
                                                "Time (weeks)", min_value=0,
-                                               max_value=52, step=1, value=10,
+                                               max_value=52, step=1, value=couns_wait_def,
                                                help='If a waiting list value has '
                                             'been entered above, the average '
                                              'waiting time in weeks for patients '
@@ -383,9 +389,12 @@ with st.sidebar:
                                             'Plans: the number of minutes allocated '
                                             'for admin and writing up following '
                                             'a Step 3 appointment')
-        step3_couns_dna_input = st.number_input("% DNA's for DepC Sessions",
+        step3_couns_dna_1st_input = st.number_input("% DNA's for DepC 1st Sessions",
                                                 min_value=0.0, max_value=30.0,
-                                                step=0.25, value=20.0)
+                                                step=0.25, value=couns_dna_1st_def)
+        step3_couns_dna_fu_input = st.number_input("% DNA's for DepC 1st Sessions",
+                                                min_value=0.0, max_value=30.0,
+                                                step=0.25, value=couns_dna_fu_def)
         step3_session_var_input = st.number_input(
                     "% of Instances where Patients Receive Additional Sessions",
                                                   min_value=0.0, max_value=30.0,
