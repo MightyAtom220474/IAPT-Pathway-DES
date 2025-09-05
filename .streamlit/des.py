@@ -161,7 +161,7 @@ with st.sidebar:
     couns_wait_def     = get_param_value(base_params_df, selected_team_norm, 'depc_avg_wait', g.couns_avg_wait)
     couns_dna_1st_def     = get_param_value(base_params_df, selected_team_norm, 'depc_dna_first', g.step3_couns_dna_1st_rate)
     couns_dna_fu_def     = get_param_value(base_params_df, selected_team_norm, 'depc_dna_fu', g.step3_couns_dna_fu_rate)
-    pwp_wte_def     = get_param_value(base_params_df, selected_team_norm, 'pwp_wte', g.number_staff_pwp
+    pwp_wte_def     = get_param_value(base_params_df, selected_team_norm, 'pwp_wte', g.number_staff_pwp)
     cbt_wte_def     = get_param_value(base_params_df, selected_team_norm, 'cbt_wte', g.number_staff_cbt)
     couns_wte_def     = get_param_value(base_params_df, selected_team_norm, 'depc_wte', g.number_staff_couns)
 
