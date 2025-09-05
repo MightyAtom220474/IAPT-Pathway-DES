@@ -1,9 +1,9 @@
 import simpy
-import random
+#import random
 import numpy as np
 import pandas as pd
 import streamlit as st
-import re
+#import re
 #import matplotlib.pyplot as plt
 import plotly.express as px
 import plotly.graph_objects as go
@@ -34,6 +34,8 @@ st.set_page_config(layout="wide")
 
 base_params_df = load_base_params()
 
+print(base_params_df)
+
 # Enforce schema to ensure data types
 def enforce_schema(df: pd.DataFrame) -> pd.DataFrame:
     schema = {
@@ -41,7 +43,7 @@ def enforce_schema(df: pd.DataFrame) -> pd.DataFrame:
         'referrals_pw':'Int64',
         'prevalence':'Int64',
         'ta_wl':'Int64',
-        'ta_modal_wait':'Int64',
+        'ta_avg_wait':'Int64',
         'ref_rej_rate':'float',
         'screen_pc':'Int64',
         'opt_in_rate':'Int64',
@@ -49,16 +51,16 @@ def enforce_schema(df: pd.DataFrame) -> pd.DataFrame:
         'step_2_pc':'Int64',
         'pwp_vs_grp':'Int64',
         'pwp_wl':'Int64',
-        'pwp_modal_wait':'Int64',
+        'pwp_avg_wait':'Int64',
         'step2_dna_pc':'float',
         'group_size':'Int64',
         'cbt_vs_depc':'Int64',
         'cbt_wl':'Int64',
-        'cbt_modal_wait':'Int64',
+        'cbt_avg_wait':'Int64',
         'cbt_dna_first':'float',
         'cbt_dna_fu':'float',
         'depc_wl':'Int64',
-        'depc_modal_wait':'Int64',
+        'depc_avg_wait':'Int64',
         'depc_dna_first':'float',
         'depc_dna_fu':'float',
         'pwp_wte':'Int64',
