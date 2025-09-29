@@ -362,14 +362,14 @@ with st.sidebar:
                                               min_value=0.0, max_value=30.0,
                                               step=0.5, value=cbt_dna_fu_def)
         couns_wl_input = st.number_input("Current DepC Waiting List",
-                                        min_value=0, max_value=couns_wl_def,
-                                        step=1, value=250,help='The current '
+                                        min_value=0, max_value=250,
+                                        step=1, value=couns_wl_def,help='The current '
                                         'number of patients on the '
                                         'DepC waiting list, default is 0')
         if couns_wl_input > 0:
             couns_wait_input = st.number_input("Current Average DepC Waiting "
                                                "Time (weeks)", min_value=0,
-                                               max_value=52, step=1, value=couns_wait_def,
+                                               max_value=260, step=1, value=couns_wait_def,
                                                help='If a waiting list value has '
                                             'been entered above, the average '
                                              'waiting time in weeks for patients '
